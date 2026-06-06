@@ -32,8 +32,9 @@ output reflects the data rather than canned text.
 
 Prefer not to run anything? The committed result lives in
 [`examples/demo-registration-drop/`](examples/demo-registration-drop/) — read
-[`report.md`](examples/demo-registration-drop/report.md), including its
-`## Challenge Review` section.
+[`report.md`](examples/demo-registration-drop/report.md), or open
+[`replay.html`](examples/demo-registration-drop/replay.html) for the whole case
+on one page (`uv run python viz/generate.py <case_dir>`).
 
 ## How it works
 
