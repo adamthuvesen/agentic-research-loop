@@ -84,6 +84,11 @@ context notes, forms and tests hypotheses, writes `notes.md`/`report.md`, and
 runs the mandatory challenge cycle — entirely on your machine. Swap to `--runner
 claude` once you've wired up real sources (see Setup).
 
+A committed snapshot of a real run lives in
+[`examples/claude-local-registration-drop/`](examples/claude-local-registration-drop/)
+— the agent decomposed the drop into two effects, computed a counterfactual
+impact split, and capped its own confidence in the challenge cycle.
+
 ## Sources
 
 With a real agent runner, cases can pull from any sources you wire up through
