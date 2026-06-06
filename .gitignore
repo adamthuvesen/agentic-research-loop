@@ -20,6 +20,9 @@ research/
 # Personal, per-machine Claude settings
 .claude/settings.local.json
 
+# User-defined sources (copy config/sources.json.example to start)
+config/sources.json
+
 # Agent docs — only allow curated paths under agents/docs/
 agents/docs/*
 !agents/docs/examples/

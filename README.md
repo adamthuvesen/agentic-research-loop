@@ -111,6 +111,10 @@ The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
 respective tools — edit all three when adding or removing a server; a test flags
 drift. Source routing per case is stored in `state/sources.json`.
 
+Two extension points: pass `--local-only` to `init` to disable every external
+source and investigate just `--context-path` files, and add your own sources by
+copying `config/sources.json.example` to `config/sources.json` (no code edits).
+
 ## Research workspace
 
 Each case lives in `research/<date>-<slug>/`.

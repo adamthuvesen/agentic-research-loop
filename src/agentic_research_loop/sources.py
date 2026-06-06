@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import TypedDict
+
+from .layout import find_repo_root
 
 
 _READ_ONLY_POLICY = (
@@ -9,6 +12,10 @@ _READ_ONLY_POLICY = (
     "Search, query, and retrieve only — never send messages, create or update issues, "
     "modify data, post comments, or alter any external system."
 )
+
+# Where users register their own sources without editing this file. See
+# config/sources.json.example for the shape.
+USER_SOURCES_FILE = "config/sources.json"
 
 
 class SourceSpec(TypedDict):
@@ -21,7 +28,7 @@ class SourceSpec(TypedDict):
     base_notes: str
 
 
-SOURCE_CONFIGS: dict[str, SourceSpec] = {
+_BUILTIN_SOURCES: dict[str, SourceSpec] = {
     "notion": {
         "key": "notion_mcp",
         "hint_field": "target",
@@ -124,6 +131,78 @@ SOURCE_CONFIGS: dict[str, SourceSpec] = {
     },
 }
 
+# The live registry: built-ins plus anything registered at runtime or loaded
+# from config/sources.json. Extend it via register_source() or that file rather
+# than editing the built-ins above.
+SOURCE_CONFIGS: dict[str, SourceSpec] = dict(_BUILTIN_SOURCES)
+
+_REQUIRED_SPEC_KEYS: frozenset[str] = frozenset(SourceSpec.__annotations__)
+
+
+def _validate_source_spec(name: str, spec: object) -> SourceSpec:
+    if not isinstance(spec, dict):
+        raise ValueError(
+            f"Source {name!r} must be an object, got {type(spec).__name__}."
+        )
+    missing = _REQUIRED_SPEC_KEYS - spec.keys()
+    if missing:
+        raise ValueError(
+            f"Source {name!r} is missing required field(s): {', '.join(sorted(missing))}."
+        )
+    extra = spec.keys() - _REQUIRED_SPEC_KEYS
+    if extra:
+        raise ValueError(
+            f"Source {name!r} has unknown field(s): {', '.join(sorted(extra))}."
+        )
+    for field, value in spec.items():
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"Source {name!r} field {field!r} must be a non-empty string."
+            )
+    return spec  # type: ignore[return-value]
+
+
+def register_source(name: str, spec: SourceSpec, *, override: bool = False) -> None:
+    """Add a source to the registry. Raises on collision unless override=True."""
+    if not name or not name.isascii():
+        raise ValueError(f"Source name {name!r} must be a non-empty ASCII string.")
+    if name in SOURCE_CONFIGS and not override:
+        raise ValueError(
+            f"Source {name!r} already exists. Pass override=True to replace it."
+        )
+    SOURCE_CONFIGS[name] = _validate_source_spec(name, spec)
+
+
+def _load_user_sources() -> None:
+    """Merge user-defined sources from config/sources.json, if present."""
+    try:
+        repo_root = find_repo_root()
+    except FileNotFoundError:
+        return
+    path = repo_root / USER_SOURCES_FILE
+    if not path.exists():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{USER_SOURCES_FILE} is not valid JSON: {exc}") from exc
+    sources = payload.get("sources", payload) if isinstance(payload, dict) else None
+    if not isinstance(sources, dict):
+        raise ValueError(
+            f"{USER_SOURCES_FILE} must be an object mapping source names to specs "
+            f'(optionally under a top-level "sources" key).'
+        )
+    for name, spec in sources.items():
+        if name in _BUILTIN_SOURCES:
+            raise ValueError(
+                f"{USER_SOURCES_FILE} redefines built-in source {name!r}; "
+                "choose a different name."
+            )
+        register_source(name, _validate_source_spec(name, spec))
+
+
+_load_user_sources()
+
 VALID_SOURCES: frozenset[str] = frozenset(SOURCE_CONFIGS)
 
 
@@ -142,15 +221,16 @@ def build_sources_config(
     enabled: dict[str, bool] | None = None,
     hints: dict[str, str] | None = None,
     local_context_paths: list[str] | None = None,
+    local_only: bool = False,
 ) -> dict:
     enabled = enabled or {}
     hints = hints or {}
 
     for name in enabled:
-        if name not in VALID_SOURCES:
+        if name not in SOURCE_CONFIGS:
             raise ValueError(
                 f"Unknown source {name!r} in enabled. "
-                f"Valid sources: {', '.join(sorted(VALID_SOURCES))}"
+                f"Valid sources: {', '.join(sorted(SOURCE_CONFIGS))}"
             )
 
     config: dict = {
@@ -158,7 +238,9 @@ def build_sources_config(
     }
 
     for name, spec in SOURCE_CONFIGS.items():
-        is_enabled = enabled.get(name, True)
+        # local_only forces every registered (external) source off, leaving only
+        # the local context folders below.
+        is_enabled = False if local_only else enabled.get(name, True)
         hint = hints.get(name, "")
         entry = {spec["hint_field"]: hint, "notes": spec["base_notes"]}
         entry["enabled"] = is_enabled

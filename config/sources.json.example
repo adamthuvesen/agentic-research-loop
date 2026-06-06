@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to config/sources.json to add your own sources without editing code. Each entry is merged into the built-in registry and becomes available as --no-<name> / --<name>-hint CLI flags. The agent must know how to actually reach the source (e.g. via an MCP server in .mcp.json); these specs only describe it for planning and prompting.",
+  "sources": {
+    "zendesk": {
+      "key": "zendesk_mcp",
+      "hint_field": "focus",
+      "label": "Zendesk focus",
+      "display_label": "Zendesk",
+      "freshness_caveat_group": "docs",
+      "plan_line": "Zendesk for support tickets and customer-reported signals.",
+      "base_notes": "Search support tickets, conversations, and macros for customer-reported signals. Read-only — never reply to or modify tickets."
+    }
+  }
+}

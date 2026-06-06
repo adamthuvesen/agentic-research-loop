@@ -142,6 +142,7 @@ def create_manual(
     enabled: dict[str, bool] | None = None,
     hints: dict[str, str] | None = None,
     local_context_paths: list[str] | None = None,
+    local_only: bool = False,
     from_spec_path: Path | None = None,
 ) -> ResearchInitResult:
     question = f"Research: {slug}"
@@ -149,6 +150,7 @@ def create_manual(
         enabled=enabled,
         hints=hints,
         local_context_paths=local_context_paths,
+        local_only=local_only,
     )
     enabled_names = enabled_source_labels(sources_config)
     source_plan = ["Live systems for fresh facts"]

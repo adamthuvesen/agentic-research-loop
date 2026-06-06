@@ -69,6 +69,11 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         default=[],
         help="Attach a local context folder or file. Can be passed multiple times.",
     )
+    parser.add_argument(
+        "--local-only",
+        action="store_true",
+        help="Disable all external sources; investigate only --context-path files.",
+    )
 
 
 def _source_kwargs(args: argparse.Namespace) -> dict:
@@ -86,6 +91,7 @@ def _source_kwargs(args: argparse.Namespace) -> dict:
         "enabled": enabled or None,
         "hints": hints or None,
         "local_context_paths": args.context_path or None,
+        "local_only": args.local_only,
     }
 
 
