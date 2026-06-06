@@ -1,0 +1,17 @@
+{
+  "command": [
+    "claude",
+    "--print",
+    "--output-format",
+    "text",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "config/mcp-empty.json",
+    "--allowedTools",
+    "Read,Glob,Grep,Bash,Edit,Write",
+    "--dangerously-skip-permissions"
+  ],
+  "prompt_via_stdin": true,
+  "timeout_seconds": 1800,
+  "env": {}
+}

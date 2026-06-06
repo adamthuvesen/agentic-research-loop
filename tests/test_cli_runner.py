@@ -24,4 +24,8 @@ def test_builtin_runner_filenames() -> None:
     assert builtin_runner_path(root, "claude") == root / "config/runners/claude.json"
     assert builtin_runner_path(root, "codex") == root / "config/runners/codex.json"
     assert builtin_runner_path(root, "demo") == root / "config/runners/demo.json"
-    assert set(BUILTIN_RUNNERS) == {"claude", "codex", "demo"}
+    assert (
+        builtin_runner_path(root, "claude-local")
+        == root / "config/runners/claude-local.json"
+    )
+    assert set(BUILTIN_RUNNERS) == {"claude", "codex", "demo", "claude-local"}

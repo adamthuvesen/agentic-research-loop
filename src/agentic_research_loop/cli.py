@@ -122,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("case", help="Case id or path")
     run_parser.add_argument(
         "--runner",
-        choices=("claude", "codex", "demo"),
+        choices=("claude", "codex", "demo", "claude-local"),
         default="claude",
         help="External agent CLI (default: claude).",
     )
@@ -135,7 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
     resume_parser.add_argument("case", help="Case id or path")
     resume_parser.add_argument(
         "--runner",
-        choices=("claude", "codex", "demo"),
+        choices=("claude", "codex", "demo", "claude-local"),
         default="claude",
         help="External agent CLI (default: claude).",
     )
@@ -174,7 +174,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan_parser.add_argument("case", help="Case id or path")
     plan_parser.add_argument(
         "--runner",
-        choices=("claude", "codex", "demo"),
+        choices=("claude", "codex", "demo", "claude-local"),
         default="claude",
         help="External agent CLI (default: claude).",
     )

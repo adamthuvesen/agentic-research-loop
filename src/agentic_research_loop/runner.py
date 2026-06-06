@@ -13,6 +13,7 @@ BUILTIN_RUNNERS = {
     "claude": "config/runners/claude.json",
     "codex": "config/runners/codex.json",
     "demo": "config/runners/demo.json",
+    "claude-local": "config/runners/claude-local.json",
 }
 
 

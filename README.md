@@ -55,14 +55,34 @@ A runner is any command that takes the cycle prompt on stdin and emits exactly
 one completion marker — `<promise>CYCLE_DONE</promise>` or
 `<promise>CASE_COMPLETE</promise>`. Built-in runners (`config/runners/`):
 
-| Runner   | What it is                                                    |
-| -------- | ------------------------------------------------------------ |
-| `demo`   | Offline, deterministic reference runner. No LLM, no network. |
-| `claude` | Claude Code CLI (`claude --print`).                          |
-| `codex`  | Codex CLI (`codex exec`).                                    |
+| Runner         | What it is                                                                              |
+| -------------- | -------------------------------------------------------------------------------------- |
+| `demo`         | Offline, deterministic reference runner. No LLM, no network.                           |
+| `claude-local` | Real Claude Code agent, **local files only** — no MCP, no setup beyond your Claude login. |
+| `claude`       | Claude Code CLI with your full MCP source stack.                                       |
+| `codex`        | Codex CLI (`codex exec`) with your full MCP source stack.                              |
 
-Point `--runner` at the one you want. `demo` is the zero-setup path;
-`claude`/`codex` run real investigations against live sources once configured.
+Point `--runner` at the one you want. `demo` shows the loop with zero setup;
+`claude-local` runs a **real** agentic investigation over the bundled data; `claude`
+and `codex` do real investigations against your live sources once configured.
+
+## Run it for real with Claude (local, no setup)
+
+If you have Claude Code installed and signed in, you can watch a real agent run
+the loop over the bundled synthetic data — no MCP servers, no API keys, no
+external sources:
+
+```bash
+uv run research init registration-drop --template root-cause --mode autonomous \
+  --context-path examples/local-sources
+uv run research run <slug> --runner claude-local --max-cycles 8
+```
+
+The `claude-local` runner pins Claude Code to local file tools only
+(`--strict-mcp-config` with an empty MCP config), so the agent reads the CSV and
+context notes, forms and tests hypotheses, writes `notes.md`/`report.md`, and
+runs the mandatory challenge cycle — entirely on your machine. Swap to `--runner
+claude` once you've wired up real sources (see Setup).
 
 ## Sources
 
