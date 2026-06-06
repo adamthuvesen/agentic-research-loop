@@ -167,4 +167,4 @@ uv run ruff check . && uv run ruff format --check . && uv run pytest -q
 
 ## License
 
-[MIT](LICENSE) © 2026 Adam Thuvesen
+[Apache 2.0](LICENSE) © 2026 Adam Thuvesen
