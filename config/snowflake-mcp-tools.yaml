@@ -1,0 +1,27 @@
+# Snowflake MCP service config, loaded by snowflake-labs-mcp via --service-config-file
+# (referenced from .mcp.json, .codex/config.toml, and .cursor/mcp.json).
+#
+# Read-only by design: SELECT/DESCRIBE/SHOW/USE only. No writes.
+#
+# Adapt `agent_services` to the Cortex Agents in your own Snowflake account, or leave
+# the list empty if you only query semantic views / tables directly.
+
+agent_services:
+  - service_name: EXAMPLE_AGENT
+    description: Example Cortex Agent — replace with your own, or remove this entry.
+    database_name: YOUR_DATABASE
+    schema_name: AGENTS
+
+search_services: []
+
+other_services:
+  object_manager: false
+  query_manager: true
+  semantic_manager: true
+
+sql_statement_permissions:
+  - Select: true
+  - Describe: true
+  - Show: true
+  - Use: true
+  - Unknown: false

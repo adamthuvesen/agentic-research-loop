@@ -1,0 +1,49 @@
+{
+  "enabledMcpjsonServers": [
+    "snowflake",
+    "linear",
+    "notion",
+    "slack",
+    "confidence-docs",
+    "confidence-experiments"
+  ],
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "mcp__slack__slack_send_message",
+      "mcp__slack__slack_send_message_draft",
+      "mcp__slack__slack_schedule_message",
+      "mcp__slack__slack_create_canvas",
+      "mcp__slack__slack_update_canvas",
+      "mcp__linear__create_attachment",
+      "mcp__linear__create_document",
+      "mcp__linear__create_issue_label",
+      "mcp__linear__delete_attachment",
+      "mcp__linear__delete_comment",
+      "mcp__linear__delete_customer",
+      "mcp__linear__delete_customer_need",
+      "mcp__linear__delete_status_update",
+      "mcp__linear__save_comment",
+      "mcp__linear__save_customer",
+      "mcp__linear__save_customer_need",
+      "mcp__linear__save_initiative",
+      "mcp__linear__save_issue",
+      "mcp__linear__save_milestone",
+      "mcp__linear__save_project",
+      "mcp__linear__save_status_update",
+      "mcp__linear__update_document",
+      "mcp__notion__notion-create-comment",
+      "mcp__notion__notion-create-database",
+      "mcp__notion__notion-create-pages",
+      "mcp__notion__notion-create-view",
+      "mcp__notion__notion-duplicate-page",
+      "mcp__notion__notion-move-pages",
+      "mcp__notion__notion-update-data-source",
+      "mcp__notion__notion-update-page",
+      "mcp__notion__notion-update-view"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "effortLevel": "medium"
+}

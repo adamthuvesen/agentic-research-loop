@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "snowflake": {
+      "type": "stdio",
+      "command": "/usr/bin/env",
+      "args": [
+        "-u",
+        "UV_ENV_FILE",
+        "uvx",
+        "--from",
+        "snowflake-labs-mcp",
+        "mcp-server-snowflake",
+        "--connection-name",
+        "default",
+        "--service-config-file",
+        "config/snowflake-mcp-tools.yaml"
+      ]
+    },
+    "linear": {
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp"
+    },
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "slack": {
+      "type": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "oauth": {
+        "clientId": "YOUR_SLACK_CLIENT_ID",
+        "callbackPort": 3118
+      }
+    },
+    "confidence-docs": {
+      "type": "http",
+      "url": "https://mcp.confidence.dev/mcp/docs"
+    },
+    "confidence-experiments": {
+      "type": "http",
+      "url": "https://mcp.confidence.dev/mcp/experiments"
+    }
+  }
+}

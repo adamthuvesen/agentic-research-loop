@@ -1,0 +1,11 @@
+# Example Snowflake connection for ~/.snowflake/config.toml
+# Replace ALL placeholder values with your real account details. Do NOT commit real credentials.
+
+[connections.default]
+account = "YOUR_ACCOUNT_LOCATOR"
+user = "you@example.com"
+authenticator = "externalbrowser"
+warehouse = "AD_HOC_WH"
+database = "YOUR_DATABASE"
+schema = "PUBLIC"
+role = "YOUR_ROLE"

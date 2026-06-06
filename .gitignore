@@ -1,0 +1,30 @@
+# OS / editor / tooling artifacts
+.DS_Store
+.python-version
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.idea/
+.vscode/
+.env
+
+# Research cases are local by default — force-add to commit: git add -f research/<case>/
+research/
+
+# Personal, per-machine Claude settings
+.claude/settings.local.json
+
+# Agent docs — only allow curated paths under agents/docs/
+agents/docs/*
+!agents/docs/examples/
+!agents/docs/examples/**
+!agents/docs/architecture.md
+!agents/docs/setup.md
+!agents/docs/runtime-contract.md
+!agents/docs/runtime-playbook.md

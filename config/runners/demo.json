@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "runners/demo_runner.py",
+    "{case_dir}",
+    "{agent_message_file}",
+    "{cycle_id}"
+  ],
+  "prompt_via_stdin": true,
+  "timeout_seconds": 120,
+  "env": {}
+}

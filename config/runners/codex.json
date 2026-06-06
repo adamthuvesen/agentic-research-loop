@@ -1,0 +1,15 @@
+{
+  "command": [
+    "codex",
+    "exec",
+    "--cd",
+    "{repo_root}",
+    "--dangerously-bypass-approvals-and-sandbox",
+    "--output-last-message",
+    "{agent_message_file}",
+    "-"
+  ],
+  "prompt_via_stdin": true,
+  "timeout_seconds": 1800,
+  "env": {}
+}

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-research-loop"
+version = "0.1.0"
+description = "Agent-driven autonomous research loop for business questions"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Adam Thuvesen" }]
+keywords = ["agents", "research", "autonomous", "investigation", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "google-auth>=2.20",
+    "requests>=2.28",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "pytest>=8.2,<9",
+    "ruff>=0.9",
+]
+
+[project.scripts]
+research = "agentic_research_loop.cli:_entry"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_research_loop"]
