@@ -4,7 +4,6 @@
     "linear",
     "notion",
     "slack",
-    "confidence-docs",
     "confidence-experiments"
   ],
   "permissions": {
