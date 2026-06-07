@@ -117,7 +117,7 @@ same analysis lenses you would from the API:
   - Identify top pages and traffic sources
   - Detect changes in user flow or drop-off points
   - Cross-reference with GSC to connect search intent to on-site behavior
-  - Query via `research ga4` CLI (arbitrary dimensions and metrics, pagination)
+  - Query via the official GA4 MCP server (enable the `examples/sources/ga4/` bundle)
 
 **Local context folders** — if the user pointed to a local folder or file,
 read it now — it's likely high-signal context they curated for this question.
@@ -153,7 +153,7 @@ experiments are useful context (they rule out that surface as a cause).
 ### 2c. Search trends and external context (enrich with external signals)
 
 For traffic, growth, or behavior shifts: **GSC in Snowflake first**, then
-**`research gsc`** only as fallback; **GA4** remains **`research ga4`** when you need site analytics the warehouse does not cover. Organic search and
+**`research gsc`** only as fallback; for **GA4** use the official GA4 MCP server (the `examples/sources/ga4/` bundle) when you need site analytics the warehouse does not cover. Organic search and
 on-site behavior often explain registration and funnel moves that product
 metrics alone do not surface.
 
@@ -232,7 +232,7 @@ Define each of these concretely:
   | Snowflake (`your_metrics_table`, etc.) | Registration counts, WAU, conversion funnel | Primary |
   | Snowflake (GSC sync / `GOOGLE_SEARCH_CONSOLE`) | Organic queries, clicks, impressions, CTR, rankings | Primary |
   | GSC API (`research gsc`) | Same family when warehouse is stale or incomplete | Fallback |
-  | GA4 (`research ga4`) | Page views, sessions, users, engagement, conversions by page/source | Primary |
+  | GA4 (GA4 MCP) | Page views, sessions, users, engagement, conversions by page/source | Primary |
   | Confidence | Experiments, rollouts, feature flags affecting metrics | Primary |
   | Notion | Strategy docs, SEO roadmap, retrospectives | Supporting |
   | Slack | Team discussions, incidents, product changes | Supporting |
@@ -243,7 +243,7 @@ Define each of these concretely:
 - **Known Confounders** — from documentation, past incidents, and domain
   knowledge (attribution bugs, tracking breaks, seasonal effects, external
   platform changes like search engine updates)
-- **Freshness Requirements** — which facts need **Snowflake** refresh checks vs **`research gsc` / `research ga4`** API fallback vs. cached docs or local exports
+- **Freshness Requirements** — which facts need **Snowflake** refresh checks vs **`research gsc` CLI / GA4 MCP** live queries vs. cached docs or local exports
 - **Success Criteria** — specific and checkable, not generic. Example:
   "Top 2-3 drivers ranked with quantified contribution estimates" not
   "Clear answer for a teammate"

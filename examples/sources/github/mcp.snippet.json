@@ -1,0 +1,12 @@
+{
+  "_comment": "Merge each block into the matching committed MCP config: `claude` -> .mcp.json mcpServers, `cursor` -> .cursor/mcp.json mcpServers, `codex_toml` -> append to .codex/config.toml. The /readonly endpoint is the GitHub MCP strict read-only filter; it disables every write tool regardless of other config.",
+  "server_name": "github",
+  "read_only_mechanism": "url-suffix:/readonly",
+  "claude": {
+    "github": { "type": "http", "url": "https://api.githubcopilot.com/mcp/readonly" }
+  },
+  "cursor": {
+    "github": { "url": "https://api.githubcopilot.com/mcp/readonly" }
+  },
+  "codex_toml": "[mcp_servers.github]\nurl = \"https://api.githubcopilot.com/mcp/readonly\"\nenabled = true"
+}

@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Google Analytics MCP server (googleanalytics/google-analytics-mcp), wrapping the live GA4 Data API. Read-only via the analytics.readonly ADC scope (see SETUP.md). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml. Verify the exact install command against the upstream repo.",
+  "server_name": "ga4",
+  "read_only_mechanism": "scope:analytics.readonly",
+  "claude": {
+    "ga4": { "type": "stdio", "command": "pipx", "args": ["run", "analytics-mcp"] }
+  },
+  "cursor": {
+    "ga4": { "type": "stdio", "command": "pipx", "args": ["run", "analytics-mcp"] }
+  },
+  "codex_toml": "[mcp_servers.ga4]\ncommand = \"pipx\"\nargs = [\"run\", \"analytics-mcp\"]\nenabled = true"
+}

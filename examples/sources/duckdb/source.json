@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "duckdb": {
+      "key": "duckdb_mcp",
+      "hint_field": "focus",
+      "label": "DuckDB focus",
+      "display_label": "DuckDB",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "arg-absent:--read-write",
+      "plan_line": "DuckDB for local analytical queries over files and embedded databases.",
+      "base_notes": "Query a local DuckDB database or files (CSV/Parquet) via the MotherDuck MCP server, opened read-only. Discover objects live (SHOW TABLES / DESCRIBE) before querying — do not assume a schema. SELECT-only: the database is opened without --read-write. Good for ad-hoc analysis of exports without standing up a warehouse."
+    }
+  }
+}

@@ -78,20 +78,49 @@ role = "YOUR_ROLE"
 
 Adjust to match your access. The MCP server is started with `--connection-name default`.
 
-## Optional: Google Search Console / GA4 (Application Default Credentials)
+## Optional: Google Search Console CLI (Application Default Credentials)
 
-**GSC:** Prefer **Snowflake** for organic search metrics (synced GSC data). The steps below apply only when you use the `research gsc` command — the **live Search Console API fallback**, not the default path.
+**GSC:** Prefer a **warehouse** (Snowflake or BigQuery) for organic search metrics (synced GSC data). The steps below apply only when you use the `research gsc` command — the **live Search Console API fallback**, not the default path.
 
-Code under `agentic_research_loop.google_api` uses **Application Default Credentials**. If you need `research gsc` or `research ga4`, run (see repo for current scopes):
+**GA4:** served by the official GA4 MCP server, not a CLI — enable the `examples/sources/ga4/` bundle (read-only via the `analytics.readonly` scope).
+
+Code under `agentic_research_loop.google_api` uses **Application Default Credentials**. If you need `research gsc`, run (see repo for current scopes):
 
 ```bash
 gcloud auth application-default login \
   --client-id-file="$HOME/.config/gcloud/oauth-client.json" \
-  --scopes="https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/webmasters.readonly,https://www.googleapis.com/auth/cloud-platform"
+  --scopes="https://www.googleapis.com/auth/webmasters.readonly,https://www.googleapis.com/auth/cloud-platform"
 ```
 
-Both fallback commands validate `--start-date` and `--end-date` locally as
-real `YYYY-MM-DD` dates and reject inverted ranges before making API calls.
+The `research gsc` command validates `--start-date` and `--end-date` locally as
+real `YYYY-MM-DD` dates and rejects inverted ranges before making API calls.
+
+## Opt-in source bundles
+
+Sources beyond the built-ins ship as **copy-to-enable bundles** under
+[`examples/sources/`](../../examples/sources/) — the committed MCP configs stay
+neutral. Each bundle has a `source.json` (merge into `config/sources.json`), an
+`mcp.snippet.json` (paste into the three MCP configs), and a `SETUP.md`
+(credentials + read-only setup).
+
+**Do the credential-only sources first** — for these, *nothing in committed config
+can guarantee read-only*; the account or IAM role you connect is the only guardrail:
+
+- **Jira** — provision a **view-only Atlassian account** (Browse Projects; no
+  create/edit/transition). The remote server has no read-only flag.
+- **BigQuery** — authenticate a principal with only **BigQuery Data Viewer + Job
+  User**, and prefer the `execute_sql_readonly` tool.
+
+The rest enforce read-only in config (and the contract test verifies it) — still
+scope the credential as defense in depth:
+
+- **GitHub** — `/readonly` endpoint (strict filter); pair with a read-only PAT.
+- **Postgres** — `--access-mode=restricted`; pair with a SELECT-only role and pass
+  `DATABASE_URI` via the environment, never committed config.
+- **DuckDB** — read-only by default (omit `--read-write`).
+- **GA4** — `analytics.readonly` ADC scope.
+
+See each bundle's `SETUP.md` for exact steps.
 
 ## Verify
 

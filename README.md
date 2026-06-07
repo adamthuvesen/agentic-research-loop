@@ -92,28 +92,45 @@ impact split, and capped its own confidence in the challenge cycle.
 
 ## Sources
 
-With a real agent runner, cases can pull from any sources you wire up through
-MCP. The defaults the framework knows about:
+With a real agent runner, cases pull from whatever sources you wire up. Every
+source is **read-only**, and each declares *how* read-only is enforced — a config
+flag, an OAuth scope, or, where only the credential can guarantee it, a read-only
+account. A test (`tests/test_readonly_contract.py`) checks that the shipped config
+actually carries the declared mechanism.
 
-| Source          | What it provides                               |
-| --------------- | ---------------------------------------------- |
-| **Notion**      | Workspace pages, databases, discussions        |
-| **Slack**       | Decisions, thread context, informal signals    |
-| **Linear**      | Issue state, project progress, ownership        |
-| **Snowflake**   | Live metric evidence                           |
-| **Confidence**  | Experiments, flags, rollouts, decision history |
-| **GSC / GA4**   | Organic search and site analytics              |
-| **Web**         | External context                               |
-| **Local files** | CSVs, markdown, exports scoped to the question |
+**Built in** (wired by default, or no MCP server needed):
+
+| Source          | What it provides                                                         | Read-only          |
+| --------------- | ------------------------------------------------------------------------ | ------------------ |
+| **Notion**      | Workspace pages, databases, discussions                                  | read account/scope |
+| **Slack**       | Decisions, thread context, informal signals                              | read account/scope |
+| **Linear**      | Issue state, project progress, ownership                                 | read account/scope |
+| **Snowflake**   | Live metric evidence                                                     | SQL statement allowlist |
+| **Confidence**  | Experiments, flags, rollouts, decision history                           | read account/scope |
+| **GSC**         | Organic search — warehouse-synced default; `research gsc` CLI fallback   | `webmasters.readonly` scope |
+| **Web**         | External context                                                         | native read-only tool |
+| **Local files** | CSVs, markdown, exports scoped to the question                           | read-only |
+
+**Opt-in bundles** ([`examples/sources/<name>/`](examples/sources/) — copy to enable):
+
+| Source       | What it provides                              | Read-only mechanism |
+| ------------ | --------------------------------------------- | ------------------- |
+| **GitHub**   | Issues, PRs, commits, code search             | `/readonly` endpoint (strict filter) |
+| **Jira**     | Issue state, projects, ownership              | view-only account (credential-only) |
+| **Postgres** | Application-DB / live metric evidence         | `--access-mode=restricted` |
+| **DuckDB**   | Local files (CSV/Parquet), embedded analytics | read-only by default |
+| **BigQuery** | Warehouse metrics (incl. GA4/GSC exports)     | IAM: Data Viewer + Job User |
+| **GA4**      | Site analytics — sessions, users, conversions | `analytics.readonly` scope |
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
-`.cursor/mcp.json`) are the canonical, hand-maintained source of truth for their
-respective tools — edit all three when adding or removing a server; a test flags
-drift. Source routing per case is stored in `state/sources.json`.
+`.cursor/mcp.json`) are the canonical source of truth for built-in servers — edit
+all three when adding or removing one; a test flags drift. New sources stay out of
+them: ship as an `examples/sources/<name>/` bundle instead. Source routing per case
+is stored in `state/sources.json`.
 
 Two extension points: pass `--local-only` to `init` to disable every external
 source and investigate just `--context-path` files, and add your own sources by
-copying `config/sources.json.example` to `config/sources.json` (no code edits).
+copying a bundle (or `config/sources.json.example`) into `config/sources.json`.
 
 ## Research workspace
 
@@ -147,8 +164,8 @@ To run live investigations with Claude Code or Codex against your own sources,
 follow **[`agents/docs/setup.md`](agents/docs/setup.md)** for MCP/OAuth and
 (optionally) a Snowflake connection. The `/research-spec` skill
 (`agents/skills/research-spec/`) discovers sources and designs hypotheses before
-scaffolding. The Google API helpers read `GSC_SITE`, `GA4_PROPERTY_ID`, and
-`GCP_QUOTA_PROJECT` from the environment.
+scaffolding. The `research gsc` CLI reads `GSC_SITE` and `GCP_QUOTA_PROJECT`
+from the environment; GA4 is served by the official GA4 MCP (`examples/sources/ga4/`).
 
 ## Development
 

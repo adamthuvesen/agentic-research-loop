@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "bigquery": {
+      "key": "bigquery_mcp",
+      "hint_field": "focus",
+      "label": "BigQuery focus",
+      "display_label": "BigQuery",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "BigQuery for live metrics and warehouse-backed evidence (incl. GA4/GSC exports).",
+      "base_notes": "Query BigQuery via the Google-managed BigQuery MCP server. Discover datasets and tables live before querying. Prefer the read-only query path (execute_sql_readonly); read-only is ultimately enforced by IAM — grant only BigQuery Data Viewer + Job User (see SETUP.md). SELECT-only; never run DML/DDL. If GA4 or GSC BigQuery exports exist, query them here as the default analytics path."
+    }
+  }
+}

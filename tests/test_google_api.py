@@ -12,7 +12,6 @@ import pytest
 from agentic_research_loop.google_api import (
     GoogleApiError,
     GoogleAuthError,
-    ga4_report,
     gsc_query,
 )
 
@@ -31,7 +30,6 @@ def _google_env(monkeypatch):
     """Provide the account-specific Google config the API helpers read from env."""
     monkeypatch.setenv("GCP_QUOTA_PROJECT", "example-quota-project")
     monkeypatch.setenv("GSC_SITE", "https://www.example.com/")
-    monkeypatch.setenv("GA4_PROPERTY_ID", "123456789")
 
 
 @pytest.fixture(autouse=True)
@@ -101,76 +99,6 @@ class TestGscQuery:
             assert req.get_header("X-goog-user-project") == "example-quota-project"
 
 
-class TestGa4Report:
-    def test_basic_report(self):
-        response = {
-            "rows": [
-                {
-                    "dimensionValues": [{"value": "/"}],
-                    "metricValues": [{"value": "100"}],
-                }
-            ]
-        }
-        with patch.object(
-            urllib.request, "urlopen", return_value=_mock_urlopen(response)
-        ) as mock:
-            result = ga4_report(
-                "2026-03-01", "2026-04-06", ["pagePath"], ["screenPageViews"]
-            )
-
-            assert result == response
-            body = json.loads(mock.call_args[0][0].data)
-            assert body["dimensions"] == [{"name": "pagePath"}]
-            assert body["metrics"] == [{"name": "screenPageViews"}]
-            assert body["limit"] == 25
-            assert body["offset"] == 0
-            assert "orderBys" not in body
-
-    def test_order_by(self):
-        with patch.object(
-            urllib.request, "urlopen", return_value=_mock_urlopen({})
-        ) as mock:
-            ga4_report(
-                "2026-03-01",
-                "2026-04-06",
-                ["pagePath"],
-                ["sessions"],
-                order_by="sessions",
-            )
-
-            body = json.loads(mock.call_args[0][0].data)
-            assert body["orderBys"] == [
-                {"metric": {"metricName": "sessions"}, "desc": True}
-            ]
-
-    def test_pagination(self):
-        with patch.object(
-            urllib.request, "urlopen", return_value=_mock_urlopen({})
-        ) as mock:
-            ga4_report(
-                "2026-03-01",
-                "2026-04-06",
-                ["pagePath"],
-                ["sessions"],
-                limit=50,
-                offset=100,
-            )
-
-            body = json.loads(mock.call_args[0][0].data)
-            assert body["limit"] == 50
-            assert body["offset"] == 100
-
-    def test_auth_headers(self):
-        with patch.object(
-            urllib.request, "urlopen", return_value=_mock_urlopen({})
-        ) as mock:
-            ga4_report("2026-03-01", "2026-04-06", ["pagePath"], ["sessions"])
-
-            req = mock.call_args[0][0]
-            assert req.get_header("Authorization") == "Bearer fake-token-123"
-            assert req.get_header("X-goog-user-project") == "example-quota-project"
-
-
 class TestAuthErrors:
     def test_missing_credentials_raises_google_auth_error(self):
         import google.auth.exceptions
@@ -221,4 +149,4 @@ class TestApiErrors:
             side_effect=urllib.error.URLError("network down"),
         ):
             with pytest.raises(GoogleApiError, match="network down"):
-                ga4_report("2026-03-01", "2026-04-06", ["pagePath"], ["sessions"])
+                gsc_query("2026-03-01", "2026-04-06", ["query"])

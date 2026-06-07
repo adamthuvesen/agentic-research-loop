@@ -1,0 +1,12 @@
+{
+  "_comment": "Google-managed BigQuery MCP server (remote, OAuth + IAM). Read-only is enforced by IAM, NOT a config flag — grant the principal only BigQuery Data Viewer + Job User and prefer the execute_sql_readonly tool (see SETUP.md). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "bigquery",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "bigquery": { "type": "http", "url": "https://bigquery.googleapis.com/mcp" }
+  },
+  "cursor": {
+    "bigquery": { "url": "https://bigquery.googleapis.com/mcp" }
+  },
+  "codex_toml": "[mcp_servers.bigquery]\nurl = \"https://bigquery.googleapis.com/mcp\"\nenabled = true"
+}

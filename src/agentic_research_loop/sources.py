@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
@@ -24,13 +25,74 @@ class SourceSpec(TypedDict):
     label: str
     display_label: str
     freshness_caveat_group: str
+    transport: str
+    read_only_mechanism: str
     plan_line: str
     base_notes: str
+
+
+# Transports a source uses to reach its system. "native" = a built-in agent tool
+# (e.g. web search); "cli" = a `research <x>` subcommand; "stdio" / "http-oauth"
+# = an MCP server.
+VALID_TRANSPORTS: frozenset[str] = frozenset({"http-oauth", "stdio", "cli", "native"})
+
+# read_only_mechanism taxonomy. A "config" mechanism names a token that must be
+# present (or, for arg-absent, absent) in the shipped MCP config and is checked
+# mechanically. A "documented" mechanism is enforced outside the MCP args — an
+# OAuth scope, a credential/grant, a SQL statement allowlist, or a native
+# read-only tool — and must instead be covered by setup notes.
+_CONFIG_PRESENT_PREFIXES = ("url-suffix:", "server-flag:", "tool-allowlist:")
+_CONFIG_ABSENT_PREFIXES = ("arg-absent:",)
+_DOCUMENTED_PREFIXES = ("scope:",)
+_DOCUMENTED_BARE = frozenset({"statement-allowlist", "credential-only", "native"})
+
+
+@dataclass(frozen=True)
+class ReadOnlyMechanism:
+    """A parsed ``read_only_mechanism``.
+
+    ``family`` is "config" (the token must be present/absent in the shipped MCP
+    config) or "documented" (read-only is enforced outside the MCP args and must
+    be described in setup notes).
+    """
+
+    raw: str
+    family: str
+    token: str
+    expect_present: bool
+
+
+def classify_read_only_mechanism(value: str) -> ReadOnlyMechanism | None:
+    """Parse a read_only_mechanism string, or return None if it is unrecognized.
+
+    Used by source validation (to reject unknown mechanisms) and by the read-only
+    contract test (to check the shipped config or setup notes).
+    """
+    text = value.strip()
+    if not text:
+        return None
+    for prefix in _CONFIG_PRESENT_PREFIXES:
+        if text.startswith(prefix):
+            token = text[len(prefix) :].strip()
+            return ReadOnlyMechanism(text, "config", token, True) if token else None
+    for prefix in _CONFIG_ABSENT_PREFIXES:
+        if text.startswith(prefix):
+            token = text[len(prefix) :].strip()
+            return ReadOnlyMechanism(text, "config", token, False) if token else None
+    for prefix in _DOCUMENTED_PREFIXES:
+        if text.startswith(prefix):
+            token = text[len(prefix) :].strip()
+            return ReadOnlyMechanism(text, "documented", token, True) if token else None
+    if text in _DOCUMENTED_BARE:
+        return ReadOnlyMechanism(text, "documented", "", True)
+    return None
 
 
 _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     "notion": {
         "key": "notion_mcp",
+        "transport": "http-oauth",
+        "read_only_mechanism": "credential-only",
         "hint_field": "target",
         "label": "Notion target",
         "display_label": "Notion",
@@ -40,6 +102,8 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "slack": {
         "key": "slack_mcp",
+        "transport": "http-oauth",
+        "read_only_mechanism": "credential-only",
         "hint_field": "focus",
         "label": "Slack focus",
         "display_label": "Slack",
@@ -49,6 +113,8 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "linear": {
         "key": "linear_mcp",
+        "transport": "http-oauth",
+        "read_only_mechanism": "credential-only",
         "hint_field": "focus",
         "label": "Linear focus",
         "display_label": "Linear",
@@ -58,6 +124,8 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "web-search": {
         "key": "web_search",
+        "transport": "native",
+        "read_only_mechanism": "native",
         "hint_field": "focus",
         "label": "Web focus",
         "display_label": "web",
@@ -67,6 +135,8 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "snowflake": {
         "key": "snowflake",
+        "transport": "stdio",
+        "read_only_mechanism": "statement-allowlist",
         "hint_field": "focus",
         "label": "Snowflake focus",
         "display_label": "Snowflake",
@@ -82,6 +152,8 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "confidence": {
         "key": "confidence_mcp",
+        "transport": "http-oauth",
+        "read_only_mechanism": "credential-only",
         "hint_field": "focus",
         "label": "Confidence focus",
         "display_label": "Confidence",
@@ -91,15 +163,17 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
     },
     "gsc": {
         "key": "gsc",
+        "transport": "cli",
+        "read_only_mechanism": "scope:webmasters.readonly",
         "hint_field": "focus",
         "label": "GSC focus",
         "display_label": "GSC",
         "freshness_caveat_group": "live",
-        "plan_line": "GSC organic search — default Snowflake (synced); `research gsc` only as API fallback.",
+        "plan_line": "GSC organic search — default warehouse (Snowflake or BigQuery, synced); `research gsc` only as API fallback.",
         "base_notes": (
             "Google Search Console data for organic search performance — clicks, impressions, CTR, "
             "positions by query, page, device, country, and date. Read-only.\n"
-            "**Default:** Snowflake, if your warehouse syncs GSC (e.g. via Fivetran); prefer "
+            "**Default:** a warehouse-synced copy (Snowflake or BigQuery, via Fivetran or the GSC bulk export); prefer "
             "semantic views / marts when they cover the question, else the synced staging "
             "tables, e.g. a keyword+page report (query + page + country + device + date) and a "
             "page report (page + country + device + date, no query dimension).\n"
@@ -107,26 +181,6 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
             "  Example: research gsc --start-date 2026-03-01 --end-date 2026-04-06 --dimensions query,page\n"
             "  Dimensions: query, page, country, device, searchAppearance, date\n"
             "  Supports --row-limit and --start-row for pagination."
-        ),
-    },
-    "ga4": {
-        "key": "ga4",
-        "hint_field": "focus",
-        "label": "GA4 focus",
-        "display_label": "GA4",
-        "freshness_caveat_group": "live",
-        "plan_line": "Google Analytics 4 for site analytics — page views, sessions, users, engagement, and conversions.",
-        "base_notes": (
-            "Google Analytics 4 data for site analytics — page views, sessions, active users, "
-            "engagement, conversions by page, source/medium, device, country, and date. Read-only.\n"
-            "Use `research ga4` CLI to query the GA4 Data API (property from the GA4_PROPERTY_ID env var).\n"
-            "  Example: research ga4 --start-date 2026-03-01 --end-date 2026-04-06 "
-            "--dimensions pagePath --metrics screenPageViews,sessions\n"
-            "  Common dimensions: pagePath, pageTitle, country, city, deviceCategory, "
-            "sessionSource, sessionMedium, date\n"
-            "  Common metrics: screenPageViews, sessions, activeUsers, newUsers, bounceRate, "
-            "averageSessionDuration, conversions\n"
-            "  Supports --limit, --offset for pagination and --order-by for sorting."
         ),
     },
 }
@@ -159,6 +213,17 @@ def _validate_source_spec(name: str, spec: object) -> SourceSpec:
             raise ValueError(
                 f"Source {name!r} field {field!r} must be a non-empty string."
             )
+    transport = str(spec["transport"])
+    if transport not in VALID_TRANSPORTS:
+        raise ValueError(
+            f"Source {name!r} has unknown transport {transport!r}. "
+            f"Valid transports: {', '.join(sorted(VALID_TRANSPORTS))}."
+        )
+    if classify_read_only_mechanism(str(spec["read_only_mechanism"])) is None:
+        raise ValueError(
+            f"Source {name!r} has an unrecognized read_only_mechanism "
+            f"{spec['read_only_mechanism']!r}."
+        )
     return spec  # type: ignore[return-value]
 
 

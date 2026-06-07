@@ -1,4 +1,4 @@
-"""Thin wrappers for Google Search Console and GA4 Data APIs.
+"""Thin wrapper for the Google Search Console Search Analytics API.
 
 Uses Application Default Credentials (ADC) with auto-refresh.
 """
@@ -17,9 +17,7 @@ import google.auth.transport.requests
 # These are read from the environment so the repo carries no account-specific values.
 #   GCP_QUOTA_PROJECT — billing/quota project for the API calls (optional)
 #   GSC_SITE          — verified Search Console site URL, e.g. https://www.example.com/
-#   GA4_PROPERTY_ID   — numeric GA4 property id
 _GSC_BASE = "https://searchconsole.googleapis.com/webmasters/v3"
-_GA4_BASE = "https://analyticsdata.googleapis.com/v1beta"
 
 
 def _quota_project() -> str | None:
@@ -36,26 +34,14 @@ def _gsc_site() -> str:
     return site
 
 
-def _ga4_property_id() -> str:
-    prop = os.environ.get("GA4_PROPERTY_ID")
-    if not prop:
-        raise GoogleApiError(
-            "GA4_PROPERTY_ID is not set. Export your numeric GA4 property id, "
-            "e.g. GA4_PROPERTY_ID=123456789"
-        )
-    return prop
-
-
 _SCOPES = [
     "https://www.googleapis.com/auth/webmasters.readonly",
-    "https://www.googleapis.com/auth/analytics.readonly",
 ]
 
 _RE_AUTH_COMMAND = (
     "gcloud auth application-default login "
     "--client-id-file=$HOME/.config/gcloud/oauth-client.json "
-    '--scopes="https://www.googleapis.com/auth/analytics.readonly,'
-    "https://www.googleapis.com/auth/webmasters.readonly,"
+    '--scopes="https://www.googleapis.com/auth/webmasters.readonly,'
     'https://www.googleapis.com/auth/cloud-platform"'
 )
 
@@ -137,32 +123,4 @@ def gsc_query(
         "rowLimit": row_limit,
         "startRow": start_row,
     }
-    return _authed_request(url, body)
-
-
-# ---------------------------------------------------------------------------
-# Google Analytics 4
-# ---------------------------------------------------------------------------
-
-
-def ga4_report(
-    start_date: str,
-    end_date: str,
-    dimensions: list[str],
-    metrics: list[str],
-    limit: int = 25,
-    offset: int = 0,
-    order_by: str | None = None,
-) -> dict[str, Any]:
-    """Query GA4 Data API (runReport)."""
-    url = f"{_GA4_BASE}/properties/{_ga4_property_id()}:runReport"
-    body: dict[str, Any] = {
-        "dateRanges": [{"startDate": start_date, "endDate": end_date}],
-        "dimensions": [{"name": d} for d in dimensions],
-        "metrics": [{"name": m} for m in metrics],
-        "limit": limit,
-        "offset": offset,
-    }
-    if order_by:
-        body["orderBys"] = [{"metric": {"metricName": order_by}, "desc": True}]
     return _authed_request(url, body)

@@ -20,6 +20,8 @@ _VALID_SPEC = {
     "label": "Zendesk focus",
     "display_label": "Zendesk",
     "freshness_caveat_group": "docs",
+    "transport": "stdio",
+    "read_only_mechanism": "credential-only",
     "plan_line": "Zendesk for support tickets.",
     "base_notes": "Search support tickets. Read-only.",
 }
@@ -63,6 +65,20 @@ def test_register_source_rejects_collision(_restore_registry) -> None:
 def test_register_source_validates_spec(_restore_registry, bad_spec, match) -> None:
     with pytest.raises(ValueError, match=match):
         register_source("zendesk", bad_spec)  # type: ignore[arg-type]
+
+
+def test_register_source_rejects_unknown_transport(_restore_registry) -> None:
+    with pytest.raises(ValueError, match="unknown transport"):
+        register_source(  # type: ignore[arg-type]
+            "zendesk", {**_VALID_SPEC, "transport": "carrier-pigeon"}
+        )
+
+
+def test_register_source_rejects_unknown_read_only_mechanism(_restore_registry) -> None:
+    with pytest.raises(ValueError, match="read_only_mechanism"):
+        register_source(  # type: ignore[arg-type]
+            "zendesk", {**_VALID_SPEC, "read_only_mechanism": "trust-me"}
+        )
 
 
 def test_local_only_disables_every_external_source() -> None:

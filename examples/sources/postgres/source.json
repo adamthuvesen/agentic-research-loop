@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "postgres": {
+      "key": "postgres_mcp",
+      "hint_field": "focus",
+      "label": "Postgres focus",
+      "display_label": "Postgres",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "server-flag:--access-mode=restricted",
+      "plan_line": "Postgres for live metrics and application-database evidence.",
+      "base_notes": "Query a Postgres database via Postgres MCP Pro in restricted (read-only) mode. Discover objects live before querying — list schemas and tables, inspect columns — do not assume a schema. SELECT-only: the server parses each statement and runs it in a read-only transaction. Prefer explicit column lists and bounded result sets over SELECT *."
+    }
+  }
+}

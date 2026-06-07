@@ -13,7 +13,7 @@ The agent accesses all sources via MCP tools and APIs:
 - Linear
 - Confidence MCP
 - Google Search Console — **default:** Snowflake (GSC-synced tables; use the Snowflake MCP server and warehouse discovery). **Fallback:** `research gsc` CLI when you need fresher data than the sync, suspect Fivetran lag, or API-only dimensions
-- Google Analytics 4 (`research ga4` CLI)
+- Google Analytics 4 — official GA4 MCP server (enable the `examples/sources/ga4/` bundle)
 - web tools
 - local context
 - higher-level synthesis and source strategy

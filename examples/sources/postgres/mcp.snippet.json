@@ -1,0 +1,20 @@
+{
+  "_comment": "Merge each block into the matching committed MCP config: `claude` -> .mcp.json mcpServers, `cursor` -> .cursor/mcp.json mcpServers, `codex_toml` -> append to .codex/config.toml. Read-only is the `--access-mode=restricted` flag (parse + read-only transaction). Provide DATABASE_URI for a READ-ONLY Postgres role via your environment / secret manager — do NOT hardcode a password in committed config (see SETUP.md).",
+  "server_name": "postgres",
+  "read_only_mechanism": "server-flag:--access-mode=restricted",
+  "claude": {
+    "postgres": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["postgres-mcp", "--access-mode=restricted"]
+    }
+  },
+  "cursor": {
+    "postgres": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["postgres-mcp", "--access-mode=restricted"]
+    }
+  },
+  "codex_toml": "[mcp_servers.postgres]\ncommand = \"uvx\"\nargs = [\"postgres-mcp\", \"--access-mode=restricted\"]\nenabled = true"
+}

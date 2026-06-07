@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "ga4": {
+      "key": "ga4_mcp",
+      "hint_field": "focus",
+      "label": "GA4 focus",
+      "display_label": "GA4",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:analytics.readonly",
+      "plan_line": "Google Analytics 4 for site analytics — page views, sessions, users, engagement, conversions.",
+      "base_notes": "Query the GA4 Data API via the official Google Analytics MCP server (report-style queries: dimensions + metrics over a date range, plus realtime and funnel reports). Authenticated read-only with the analytics.readonly scope — it cannot edit GA4 configuration. Note GA4 sampling and thresholding on large properties; the BigQuery export is the unsampled alternative when available."
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "_comment": "Merge each block into the matching committed MCP config: `claude` -> .mcp.json mcpServers, `cursor` -> .cursor/mcp.json mcpServers, `codex_toml` -> append to .codex/config.toml. Read-only is the DEFAULT: do NOT add --read-write. Point --db-path at your local .duckdb file; for MotherDuck cloud see SETUP.md.",
+  "server_name": "duckdb",
+  "read_only_mechanism": "arg-absent:--read-write",
+  "claude": {
+    "duckdb": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-motherduck", "--db-path", "/absolute/path/to/your.duckdb"]
+    }
+  },
+  "cursor": {
+    "duckdb": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-motherduck", "--db-path", "/absolute/path/to/your.duckdb"]
+    }
+  },
+  "codex_toml": "[mcp_servers.duckdb]\ncommand = \"uvx\"\nargs = [\"mcp-server-motherduck\", \"--db-path\", \"/absolute/path/to/your.duckdb\"]\nenabled = true"
+}

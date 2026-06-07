@@ -204,31 +204,6 @@ def build_parser() -> argparse.ArgumentParser:
     gsc_parser.add_argument("--row-limit", type=_positive_int, default=100)
     gsc_parser.add_argument("--start-row", type=_non_negative_int, default=0)
 
-    ga4_parser = subparsers.add_parser(
-        "ga4", help="Query Google Analytics 4 Data API (runReport)"
-    )
-    ga4_parser.add_argument(
-        "--start-date", required=True, type=_iso_date, help="YYYY-MM-DD"
-    )
-    ga4_parser.add_argument(
-        "--end-date", required=True, type=_iso_date, help="YYYY-MM-DD"
-    )
-    ga4_parser.add_argument(
-        "--dimensions",
-        required=True,
-        type=_comma_list,
-        help="Comma-separated dimension names (e.g. pagePath,deviceCategory)",
-    )
-    ga4_parser.add_argument(
-        "--metrics",
-        required=True,
-        type=_comma_list,
-        help="Comma-separated metric names (e.g. screenPageViews,sessions)",
-    )
-    ga4_parser.add_argument("--limit", type=_positive_int, default=25)
-    ga4_parser.add_argument("--offset", type=_non_negative_int, default=0)
-    ga4_parser.add_argument("--order-by", help="Metric name to sort descending")
-
     return parser
 
 
@@ -328,28 +303,6 @@ def main(argv: list[str] | None = None) -> int:
                 dimensions=args.dimensions,
                 row_limit=args.row_limit,
                 start_row=args.start_row,
-            )
-        except (GoogleApiError, GoogleAuthError) as exc:
-            print(str(exc), file=sys.stderr)
-            return 1
-        print(json.dumps(result, indent=2))
-        return 0
-
-    if args.command == "ga4":
-        import sys
-        from .google_api import ga4_report, GoogleApiError, GoogleAuthError
-
-        if args.start_date > args.end_date:
-            parser.error("--start-date must be on or before --end-date")
-        try:
-            result = ga4_report(
-                start_date=args.start_date,
-                end_date=args.end_date,
-                dimensions=args.dimensions,
-                metrics=args.metrics,
-                limit=args.limit,
-                offset=args.offset,
-                order_by=args.order_by,
             )
         except (GoogleApiError, GoogleAuthError) as exc:
             print(str(exc), file=sys.stderr)

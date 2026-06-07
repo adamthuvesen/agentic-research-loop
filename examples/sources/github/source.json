@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "github": {
+      "key": "github_mcp",
+      "hint_field": "focus",
+      "label": "GitHub focus",
+      "display_label": "GitHub",
+      "freshness_caveat_group": "docs",
+      "transport": "http-oauth",
+      "read_only_mechanism": "url-suffix:/readonly",
+      "plan_line": "GitHub for issues, pull requests, commits, and code search.",
+      "base_notes": "Search issues, pull requests, commits, and code via the GitHub MCP server (read-only filter). Strong fit for engineering root-cause: when a regression landed, which PR or commit touched a path, and who owns an area. Read-only — never open, edit, comment on, or merge issues or PRs."
+    }
+  }
+}

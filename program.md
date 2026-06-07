@@ -21,17 +21,22 @@ escalate into bounded autonomous work.
 - Do not mutate `brief.md` during autonomous loops unless explicitly asked.
 - For Snowflake work, follow the repo's `AGENTS.md` rule: use the Snowflake MCP server
   rather than improvised querying.
+- For other warehouses, enable the matching bundle — **BigQuery**, **Postgres**, or
+  **DuckDB** (`examples/sources/<name>/`). Treat them like Snowflake: discover objects
+  live, query SELECT-only, stay read-only.
 - Use Notion MCP for curated context, internal documentation, live workspace pages, databases, and discussions.
 - Use Slack when the question depends on recent decisions, incident threads, or informal context that has not landed in docs yet.
 - Use Linear when the question depends on issue state, project progress, cycle planning, or ownership context.
+- Use GitHub (enable `examples/sources/github/`) when the question depends on code, pull requests, commits, or who changed what — strong for engineering root-cause.
+- Use Jira (enable `examples/sources/jira/`) when work is tracked there instead of Linear — issue state, projects, and ownership.
 - Use Google Search Console (GSC) for organic search traffic, query performance,
-  CTR, impressions, and ranking trends. **Default:** query GSC-shaped data in **Snowflake**
-  (e.g. the GSC-synced staging schema and downstream models).
+  CTR, impressions, and ranking trends. **Default:** query GSC-shaped data in your **warehouse** (Snowflake or BigQuery)
+  (e.g. the GSC-synced staging schema, or the GSC BigQuery bulk export).
   **Fallback:** `research gsc` CLI for fresher data, sync lag, or API-only dimensions
   (e.g. `research gsc --start-date 2026-03-01 --end-date 2026-04-06 --dimensions query`).
 - Use Google Analytics 4 (GA4) for site analytics — page views, sessions, users,
-  engagement, and conversions. Query via the `research ga4` CLI
-  (e.g. `research ga4 --start-date 2026-03-01 --end-date 2026-04-06 --dimensions pagePath --metrics screenPageViews,sessions`).
+  engagement, and conversions. Query via the official GA4 MCP server (enable the
+  `examples/sources/ga4/` bundle); read-only via the `analytics.readonly` scope.
 - Use web tools when the explanation depends on external context.
 - If Confidence MCP is enabled in the sources registry, treat it as a primary
   source for rollout and experiment questions.
