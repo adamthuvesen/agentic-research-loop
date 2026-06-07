@@ -12,7 +12,9 @@ from agentic_research_loop.loop import run_loop
 def test_run_executes_a_cycle_with_fake_runner(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
     case_path = init_with_question(
-        repo_root, "reg-drop", "Why did registrations drop after the launch?"
+        repo_root,
+        "export-drop",
+        "Why did export success rate drop after the scheduler change?",
     )
     # Pre-populate plan so the plan step doesn't run and consume the first diff
     (case_path / "plan.md").write_text(
@@ -238,7 +240,9 @@ def test_run_reports_elapsed_time_in_terminal_output(
 ) -> None:
     monkeypatch.chdir(repo_root)
     case_path = init_with_question(
-        repo_root, "reg-drop-elapsed", "Why did registrations drop after the launch?"
+        repo_root,
+        "export-drop-elapsed",
+        "Why did export success rate drop after the scheduler change?",
     )
 
     exit_code = main(["run", case_path.name, "--max-cycles", "1"])
@@ -272,7 +276,7 @@ def test_successful_cycle_with_hints_still_uses_progress_semantics(
     case_path = init_with_question(
         repo_root,
         "hints-progress",
-        "Why did registrations drop after the launch?",
+        "Why did export success rate drop after the scheduler change?",
     )
     (case_path / "plan.md").write_text(
         "# Research Plan\n\n### T1: Check metrics\n**Status:** pending\n",

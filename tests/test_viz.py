@@ -10,13 +10,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from viz.generate import md_to_html, read_case, render  # noqa: E402
 
-EXAMPLE = PROJECT_ROOT / "examples" / "demo-registration-drop"
+EXAMPLE = PROJECT_ROOT / "examples" / "demo-export-reliability"
 
 
 def test_renders_demo_example() -> None:
     out = render(read_case(EXAMPLE))
     assert out.startswith("<!doctype html>")
-    assert "Why did weekly registrations drop" in out
+    assert "Why did weekly export job success rate drop" in out
     assert "Challenge Review" in out
     assert 'class="badge good"' in out  # status complete / challenge passed
 

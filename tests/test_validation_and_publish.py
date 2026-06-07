@@ -84,7 +84,7 @@ def test_validate_strict_fails_for_root_cause_plan_missing_design_fields(
 def test_golden_root_cause_example_has_no_design_warnings() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     golden_path = (
-        repo_root / "tests" / "golden_investigations" / "root-cause-registration-drop"
+        repo_root / "tests" / "golden_investigations" / "root-cause-export-reliability"
     )
 
     warnings = collect_validation_warnings(golden_path)

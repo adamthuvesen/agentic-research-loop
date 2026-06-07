@@ -20,7 +20,7 @@ class CycleScenario:
 
 
 DEFAULT_SCENARIO = CycleScenario(
-    report_summary="The first cycle found evidence of a post-launch registration drop.",
+    report_summary="The first cycle found evidence of a post-change export reliability drop.",
     ranked_causes="- Launch friction",
     evidence_highlights="- Evidence supports the leading explanation.",
     rejected_leads="- None yet.",
@@ -256,7 +256,7 @@ def main() -> None:
             encoding="utf-8",
         )
         report_path.write_text(
-            "# Research Report\n\n## Question\n\nWhy did registrations drop?\n\n## Executive Summary\n\n"
+            "# Research Report\n\n## Question\n\nWhy did export success rate drop?\n\n## Executive Summary\n\n"
             + scenario.report_summary
             + "\n\n## Ranked Causes\n\n"
             + scenario.ranked_causes
