@@ -102,7 +102,7 @@ to search broadly across semantic views and tables:
   identify the underlying mart tables (e.g., the relevant fact and dimension
   tables) and query those instead
 
-**Google Search Console — default Snowflake** — GSC is synced into the warehouse.
+**Google Search Console — default Snowflake** (GSC is an opt-in bundle: `research source enable gsc`) — GSC is synced into the warehouse.
 For registration/growth/traffic questions, **query GSC-shaped data in Snowflake first**
 (semantic views / marts when available; otherwise `SHOW TABLES` in the GSC-synced staging schema and downstream models). Use the
 same analysis lenses you would from the API:

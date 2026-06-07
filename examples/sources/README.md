@@ -5,13 +5,18 @@ Each subdirectory here is a **copy-to-enable** source. The committed MCP configs
 wire a source you actually use. Onboarding is "add what you have," not "delete
 what you don't."
 
-A bundle has three files:
+A bundle has up to three files:
 
 | File | What it is | Where it goes |
 | --- | --- | --- |
 | `source.json` | the registry spec (describes the source for planning + prompting) | merge into `config/sources.json` |
 | `mcp.snippet.json` | the MCP server block in all three tool shapes | paste into `.mcp.json` / `.codex/config.toml` / `.cursor/mcp.json` |
 | `SETUP.md` | credentials + how read-only is enforced for this source | follow it once |
+
+A source that reaches its system without an MCP server — a `cli` or `native`
+transport such as **GSC** (`research gsc`) — is **MCP-less**: it ships only
+`source.json` and `SETUP.md`, no `mcp.snippet.json`. Enabling it just registers the
+spec; no MCP config is touched.
 
 ## Enabling a source
 
@@ -34,7 +39,8 @@ By hand, if you prefer:
    available as `--no-<name>` / `--<name>-hint` CLI flags.
 2. Paste the `mcp.snippet.json` blocks into the three committed MCP configs
    (`claude` → `.mcp.json` `mcpServers`; `cursor` → `.cursor/mcp.json`
-   `mcpServers`; `codex_toml` → append to `.codex/config.toml`).
+   `mcpServers`; `codex_toml` → append to `.codex/config.toml`). Skip this step
+   for an MCP-less bundle (no `mcp.snippet.json`).
 3. Follow `SETUP.md` for credentials and read-only setup.
 
 ## Read-only is mandatory

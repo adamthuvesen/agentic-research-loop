@@ -5,16 +5,17 @@ source selection, and synthesis directly using MCP tools.
 
 ## Agent-executed research
 
-The agent accesses all sources via MCP tools and APIs. Web tools, `research gsc`,
-and local context are built in; the other sources below are **opt-in bundles** —
-wire one with `research source enable <name>` (see `examples/sources/`):
+The agent accesses all sources via MCP tools and APIs. Web tools are built in and
+local context attaches at invocation (`--context-path`); every other source below
+is an **opt-in bundle** — wire one with `research source enable <name>` (see
+`examples/sources/`):
 
 - Snowflake
 - Notion MCP
 - Slack
 - Linear
 - Confidence MCP
-- Google Search Console — **default:** Snowflake (GSC-synced tables; use the Snowflake MCP server and warehouse discovery). **Fallback:** `research gsc` CLI when you need fresher data than the sync, suspect Fivetran lag, or API-only dimensions
+- Google Search Console (enable `examples/sources/gsc/`) — **default:** Snowflake (GSC-synced tables; use the Snowflake MCP server and warehouse discovery). **Fallback:** `research gsc` CLI when you need fresher data than the sync, suspect Fivetran lag, or API-only dimensions
 - Google Analytics 4 — official GA4 MCP server (enable the `examples/sources/ga4/` bundle)
 - web tools
 - local context

@@ -270,17 +270,19 @@ flowchart LR
 ## Source System
 
 The source registry in [sources.py](../../src/agentic_research_loop/sources.py)
-defines what the runtime knows about. Only two sources are **built in** — always
-registered without MCP wiring:
+defines what the runtime knows about. Only one source is **built in** — always
+registered without any wiring:
 
 - **Web search** (`web-search`) — native agent web search for external context
-- **GSC** (`gsc`) — organic search via warehouse-synced data by default; `research gsc` CLI as API fallback
 
 Every other external system ships as an **opt-in bundle** under
 [`examples/sources/`](../../examples/sources/). Enable one with
-`research source enable <name>`; that wires MCP config locally and registers the
-source in `config/sources.json`. Bundles include Notion, Slack, Linear,
-Snowflake, Confidence, GA4, GitHub, Datadog, and others — see
+`research source enable <name>`; that registers the source in `config/sources.json`
+and, for a bundle with an MCP server, wires that server into the MCP configs
+locally. A bundle whose source reaches its system another way — a `cli` or
+`native` transport such as **GSC** (`research gsc`) — ships no `mcp.snippet.json`,
+so enabling it only registers the spec. Bundles include Notion, Slack, Linear,
+Snowflake, Confidence, GSC, GA4, GitHub, Datadog, and others — see
 [`examples/sources/README.md`](../../examples/sources/README.md).
 
 **Local context** is separate from the registry: attach folders or files at init

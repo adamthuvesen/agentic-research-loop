@@ -35,7 +35,7 @@ escalate into bounded autonomous work.
 - Use Jira (enable `examples/sources/jira/`) when work is tracked there instead of Linear — issue state, projects, and ownership.
 - Use Azure DevOps (enable `examples/sources/azure-devops/`) when work items, repos, and pipelines live there — the Jira + GitHub equivalent for Microsoft shops; read-only depends on a read-only-scoped PAT or account (the local server has no read-only flag — see setup).
 - Use Sentry or Datadog (enable `examples/sources/sentry/` or `examples/sources/datadog/`) for incident, error, and performance root-cause — Sentry for errors, events, stack traces, and releases; Datadog for metrics, monitors, logs, traces, and incidents.
-- Use Google Search Console (GSC) for organic search traffic, query performance,
+- Use Google Search Console (GSC) (enable `examples/sources/gsc/`) for organic search traffic, query performance,
   CTR, impressions, and ranking trends. **Default:** query GSC-shaped data in your **warehouse** (Snowflake or BigQuery)
   (e.g. the GSC-synced staging schema, or the GSC BigQuery bulk export).
   **Fallback:** `research gsc` CLI for fresher data, sync lag, or API-only dimensions

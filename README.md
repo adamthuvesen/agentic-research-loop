@@ -101,11 +101,12 @@ actually carries the declared mechanism.
 
 **Built in** (no MCP server needed — always available):
 
-| Source          | What it provides                                                       | Read-only |
-| --------------- | ---------------------------------------------------------------------- | --------- |
-| **GSC**         | Organic search — warehouse-synced default; `research gsc` CLI fallback | `webmasters.readonly` scope |
-| **Web**         | External context                                                       | native read-only tool |
-| **Local files** | CSVs, markdown, exports scoped to the question                         | read-only |
+| Source  | What it provides | Read-only |
+| ------- | ---------------- | --------- |
+| **Web** | External context | native read-only tool |
+
+**Local files** aren't a registered source — attach them per case at invocation
+with `--context-path` (CSVs, markdown, exports scoped to the question, read-only).
 
 **Opt-in bundles** ([`examples/sources/<name>/`](examples/sources/) — `research source enable <name>`):
 
@@ -122,6 +123,7 @@ actually carries the declared mechanism.
 | **DuckDB**   | Local files (CSV/Parquet), embedded analytics | read-only by default |
 | **BigQuery** | Warehouse metrics (incl. GA4/GSC exports)     | IAM: Data Viewer + Job User |
 | **GA4**      | Site analytics — sessions, users, conversions | `analytics.readonly` scope |
+| **GSC**      | Organic search — warehouse-synced default; `research gsc` CLI fallback | `webmasters.readonly` scope (MCP-less; `cli` transport) |
 | **Sentry**   | Errors, events, stack traces, releases        | read-scoped token (`*:read`) |
 | **Datadog**  | Metrics, monitors, logs, traces, incidents    | Datadog Read-Only Role (credential-only) |
 | **Confluence** | Wiki spaces, pages, curated docs            | view-only account (credential-only) |
@@ -187,8 +189,9 @@ To run live investigations with Claude Code or Codex against your own sources,
 follow **[`agents/docs/setup.md`](agents/docs/setup.md)** for MCP/OAuth and
 (optionally) a Snowflake connection. The `/research-spec` skill
 (`agents/skills/research-spec/`) discovers sources and designs hypotheses before
-scaffolding. The `research gsc` CLI reads `GSC_SITE` and `GCP_QUOTA_PROJECT`
-from the environment; GA4 is served by the official GA4 MCP (`examples/sources/ga4/`).
+scaffolding. GSC and GA4 are opt-in bundles (`research source enable gsc` / `ga4`);
+the `research gsc` CLI then reads `GSC_SITE` and `GCP_QUOTA_PROJECT` from the
+environment, while GA4 is served by the official GA4 MCP.
 
 ## Development
 

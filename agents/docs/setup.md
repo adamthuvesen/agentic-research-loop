@@ -76,22 +76,16 @@ role = "YOUR_ROLE"
 
 Adjust to match your access. The MCP server is started with `--connection-name default`.
 
-## Optional: Google Search Console CLI (Application Default Credentials)
+## Optional: Google Search Console (GSC) and GA4
 
-**GSC:** Prefer a **warehouse** (Snowflake or BigQuery) for organic search metrics (synced GSC data). The steps below apply only when you use the `research gsc` command — the **live Search Console API fallback**, not the default path.
+**GSC** is an opt-in bundle. Prefer a **warehouse** (Snowflake or BigQuery) for
+organic-search metrics (synced GSC data); the `research gsc` CLI is the live
+Search Console API fallback. Run `research source enable gsc`, then follow
+[`examples/sources/gsc/SETUP.md`](../../examples/sources/gsc/) for the ADC login,
+the `webmasters.readonly` scope, and the `GSC_SITE` / `GCP_QUOTA_PROJECT` env.
 
-**GA4:** served by the official GA4 MCP server, not a CLI — enable the `examples/sources/ga4/` bundle (read-only via the `analytics.readonly` scope).
-
-Code under `agentic_research_loop.google_api` uses **Application Default Credentials**. If you need `research gsc`, run (see repo for current scopes):
-
-```bash
-gcloud auth application-default login \
-  --client-id-file="$HOME/.config/gcloud/oauth-client.json" \
-  --scopes="https://www.googleapis.com/auth/webmasters.readonly,https://www.googleapis.com/auth/cloud-platform"
-```
-
-The `research gsc` command validates `--start-date` and `--end-date` locally as
-real `YYYY-MM-DD` dates and rejects inverted ranges before making API calls.
+**GA4** is served by the official GA4 MCP server, not a CLI — enable the
+`examples/sources/ga4/` bundle (read-only via the `analytics.readonly` scope).
 
 ## Opt-in source bundles
 
