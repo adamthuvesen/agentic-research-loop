@@ -134,10 +134,14 @@ actually carries the declared mechanism.
 | **Salesforce** | CRM — opportunities, accounts, pipeline (SOQL)     | `--toolsets data,users` + read-only perm set |
 | **Databricks** | Warehouse over Unity Catalog (Genie NL/SQL)        | Genie endpoint — read-only by design |
 | **Redshift**   | Warehouse — clusters + serverless (SQL)            | engine read-only (`BEGIN READ ONLY`) |
+| **Google Drive** | Docs, Sheets, Slides, decision records           | `drive.readonly` scope |
+| **Microsoft 365** | SharePoint, OneDrive, Teams, Outlook            | `--read-only` flag (Graph) |
+| **Azure**      | Monitor/Log Analytics (KQL), Azure SQL, Kusto      | `--read-only` flag |
+| **Azure DevOps** | Work items, repos, PRs, pipelines, wiki          | read-only account / PAT (credential-only) \* |
 
-\* Amplitude, Mixpanel, and HubSpot MCP servers are read+write with no read-only flag — the
-account role is the only guardrail (and the autonomous runner skips permission
-prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
+\* Amplitude, Mixpanel, HubSpot, and Azure DevOps (local) MCP servers are read+write with no
+read-only flag — the account/PAT is the only guardrail (and the autonomous runner skips
+permission prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
 `.cursor/mcp.json`) **ship neutral** — no servers wired by default, so a clone carries

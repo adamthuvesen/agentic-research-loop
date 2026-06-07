@@ -24,12 +24,16 @@ escalate into bounded autonomous work.
 - For other warehouses, enable the matching bundle — **BigQuery**, **Postgres**,
   **DuckDB**, **Databricks** (Genie), or **Redshift** (`examples/sources/<name>/`). Treat them like Snowflake: discover objects
   live, query SELECT-only, stay read-only.
+- Use Azure (enable `examples/sources/azure/`) for the Microsoft-cloud data and observability plane — Azure Monitor / Log Analytics (KQL), Azure SQL, and Data Explorer (Kusto) — the Snowflake/BigQuery + Datadog equivalent for Azure shops; read-only via the server's `--read-only` flag.
 - Use Notion MCP for curated context, internal documentation, live workspace pages, databases, and discussions.
 - Use Confluence (enable `examples/sources/confluence/`) for wiki spaces, runbooks, RFCs, and curated internal docs — complements Notion.
+- Use Google Drive (enable `examples/sources/google-drive/`) for specs, planning docs, sheets, and decision records that live in Drive rather than a wiki — read-only via the `drive.readonly` scope.
+- Use Microsoft 365 (enable `examples/sources/microsoft-365/`) for Microsoft-shop knowledge — SharePoint/OneDrive docs and Teams threads (the Notion/Confluence + Slack equivalent); read-only via the server's `--read-only` flag.
 - Use Slack when the question depends on recent decisions, incident threads, or informal context that has not landed in docs yet.
 - Use Linear when the question depends on issue state, project progress, cycle planning, or ownership context.
 - Use GitHub (enable `examples/sources/github/`) when the question depends on code, pull requests, commits, or who changed what — strong for engineering root-cause.
 - Use Jira (enable `examples/sources/jira/`) when work is tracked there instead of Linear — issue state, projects, and ownership.
+- Use Azure DevOps (enable `examples/sources/azure-devops/`) when work items, repos, and pipelines live there — the Jira + GitHub equivalent for Microsoft shops; read-only depends on a read-only-scoped PAT or account (the local server has no read-only flag — see setup).
 - Use Sentry or Datadog (enable `examples/sources/sentry/` or `examples/sources/datadog/`) for incident, error, and performance root-cause — Sentry for errors, events, stack traces, and releases; Datadog for metrics, monitors, logs, traces, and incidents.
 - Use Google Search Console (GSC) for organic search traffic, query performance,
   CTR, impressions, and ranking trends. **Default:** query GSC-shaped data in your **warehouse** (Snowflake or BigQuery)

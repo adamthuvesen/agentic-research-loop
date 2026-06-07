@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "google-drive": {
+      "key": "google_drive_mcp",
+      "hint_field": "focus",
+      "label": "Google Drive focus",
+      "display_label": "Google Drive",
+      "freshness_caveat_group": "docs",
+      "transport": "http-oauth",
+      "read_only_mechanism": "scope:drive.readonly",
+      "plan_line": "Google Drive for docs, sheets, and decision records where the team actually writes.",
+      "base_notes": "Search and read Google Drive files — Docs, Sheets, Slides, PDFs — via Google's official Drive MCP server (search files, read content, fetch metadata). Strong for product/strategy context: specs, planning docs, meeting notes, and decision records that live in Drive rather than a wiki. Read-only — authenticate with the drive.readonly scope; never create, edit, move, or delete files."
+    }
+  }
+}

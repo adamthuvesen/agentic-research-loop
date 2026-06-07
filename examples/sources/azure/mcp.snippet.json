@@ -1,0 +1,20 @@
+{
+  "_comment": "Official Azure MCP Server (@azure/mcp), stdio. Read-only is the --read-only flag (filters the tool list to read-only operations; blocks writes across all namespaces). Add --namespace <service> (e.g. monitor, sql, kusto) to narrow scope. Authenticate with az login / DefaultAzureCredential as an identity with a Reader RBAC role (see SETUP.md); no secrets in committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "azure",
+  "read_only_mechanism": "server-flag:--read-only",
+  "claude": {
+    "azure": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start", "--read-only"]
+    }
+  },
+  "cursor": {
+    "azure": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start", "--read-only"]
+    }
+  },
+  "codex_toml": "[mcp_servers.azure]\ncommand = \"npx\"\nargs = [\"-y\", \"@azure/mcp@latest\", \"server\", \"start\", \"--read-only\"]\nenabled = true"
+}

@@ -1,0 +1,20 @@
+{
+  "_comment": "ms-365-mcp-server (Softeria), stdio over Microsoft Graph. Read-only is the --read-only flag (disables all write operations). --org-mode enables work-account services (Teams, SharePoint, OneDrive). Authenticate via device-code login on first use (see SETUP.md); no secrets in committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "microsoft-365",
+  "read_only_mechanism": "server-flag:--read-only",
+  "claude": {
+    "microsoft-365": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@softeria/ms-365-mcp-server", "--read-only", "--org-mode"]
+    }
+  },
+  "cursor": {
+    "microsoft-365": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@softeria/ms-365-mcp-server", "--read-only", "--org-mode"]
+    }
+  },
+  "codex_toml": "[mcp_servers.microsoft-365]\ncommand = \"npx\"\nargs = [\"-y\", \"@softeria/ms-365-mcp-server\", \"--read-only\", \"--org-mode\"]\nenabled = true"
+}

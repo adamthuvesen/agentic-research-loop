@@ -1,0 +1,20 @@
+{
+  "_comment": "Official Azure DevOps MCP Server (microsoft/azure-devops-mcp), local stdio via npx. This server is READ+WRITE and has NO read-only flag — read-only is enforced by the CONNECTING ACCOUNT / PAT (see SETUP.md): authenticate as a read-only (Reader/Stakeholder) user or with a PAT scoped to read-only. Replace YOUR_ADO_ORG with your Azure DevOps organization name. The remote server (mcp.dev.azure.com) has an X-MCP-Readonly header but does not yet support Claude/Codex/Cursor. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "azure-devops",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "azure-devops": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "YOUR_ADO_ORG"]
+    }
+  },
+  "cursor": {
+    "azure-devops": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "YOUR_ADO_ORG"]
+    }
+  },
+  "codex_toml": "[mcp_servers.azure-devops]\ncommand = \"npx\"\nargs = [\"-y\", \"@azure-devops/mcp\", \"YOUR_ADO_ORG\"]\nenabled = true"
+}

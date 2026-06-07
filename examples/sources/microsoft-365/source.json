@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "microsoft-365": {
+      "key": "microsoft_365_mcp",
+      "hint_field": "focus",
+      "label": "Microsoft 365 focus",
+      "display_label": "Microsoft 365",
+      "freshness_caveat_group": "docs",
+      "transport": "stdio",
+      "read_only_mechanism": "server-flag:--read-only",
+      "plan_line": "Microsoft 365 for SharePoint, OneDrive, and Teams — where Microsoft-shop knowledge and decisions live.",
+      "base_notes": "Search and read Microsoft 365 via the ms-365-mcp-server (Microsoft Graph) in read-only mode: SharePoint sites and pages, OneDrive files, Teams messages and channels, and Outlook/Calendar when enabled. The Microsoft-shop equivalent of Notion/Confluence (docs) plus Slack (comms). Read-only — the server runs with --read-only (write operations disabled); discover content with search before fetching. Never post, edit, or delete."
+    }
+  }
+}

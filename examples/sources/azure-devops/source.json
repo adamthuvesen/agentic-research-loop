@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "azure-devops": {
+      "key": "azure_devops_mcp",
+      "hint_field": "focus",
+      "label": "Azure DevOps focus",
+      "display_label": "Azure DevOps",
+      "freshness_caveat_group": "docs",
+      "transport": "stdio",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Azure DevOps for work items, boards, repos, pull requests, and pipelines — the Microsoft-shop Jira + GitHub.",
+      "base_notes": "Search and read Azure DevOps via the official azure-devops-mcp server: work items and boards, repositories and pull requests, wikis, pipelines and builds, and test plans. The Microsoft-shop equivalent of Jira (work tracking) plus GitHub (repos/PRs). Read-only — the local server ships write tools and has no read-only flag, so read-only is enforced by the connecting account / PAT (use read-only scopes); never create, edit, or transition work items, comment, queue pipelines, or push branches."
+    }
+  }
+}

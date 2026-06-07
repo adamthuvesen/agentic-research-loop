@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "azure": {
+      "key": "azure_mcp",
+      "hint_field": "focus",
+      "label": "Azure focus",
+      "display_label": "Azure",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "server-flag:--read-only",
+      "plan_line": "Azure for Monitor/Log Analytics (KQL), Azure SQL, and Data Explorer — the Microsoft-cloud data and observability plane.",
+      "base_notes": "Query Azure via the official Azure MCP Server in read-only mode: Azure Monitor / Log Analytics (KQL over logs and metrics), Azure SQL, Azure Data Explorer (Kusto/ADX), Cosmos DB, and Storage. The Microsoft-cloud equivalent of Snowflake/BigQuery (warehouse) plus Datadog (observability). Read-only — the server runs with --read-only (write tools filtered out); list resource groups and resources to discover scope before querying. Authenticate with an Azure identity holding a Reader role."
+    }
+  }
+}

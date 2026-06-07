@@ -123,6 +123,10 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
 - **HubSpot** — **read+write MCP server, no read-only flag.** Create the MCP Auth App
   and **grant only `*.read` scopes** (HubSpot then 403s writes), and connect a read-only
   user. The enforcement is real but lives in the grant — not auditable from config.
+- **Azure DevOps** (local server) — **read+write MCP server, no read-only flag.** Provision a
+  **read-only-scoped PAT** (Read scopes only, no write) or a **Stakeholder / read-only
+  account**; the credential is the only guardrail. The remote server's `X-MCP-Readonly`
+  header isn't usable from Claude/Codex/Cursor yet (pending Entra dynamic client registration).
 
 The rest enforce read-only via a config flag or a read-only scope (the contract test
 checks each declares its mechanism) — still scope the credential as defense in depth:
@@ -149,6 +153,12 @@ checks each declares its mechanism) — still scope the credential as defense in
   design); not the SQL server (read+write, UC-grant-guarded).
 - **Redshift** — engine-enforced read-only (every query in `BEGIN READ ONLY`, no write
   tools); still scope a read-only IAM role + DB user (writes are on AWS's roadmap).
+- **Google Drive** — `drive.readonly` OAuth scope (Google's official Drive MCP); grant only
+  the read-only scope at consent, never `drive` (full) or `drive.file` (write).
+- **Microsoft 365** — `--read-only` flag on `ms-365-mcp-server` (disables every Graph write);
+  add `--org-mode` for SharePoint/OneDrive/Teams; back it with a read-only work account.
+- **Azure** — `--read-only` flag on the official Azure MCP Server (filters to read-only tools
+  across Monitor/Log Analytics, Azure SQL, Kusto…); also scope an Azure **Reader** RBAC role.
 
 See each bundle's `SETUP.md` for exact steps.
 
