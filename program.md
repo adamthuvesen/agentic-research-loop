@@ -54,9 +54,9 @@ escalate into bounded autonomous work.
 
 ## Research modes
 
-- `quick`: synthesize a first pass and leave behind a reproducible workspace.
+- `quick`: write a first pass and leave behind a reproducible workspace.
 - `guided`: work collaboratively with humans and keep the machine state in sync.
-- `autonomous`: make meaningful progress each cycle, write up results, stop
+- `autonomous`: make visible progress each cycle, write up results, stop
   when done.
 
 ## Artifact expectations
@@ -107,7 +107,7 @@ Adjust direction by editing `notes.md` or `plan.md` before the next `uv run rese
 
 ## Challenge cycle
 
-Before an autonomous case can complete, it must pass a mandatory adversarial challenge cycle:
+Before an autonomous case can complete, it must pass a mandatory challenge cycle:
 
 1. The agent emits `<promise>CASE_COMPLETE</promise>`.
 2. Instead of closing, the runtime queues a challenge cycle.

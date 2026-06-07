@@ -47,7 +47,7 @@ on one page (`uv run python viz/generate.py <case_dir>`).
 
 Each cycle must make visible progress in `notes.md` or `report.md`. Three
 consecutive no-progress cycles stop the run. When the runner believes a
-root-cause case is complete, a mandatory adversarial **challenge cycle**
+root-cause case is complete, a mandatory **challenge cycle**
 stress-tests the conclusions before the case can close.
 
 ## Runners
@@ -140,7 +140,7 @@ actually carries the declared mechanism.
 | **Azure DevOps** | Work items, repos, PRs, pipelines, wiki          | read-only account / PAT (credential-only) \* |
 
 \* Amplitude, Mixpanel, HubSpot, and Azure DevOps (local) MCP servers are read+write with no
-read-only flag — the account/PAT is the only guardrail (and the autonomous runner skips
+read-only flag — the account/PAT is the only read-only rule (and the autonomous runner skips
 permission prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,

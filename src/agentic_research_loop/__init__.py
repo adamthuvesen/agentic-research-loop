@@ -1,4 +1,4 @@
-"""Unified AI research engine workspace."""
+"""Autonomous research case engine workspace."""
 
 __all__ = ["__version__"]
 

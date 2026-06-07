@@ -104,7 +104,7 @@ the merge + wiring automatically (`research source list` / `disable` too), then
 follow the bundle's `SETUP.md`.
 
 **Do the credential-only sources first** — for these, *nothing in committed config
-can guarantee read-only*; the account or IAM role you connect is the only guardrail:
+can guarantee read-only*; the account or IAM role you connect is the only read-only rule:
 
 - **Jira** — provision a **view-only Atlassian account** (Browse Projects; no
   create/edit/transition). The remote server has no read-only flag.
@@ -117,7 +117,7 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
 - **Amplitude / Mixpanel** — **read+write MCP servers with destructive tools** (create
   experiments/feature-flags; Mixpanel can delete dashboards and bulk-edit the
   taxonomy) and **no read-only flag**. The autonomous runner skips permission prompts,
-  so the **account role is the only guardrail**: use a dedicated **Amplitude Viewer** /
+  so the **account role is the only read-only rule**: use a dedicated **Amplitude Viewer** /
   **Mixpanel Consumer** account and verify a write returns 403 before autonomous use.
   Prefer **PostHog** for a provably read-only product-analytics source.
 - **HubSpot** — **read+write MCP server, no read-only flag.** Create the MCP Auth App
@@ -125,7 +125,7 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
   user. The enforcement is real but lives in the grant — not auditable from config.
 - **Azure DevOps** (local server) — **read+write MCP server, no read-only flag.** Provision a
   **read-only-scoped PAT** (Read scopes only, no write) or a **Stakeholder / read-only
-  account**; the credential is the only guardrail. The remote server's `X-MCP-Readonly`
+  account**; the credential is the only read-only rule. The remote server's `X-MCP-Readonly`
   header isn't usable from Claude/Codex/Cursor yet (pending Entra dynamic client registration).
 
 The rest enforce read-only via a config flag or a read-only scope (the contract test

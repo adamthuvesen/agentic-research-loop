@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "agentic-research-loop"
 version = "0.1.0"
-description = "Agent-driven autonomous research loop for business questions"
+description = "Autonomous research case engine for bounded investigation cycles"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

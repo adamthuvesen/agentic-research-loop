@@ -1,13 +1,10 @@
 # Architecture
 
-`agentic-research-loop` is a CLI-first, agentic workspace for autonomous
-cases.
+`agentic-research-loop` is a CLI-first workspace for bounded autonomous
+research cases.
 
-The design goal is:
-
-- give the agent enough context, tools, and structure to succeed
-- keep the workflow reproducible and legible
-- avoid rigid choreography that prevents good research work
+It gives the agent enough context, tools, and structure to run cases
+reproducibly without rigid step-by-step choreography.
 
 ## System Shape
 
@@ -49,7 +46,7 @@ The system has three layers:
 ### Agentic runtime
 
 - [loop.py](../../src/agentic_research_loop/loop.py)
-  - runtime orchestration (`run_loop`, planning step, progress updates)
+  - loop runtime (`run_loop`, planning step, progress updates)
 - [cycle_execution.py](../../src/agentic_research_loop/cycle_execution.py)
   - per-cycle attempt pipeline (invoke runner, validate markers, artifact restore)
 - [cycle_markers.py](../../src/agentic_research_loop/cycle_markers.py)
@@ -118,14 +115,14 @@ The autonomous loop:
 
 - reads the current case state
 - gives the agent the task, current artifacts, source registry, and runtime docs
-- asks for one meaningful hypothesis-led slice
+- asks for one focused hypothesis-led slice
 - validates the result
 - retries when necessary
 - updates cycle summaries and status
 
 The key principle is:
 
-- the system defines contracts and guardrails
+- the system defines contracts and read-only rules
 - the agent chooses research strategy
 
 Normal cycles should choose one or two active hypotheses, leads, or plan

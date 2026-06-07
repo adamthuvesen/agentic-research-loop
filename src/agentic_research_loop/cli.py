@@ -96,7 +96,7 @@ def _source_kwargs(args: argparse.Namespace) -> dict:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Unified AI research engine CLI")
+    parser = argparse.ArgumentParser(description="Autonomous research case engine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="Create an empty case workspace")
@@ -156,7 +156,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--strict",
         action="store_true",
         help=(
-            "Full completion gate: design contract + challenge cycle + meaningful "
+            "Full completion gate: design contract + challenge cycle + substantive "
             "report.md. Use only as a publish pre-flight."
         ),
     )

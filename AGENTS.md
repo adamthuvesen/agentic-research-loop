@@ -38,7 +38,7 @@ Use the Snowflake MCP server (configured in `.mcp.json`; tool allowlists in `con
 - The canonical way to start a case is the `/research-spec` skill, which discovers sources, designs hypotheses, and presents the spec for confirmation before scaffolding. Do not bypass this with ad-hoc `uv run research init` unless the user explicitly asks.
 - Treat external systems as read-only. If a task appears to require writing to Slack, Notion, Linear, Confidence, or another external system, stop and ask the user.
 - Keep `brief.md` stable once an autonomous case has started unless the user explicitly asks to reframe the case.
-- During cycles, the meaningful progress signal is changes to `notes.md` or `report.md`. Updating only JSON state files does not count as progress.
+- During cycles, the visible progress signal is changes to `notes.md` or `report.md`. Updating only JSON state files does not count as progress.
 - The autonomous loop stops after three consecutive no-progress cycles, so write visible reasoning and answer updates as you go.
 - End each autonomous slice with exactly one marker:
   - `<promise>CYCLE_DONE</promise>` when more work is needed
@@ -57,7 +57,7 @@ Validation (`research validate --strict`) enforces these requirements.
 
 ## Challenge cycle
 
-Before an autonomous case can close, a mandatory adversarial challenge cycle stress-tests the conclusions:
+Before an autonomous case can close, a mandatory challenge cycle stress-tests the conclusions:
 
 - Identifies the strongest competing explanation
 - Flags the weakest-supported claim and most fragile dependency

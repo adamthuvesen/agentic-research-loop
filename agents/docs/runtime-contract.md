@@ -69,7 +69,7 @@ tests, rival explanations, completion thresholds, and required cross-checks.
 ## Challenge cycle
 
 Before an autonomous case can complete, it must survive a mandatory
-adversarial challenge cycle:
+challenge cycle:
 
 1. Agent emits `<promise>CASE_COMPLETE</promise>`.
 2. Runtime queues a challenge cycle instead of closing.
