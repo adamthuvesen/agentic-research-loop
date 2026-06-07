@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "posthog": {
+      "key": "posthog_mcp",
+      "hint_field": "focus",
+      "label": "PostHog focus",
+      "display_label": "PostHog",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:insight:read,query:read,dashboard:read,feature_flag:read,person:read,cohort:read,experiment:read,session_recording:read,error_tracking:read",
+      "plan_line": "PostHog for product analytics — funnels, retention, HogQL queries, events, and feature flags.",
+      "base_notes": "Query insights, trends, funnels, retention, events, persons/cohorts, feature flags, and error tracking via the official PostHog MCP server, plus HogQL/SQL through the query tool. Strong for product-analytics root-cause (why activation or conversion moved). Read-only is enforced by a read-scoped personal API key (see SETUP.md) — the key cannot write, so even the server's create/update/delete tools fail with 403."
+    }
+  }
+}

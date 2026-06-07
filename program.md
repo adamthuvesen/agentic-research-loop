@@ -39,6 +39,7 @@ escalate into bounded autonomous work.
 - Use Google Analytics 4 (GA4) for site analytics — page views, sessions, users,
   engagement, and conversions. Query via the official GA4 MCP server (enable the
   `examples/sources/ga4/` bundle); read-only via the `analytics.readonly` scope.
+- Use product analytics — **PostHog** (`examples/sources/posthog/`, the read-only default), or **Amplitude** / **Mixpanel** (read+write servers; read-only depends on a minimal-role account — see setup) — for funnels, retention, activation, and feature-adoption questions; complements GA4 (web traffic).
 - Use web tools when the explanation depends on external context.
 - If Confidence MCP is enabled in the sources registry, treat it as a primary
   source for rollout and experiment questions.

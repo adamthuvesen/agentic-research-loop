@@ -124,6 +124,13 @@ actually carries the declared mechanism.
 | **Sentry**   | Errors, events, stack traces, releases        | read-scoped token (`*:read`) |
 | **Datadog**  | Metrics, monitors, logs, traces, incidents    | Datadog Read-Only Role (credential-only) |
 | **Confluence** | Wiki spaces, pages, curated docs            | view-only account (credential-only) |
+| **PostHog**  | Product analytics — funnels, retention, HogQL, flags | read-scoped API key (`*:read`) |
+| **Amplitude** | Product analytics — charts, cohorts, experiments   | Viewer account (credential-only) \* |
+| **Mixpanel** | Product analytics — funnels, retention, JQL          | Consumer account (credential-only) \* |
+
+\* Amplitude and Mixpanel MCP servers are read+write with no read-only flag — the
+account role is the only guardrail (and the autonomous runner skips permission
+prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
 `.cursor/mcp.json`) are the canonical source of truth for built-in servers — edit

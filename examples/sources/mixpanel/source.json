@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "mixpanel": {
+      "key": "mixpanel_mcp",
+      "hint_field": "focus",
+      "label": "Mixpanel focus",
+      "display_label": "Mixpanel",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Mixpanel for product analytics — funnels, retention, flows, segmentation, and JQL queries.",
+      "base_notes": "Query events, funnels, flows, retention, segmentation/insights, boards, and run JQL-like queries via the official Mixpanel MCP server. Use only Get/List/Run-Query/Search tools. WARNING: the server also exposes destructive tools (Delete-Dashboard, Bulk-Edit-Properties, taxonomy edits) — never create, edit, or delete anything; read-only depends on a Consumer-role account (see SETUP.md). Strong for funnel and retention root-cause."
+    }
+  }
+}

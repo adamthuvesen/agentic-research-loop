@@ -114,6 +114,12 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
   (Confluence read; no add/edit/comment).
 - **Datadog** — authenticate a principal with the **Datadog Read-Only Role** (or
   `*_read` app-key scopes). Preview API — may change.
+- **Amplitude / Mixpanel** — **read+write MCP servers with destructive tools** (create
+  experiments/feature-flags; Mixpanel can delete dashboards and bulk-edit the
+  taxonomy) and **no read-only flag**. The autonomous runner skips permission prompts,
+  so the **account role is the only guardrail**: use a dedicated **Amplitude Viewer** /
+  **Mixpanel Consumer** account and verify a write returns 403 before autonomous use.
+  Prefer **PostHog** for a provably read-only product-analytics source.
 
 The rest enforce read-only via a config flag or a read-only scope (the contract test
 checks each declares its mechanism) — still scope the credential as defense in depth:
@@ -125,6 +131,9 @@ checks each declares its mechanism) — still scope the credential as defense in
 - **GA4** — `analytics.readonly` ADC scope.
 - **Sentry** — a read-scoped auth token (`org:read`, `project:read`, `event:read`);
   not the hosted OAuth flow, which grants write.
+- **PostHog** — a personal API key with only `*:read` scopes (not the `mcp_server`
+  preset, which adds `feature_flag:write`); the read-scoped key blocks writes
+  server-side (403), so read-only is enforced by the credential itself.
 
 See each bundle's `SETUP.md` for exact steps.
 

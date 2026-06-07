@@ -1,0 +1,20 @@
+{
+  "_comment": "Official PostHog MCP server via the mcp-remote shim to the hosted endpoint. Read-only is enforced by a READ-SCOPED personal API key — see SETUP.md. Do NOT use the 'mcp_server' key preset (it includes feature_flag:write). Provide the POSTHOG_AUTH_HEADER env var (an Authorization header value built from a read-scoped personal API key) via the environment, never committed config. EU accounts: use https://mcp-eu.posthog.com/mcp. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "posthog",
+  "read_only_mechanism": "scope:insight:read,query:read,dashboard:read,feature_flag:read,person:read,cohort:read,experiment:read,session_recording:read,error_tracking:read",
+  "claude": {
+    "posthog": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://mcp.posthog.com/mcp", "--header", "Authorization:${POSTHOG_AUTH_HEADER}"]
+    }
+  },
+  "cursor": {
+    "posthog": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://mcp.posthog.com/mcp", "--header", "Authorization:${POSTHOG_AUTH_HEADER}"]
+    }
+  },
+  "codex_toml": "[mcp_servers.posthog]\ncommand = \"npx\"\nargs = [\"-y\", \"mcp-remote@latest\", \"https://mcp.posthog.com/mcp\", \"--header\", \"Authorization:${POSTHOG_AUTH_HEADER}\"]\nenabled = true"
+}

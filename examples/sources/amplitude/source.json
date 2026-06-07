@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "amplitude": {
+      "key": "amplitude_mcp",
+      "hint_field": "focus",
+      "label": "Amplitude focus",
+      "display_label": "Amplitude",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Amplitude for product analytics — charts, funnels, retention, cohorts, and segmentation.",
+      "base_notes": "Query charts, dashboards, funnels, retention, metrics, cohorts, and experiments via the official Amplitude MCP server. Use only read/query tools. WARNING: the server also exposes write tools (create_chart, create_cohort, create_experiment, create_feature_flag) — never create, edit, or delete anything; read-only depends on a Viewer-role account (see SETUP.md). Strong for funnel, retention, and segmentation root-cause."
+    }
+  }
+}

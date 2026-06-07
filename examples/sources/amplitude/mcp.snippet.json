@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Amplitude MCP server (hosted, OAuth). READ+WRITE server with NO read-only flag — read-only is enforced ONLY by the connected user's role (use a dedicated Viewer account; see SETUP.md). The autonomous runner skips permission prompts, so the account role is the only guardrail. US endpoint shown; EU: https://mcp.eu.amplitude.com/mcp. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "amplitude",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "amplitude": { "type": "http", "url": "https://mcp.amplitude.com/mcp" }
+  },
+  "cursor": {
+    "amplitude": { "url": "https://mcp.amplitude.com/mcp" }
+  },
+  "codex_toml": "[mcp_servers.amplitude]\nurl = \"https://mcp.amplitude.com/mcp\"\nenabled = true"
+}
