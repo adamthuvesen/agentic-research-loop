@@ -59,7 +59,8 @@ def test_demo_runner_completes_case_offline(project_cwd: Path) -> None:
 
         report = (case_path / "report.md").read_text(encoding="utf-8")
         assert "## Challenge Review" in report
-        assert "conversion" in report.lower()
+        assert "success rate" in report.lower()
+        assert "scheduler" in report.lower()
         # The report quotes a figure computed from the bundled CSV.
         assert "%" in report
 

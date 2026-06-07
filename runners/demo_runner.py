@@ -25,7 +25,7 @@ import statistics
 import sys
 from pathlib import Path
 
-LAUNCH_WEEK = "2026-03-09"  # synthetic "Homepage v3" launch — see local-sources notes
+CHANGE_WEEK = "2026-03-09"  # synthetic scheduler change — see local-sources notes
 
 CYCLE_DONE = "<promise>CYCLE_DONE</promise>"
 CASE_COMPLETE = "<promise>CASE_COMPLETE</promise>"
@@ -48,10 +48,10 @@ def _find_dataset(case_dir: Path) -> Path | None:
     """Locate the bundled CSV via the case's recorded local context folder."""
     sources = _load_json(case_dir / "state" / "sources.json")
     for folder in sources.get("local_context_folders", []):
-        candidate = Path(folder.get("path", "")) / "registrations_weekly.csv"
+        candidate = Path(folder.get("path", "")) / "exports_weekly.csv"
         if candidate.exists():
             return candidate
-    fallback = Path("examples/local-sources/registrations_weekly.csv")
+    fallback = Path("examples/local-sources/exports_weekly.csv")
     return fallback if fallback.exists() else None
 
 
@@ -59,32 +59,47 @@ def _pct(before: float, after: float) -> float:
     return (after - before) / before * 100.0 if before else 0.0
 
 
+def _success_rate(succeeded: float, scheduled: float) -> float:
+    return succeeded / scheduled * 100.0 if scheduled else 0.0
+
+
 def _analyze(csv_path: Path) -> dict[str, float]:
     pre: dict[str, list[float]] = {
-        k: [] for k in ("visitors", "signups_started", "registrations")
+        k: []
+        for k in (
+            "jobs_scheduled",
+            "jobs_succeeded",
+            "jobs_failed",
+            "avg_queue_minutes",
+        )
     }
     post: dict[str, list[float]] = {k: [] for k in pre}
     with csv_path.open(encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
-            bucket = pre if row["week_starting"] < LAUNCH_WEEK else post
+            bucket = pre if row["week_starting"] < CHANGE_WEEK else post
             for key in pre:
                 bucket[key].append(float(row[key]))
 
     def avg(values: list[float]) -> float:
         return statistics.mean(values) if values else 0.0
 
-    pre_signup_cr = avg(pre["signups_started"]) / avg(pre["visitors"]) * 100.0
-    post_signup_cr = avg(post["signups_started"]) / avg(post["visitors"]) * 100.0
+    pre_rate = _success_rate(avg(pre["jobs_succeeded"]), avg(pre["jobs_scheduled"]))
+    post_rate = _success_rate(avg(post["jobs_succeeded"]), avg(post["jobs_scheduled"]))
     return {
-        "reg_pre": avg(pre["registrations"]),
-        "reg_post": avg(post["registrations"]),
-        "reg_drop": _pct(avg(pre["registrations"]), avg(post["registrations"])),
-        "visitors_change": _pct(avg(pre["visitors"]), avg(post["visitors"])),
-        "signup_started_drop": _pct(
-            avg(pre["signups_started"]), avg(post["signups_started"])
+        "scheduled_pre": avg(pre["jobs_scheduled"]),
+        "scheduled_post": avg(post["jobs_scheduled"]),
+        "scheduled_change": _pct(
+            avg(pre["jobs_scheduled"]), avg(post["jobs_scheduled"])
         ),
-        "signup_cr_pre": pre_signup_cr,
-        "signup_cr_post": post_signup_cr,
+        "success_pre": pre_rate,
+        "success_post": post_rate,
+        "success_drop_pp": post_rate - pre_rate,
+        "failed_change": _pct(avg(pre["jobs_failed"]), avg(post["jobs_failed"])),
+        "queue_pre": avg(pre["avg_queue_minutes"]),
+        "queue_post": avg(post["avg_queue_minutes"]),
+        "queue_change": _pct(
+            avg(pre["avg_queue_minutes"]), avg(post["avg_queue_minutes"])
+        ),
     }
 
 
@@ -97,31 +112,31 @@ def _write_plan(case_dir: Path) -> None:
     (case_dir / "plan.md").write_text(
         """# Research Plan
 
-### T1: Confirm and localize the registration drop
+### T1: Confirm and localize the export reliability break
 **Priority:** high
 **Source:** Local files
-**Objective:** Confirm registrations fell and find where in the funnel it concentrates.
-**Main Explanation:** A real conversion change at a funnel step caused the drop.
-**Strongest Rival:** Traffic fell, or the movement is normal week-to-week variance.
-**Discriminating Test:** Compare visitors, signup starts, and registrations before vs after the launch week.
-**Evidence Needed:** A concentrated step-level drop with steady traffic.
-**Completion Threshold:** done when the affected funnel step is explicit.
+**Objective:** Confirm export success rate fell and check whether volume or queue pressure changed.
+**Main Explanation:** Queue contention from rescheduled heavy jobs caused more failures.
+**Strongest Rival:** Job volume rose and overwhelmed capacity, unrelated to the schedule change.
+**Discriminating Test:** Compare success rate, failure count, and queue minutes before vs after the change week.
+**Evidence Needed:** A step down in success rate with a matching queue spike while scheduled volume stays flat.
+**Completion Threshold:** done when the break magnitude and timing are explicit.
 **Confounders / Freshness Risks:** Partial-week data near the window edges.
-**Cross-Check:** Reconcile with the launch timeline in the context notes.
+**Cross-Check:** Reconcile with the scheduler change date in the context notes.
 **Depends on:** none
 **Status:** pending
 
-### T2: Tie the drop to a specific change
+### T2: Tie the break to the scheduler change
 **Priority:** medium
 **Source:** Local files (context notes)
-**Objective:** Check whether a known change lines up with the inflection.
-**Main Explanation:** The homepage redesign reduced visitor -> signup conversion.
-**Strongest Rival:** An unrelated change or measurement shift explains it.
-**Discriminating Test:** Match the inflection week to the documented launch date.
-**Evidence Needed:** Timing alignment plus a plausible mechanism.
+**Objective:** Check whether the documented schedule change lines up with the inflection.
+**Main Explanation:** Moving heavy exports into business hours overloaded the shared queue.
+**Strongest Rival:** An unrelated platform or counting change explains the failures.
+**Discriminating Test:** Match the inflection week to the documented 2026-03-09 schedule change.
+**Evidence Needed:** Timing alignment plus a plausible queue-contention mechanism.
 **Completion Threshold:** done when timing and mechanism are established.
-**Confounders / Freshness Risks:** Other changes in the same window.
-**Cross-Check:** Confirm no tracking change in the window.
+**Confounders / Freshness Risks:** Other operational changes in the same window.
+**Cross-Check:** Confirm no metric-definition change in the window.
 **Depends on:** T1
 **Status:** pending
 """,
@@ -135,22 +150,22 @@ def _write_explore(case_dir: Path, stats: dict[str, float]) -> None:
 
 ## Working Theory
 
-- Current best explanation: Weekly registrations stepped down after the {LAUNCH_WEEK} homepage launch.
-- Confidence: medium — the drop is clear, the mechanism still needs a funnel cut.
-- What would change this: evidence that traffic fell, or that the drop predates the launch.
+- Current best explanation: Export success rate stepped down after the {CHANGE_WEEK} scheduler change.
+- Confidence: medium — the drop is clear, queue pressure still needs a full cut.
+- What would change this: evidence that scheduled volume spiked, or that the drop predates the change.
 
 ## Evidence Log
 
-- Registrations fell from ~{stats["reg_pre"]:.0f}/wk to ~{stats["reg_post"]:.0f}/wk ({stats["reg_drop"]:.1f}%).
-- Visitors are essentially flat ({stats["visitors_change"]:+.1f}%), so this is not a traffic problem.
+- Success rate fell from {stats["success_pre"]:.1f}% to {stats["success_post"]:.1f}% ({stats["success_drop_pp"]:+.1f} pp).
+- Scheduled jobs are essentially flat ({stats["scheduled_change"]:+.1f}%), so this is not a volume spike.
 
 ## Open Questions
 
-- Which funnel step absorbs the drop — signup start or signup completion?
+- Did average queue minutes rise in the same week as the success-rate break?
 
 ## Leads To Pull Next
 
-- Compute the visitor -> signup-start conversion before vs after the launch.
+- Compare queue minutes and failure counts before vs after the change week.
 """,
         encoding="utf-8",
     )
@@ -163,22 +178,22 @@ def _write_report(case_dir: Path, stats: dict[str, float], *, final: bool) -> No
 
 ## Working Theory
 
-- Current best explanation: The {LAUNCH_WEEK} homepage redesign cut the visitor -> signup-start conversion, dragging registrations down.
+- Current best explanation: The {CHANGE_WEEK} scheduler change moved heavy export jobs into business hours, overloading the shared queue and cutting success rate.
 - Confidence: {confidence.lower()}.
-- What would change this: a non-launch change in the same window, or a measurement artifact.
+- What would change this: a non-scheduler change in the same window, or a metric-definition shift.
 
 ## Evidence Log
 
-- Registrations: ~{stats["reg_pre"]:.0f}/wk -> ~{stats["reg_post"]:.0f}/wk ({stats["reg_drop"]:.1f}%).
-- Visitors: {stats["visitors_change"]:+.1f}% (flat) — not a traffic problem.
-- Signup starts: {stats["signup_started_drop"]:.1f}%.
-- Visitor -> signup-start conversion: {stats["signup_cr_pre"]:.1f}% -> {stats["signup_cr_post"]:.1f}%.
-- The inflection week matches the documented Homepage v3 launch; no tracking change in the window.
+- Success rate: {stats["success_pre"]:.1f}% -> {stats["success_post"]:.1f}% ({stats["success_drop_pp"]:+.1f} pp).
+- Scheduled jobs: {stats["scheduled_change"]:+.1f}% (flat) — not a volume problem.
+- Failed jobs: {stats["failed_change"]:+.1f}% vs pre-change baseline.
+- Avg queue minutes: {stats["queue_pre"]:.1f} -> {stats["queue_post"]:.1f} ({stats["queue_change"]:+.1f}%).
+- The inflection week matches the documented scheduler change; no counting change in the window.
 
 ## Rejected Leads
 
-- Traffic decline: ruled out, visitors flat.
-- Seasonality: the step change aligns to the launch, not a seasonal pattern.
+- Volume spike: ruled out, scheduled jobs flat.
+- Random variance: the step change aligns to the schedule change and holds for five post weeks.
 """,
         encoding="utf-8",
     )
@@ -187,39 +202,40 @@ def _write_report(case_dir: Path, stats: dict[str, float], *, final: bool) -> No
 
 ## Question
 
-Why did weekly registrations drop in recent weeks?
+Why did weekly export job success rate drop in recent weeks?
 
 ## Executive Summary
 
-Weekly registrations stepped down ~{abs(stats["reg_drop"]):.0f}% after the
-{LAUNCH_WEEK} homepage redesign (Homepage v3). Traffic held flat
-({stats["visitors_change"]:+.1f}%), so the loss is a **conversion** problem, not a
-traffic problem. The drop concentrates at the very top of the funnel: the
-visitor -> signup-start conversion fell from {stats["signup_cr_pre"]:.1f}% to
-{stats["signup_cr_post"]:.1f}%, which is consistent with the redesign moving the
-primary "Sign up free" call-to-action below the fold.
+Export success rate stepped down from {stats["success_pre"]:.1f}% to
+{stats["success_post"]:.1f}% after the {CHANGE_WEEK} scheduler change that moved
+**large warehouse export jobs** from overnight into business hours. Scheduled
+volume held flat ({stats["scheduled_change"]:+.1f}%), so the loss is a **queue
+contention** problem, not a demand spike. Average queue wait rose from
+{stats["queue_pre"]:.0f} to {stats["queue_post"]:.0f} minutes in the same window,
+consistent with heavy jobs competing with interactive load on the shared export queue.
 
 ## Ranked Causes
 
-1. **Homepage v3 reduced visitor -> signup-start conversion** (leading). Timing and
-   funnel evidence both point here.
-2. Downstream signup-completion changes (minor) — completion rate is roughly stable.
+1. **Business-hours scheduling overloaded the export queue** (leading). Timing,
+   queue minutes, and flat scheduled volume all point here.
+2. Residual retry-policy noise (minor) — a smaller Feb tweak did not move the
+   inflection.
 
 ## Evidence Highlights
 
-- Registrations: ~{stats["reg_pre"]:.0f}/wk -> ~{stats["reg_post"]:.0f}/wk ({stats["reg_drop"]:.1f}%).
-- Visitors flat ({stats["visitors_change"]:+.1f}%).
-- Signup starts: {stats["signup_started_drop"]:.1f}%.
-- Visitor -> signup-start CR: {stats["signup_cr_pre"]:.1f}% -> {stats["signup_cr_post"]:.1f}%.
+- Success rate: {stats["success_pre"]:.1f}% -> {stats["success_post"]:.1f}%.
+- Scheduled jobs flat ({stats["scheduled_change"]:+.1f}%).
+- Failed jobs up {stats["failed_change"]:.1f}%.
+- Avg queue minutes: {stats["queue_pre"]:.1f} -> {stats["queue_post"]:.1f}.
 
 ## Recommended Next Actions
 
-- Move the "Sign up free" CTA back above the fold and A/B test against Homepage v3.
-- Instrument the hero section to confirm the CTA-visibility hypothesis.
+- Move large warehouse exports back to the overnight window and monitor queue minutes.
+- Cap concurrent heavy exports during business hours until queue SLO recovers.
 
 ## Confidence
 
-{confidence}. The mechanism is well supported by the timing and the step-level funnel cut.
+{confidence}. The mechanism is well supported by timing, queue pressure, and flat volume.
 """,
         encoding="utf-8",
     )
@@ -232,14 +248,14 @@ def _write_challenge_review(case_dir: Path) -> None:
         path.write_text(
             existing
             + "\n## Challenge Review\n\n"
-            + "- Strongest competing explanation tested: a non-launch change or measurement"
-            " artifact in the same window. Rejected — the context notes record no tracking"
-            " change, and the inflection aligns to the launch week.\n"
-            + "- Weakest-supported claim tested: that the CTA move is the precise mechanism."
-            " The funnel cut localizes the loss to the visitor -> signup-start step, which is"
-            " consistent with the CTA change; an A/B test is still the clean confirmation.\n"
-            + "- Most fragile dependency: partial-week data at the window edges. Re-checked —"
-            " the step change holds across the full post-launch weeks.\n"
+            + "- Strongest competing explanation tested: a volume spike or unrelated"
+            " platform change in the same window. Rejected — scheduled jobs stayed flat,"
+            " and the context notes record no counting change.\n"
+            + "- Weakest-supported claim tested: that the Feb retry-policy tweak"
+            " contributed materially. It predates the inflection by two weeks and"
+            " success rate held at 98% until the schedule change.\n"
+            + "- Most fragile dependency: partial-week data at the window edges."
+            " Re-checked — the step change holds across the full post-change weeks.\n"
             + "- Outcome: Resolved. The conclusion survives challenge.\n",
             encoding="utf-8",
         )
