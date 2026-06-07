@@ -1,5 +1,5 @@
 {
-  "_comment": "Official Datadog managed MCP server (remote, OAuth). Read-only is enforced by roles/IAM, NOT a config flag — authenticate a principal with the Datadog Read-Only Role (see SETUP.md). This is a preview ('unstable') API path and may change. Choose your regional endpoint. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "_comment": "Official Datadog (Bits AI) managed MCP server — remote, Streamable HTTP at mcp.datadoghq.com. This server EXPOSES WRITE TOOLS (mute/create/update/delete monitors, schedule/cancel downtime) — read-only is NOT a config flag: grant the Datadog Application Key only the 'MCP Read' scope (or create it under a read-only user), see SETUP.md. Auth uses DD-API-KEY + DD-APPLICATION-KEY headers (add them to your local config; never commit keys). Pick your regional endpoint. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
   "server_name": "datadog",
   "read_only_mechanism": "credential-only",
   "claude": {

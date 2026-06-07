@@ -1,5 +1,5 @@
 {
-  "_comment": "Google's official Drive MCP server (remote, hosted at https://drivemcp.googleapis.com/mcp/v1). Read-only is enforced by the OAuth scope you grant: consent to ONLY https://www.googleapis.com/auth/drive.readonly (see SETUP.md). Do NOT grant drive (full) or drive.file (write). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "_comment": "Google's official Drive MCP server (remote, hosted at https://drivemcp.googleapis.com/mcp/v1). REQUIRES your own Google Cloud OAuth 2.0 client — the bare URL will NOT connect on its own. Create an OAuth client (consent screen scoped to drive.readonly ONLY), then configure its client id/secret in your MCP client's connector settings (see SETUP.md). Read-only is the drive.readonly scope; do NOT grant drive (full) or drive.file (write). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
   "server_name": "google-drive",
   "read_only_mechanism": "scope:drive.readonly",
   "claude": {

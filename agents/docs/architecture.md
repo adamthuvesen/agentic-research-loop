@@ -177,7 +177,9 @@ The system uses a dual artifact model.
 
 ## Source System
 
-The system recognizes these first-class source families:
+The system recognizes these source families. Web tools and local context are
+built in; the rest are **opt-in bundles** wired with `research source enable
+<name>` (see `examples/sources/`):
 
 - `knowledge`
   - curated business context and internal documentation via knowledge MCP

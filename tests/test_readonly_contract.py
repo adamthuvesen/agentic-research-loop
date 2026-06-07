@@ -39,6 +39,27 @@ def _bundle_dirs() -> list[Path]:
     return sorted(p for p in BUNDLES_DIR.iterdir() if p.is_dir())
 
 
+def test_bundle_keys_are_unique() -> None:
+    """No two bundles (or a bundle and a built-in) may share a source ``key``.
+
+    The registry merges on ``key``, so a collision silently clobbers one source's
+    enabled/hint/notes state. ``register_source`` rejects this at runtime; this
+    pins it for the shipped bundles too.
+    """
+    seen: dict[str, str] = {
+        spec["key"]: name for name, spec in sources._BUILTIN_SOURCES.items()
+    }
+    for bundle in _bundle_dirs():
+        payload = json.loads((bundle / "source.json").read_text(encoding="utf-8"))
+        sources_map = payload.get("sources", payload)
+        name, spec = next(iter(sources_map.items()))
+        key = spec["key"]
+        assert key not in seen, (
+            f"{bundle.name}: key {key!r} already used by {seen[key]!r}"
+        )
+        seen[key] = name
+
+
 @pytest.mark.parametrize("bundle", _bundle_dirs(), ids=lambda p: p.name)
 def test_bundle_declares_and_enforces_read_only(bundle: Path) -> None:
     # source.json holds exactly one fully valid registry spec.
@@ -75,8 +96,27 @@ def test_bundle_declares_and_enforces_read_only(bundle: Path) -> None:
                 f"{bundle.name}: '{mech.token}' must be absent"
             )
     else:
-        # documented (credential-only / scope / native): read-only is enforced
-        # outside the MCP args, so SETUP.md must describe it.
-        assert "read-only" in setup.lower(), (
+        # documented (credential-only / scope / native / statement-allowlist):
+        # read-only is enforced outside the MCP args, so SETUP.md must both say
+        # "read-only" AND name the control that enforces it — a bare mention of
+        # the word is not enough. A unit test can't prove the control is *correct*
+        # (that needs live verification), but it can require one to be named, which
+        # catches a SETUP that only gestures at read-only.
+        low = setup.lower()
+        assert "read-only" in low, (
             f"{bundle.name}: SETUP.md must document read-only enforcement"
+        )
+        controls = (
+            "scope",
+            "account",
+            "role",
+            "credential",
+            "permission",
+            "key",
+            "token",
+            "allowlist",
+        )
+        assert any(control in low for control in controls), (
+            f"{bundle.name}: SETUP.md names no control that enforces read-only "
+            "(expected one of: account/role/scope/key/permission/allowlist)"
         )

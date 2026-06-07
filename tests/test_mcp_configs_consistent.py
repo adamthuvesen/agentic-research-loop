@@ -57,6 +57,18 @@ def test_mcp_config_files_list_the_same_server_names() -> None:
     )
 
 
+def test_committed_mcp_configs_ship_neutral() -> None:
+    """The committed configs SHALL ship with zero servers (opt-in only).
+
+    ``research source enable`` wires servers locally; the shared repo keeps these
+    three files empty so a clone carries nobody's stack. The consistency check
+    above passes even if all three drift together, so pin emptiness explicitly.
+    """
+    assert _claude_names() == set(), ".mcp.json must ship neutral (no servers)"
+    assert _codex_names() == set(), ".codex/config.toml must ship neutral"
+    assert _cursor_names() == set(), ".cursor/mcp.json must ship neutral"
+
+
 def test_snowflake_mcp_sql_permissions_are_read_only() -> None:
     text = SNOWFLAKE_TOOLS_PATH.read_text(encoding="utf-8")
     permissions: dict[str, bool] = {}

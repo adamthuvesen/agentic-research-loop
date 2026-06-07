@@ -17,7 +17,10 @@ search_services: []
 other_services:
   object_manager: false
   query_manager: true
-  semantic_manager: true
+  # Read-only safety: the semantic_manager tool `write_semantic_view_query` bypasses
+  # the sql_statement_permissions allowlist and interpolates SQL, so keep it off.
+  # Query semantic views with SELECT through run_snowflake_query instead.
+  semantic_manager: false
 
 sql_statement_permissions:
   - Select: true

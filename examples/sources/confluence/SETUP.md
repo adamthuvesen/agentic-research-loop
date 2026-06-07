@@ -1,7 +1,7 @@
 # Confluence (read-only)
 
 **Server:** official Atlassian remote MCP server — hosted at
-`https://mcp.atlassian.com/v1/mcp` (OAuth 2.1). The **same server as the Jira
+`https://mcp.atlassian.com/v1/mcp/authv2` (OAuth 2.1). The **same server as the Jira
 bundle** — it covers Confluence and Jira together.
 
 **Read-only enforcement (`credential-only`):** the Atlassian server has **no

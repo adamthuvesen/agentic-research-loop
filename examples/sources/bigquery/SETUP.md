@@ -8,8 +8,9 @@ writable `execute_sql` tool and a read-only `execute_sql_readonly` tool, so
 read-only is **per-tool, not a server-wide flag**. Nothing in committed config
 can guarantee it — enforce it at the credential layer:
 
-- Authenticate as a principal granted only **BigQuery Data Viewer** + **BigQuery
-  Job User** (no Data Editor / Admin). With viewer-only IAM the writable tool
+- Authenticate as a principal granted **BigQuery Data Viewer** + **BigQuery Job
+  User** + **MCP Tool User** (`roles/mcp.toolUser`, required to call any MCP tool)
+  — and **no** Data Editor / Admin. With viewer-only data IAM the writable tool
   cannot mutate anything.
 - Prefer `execute_sql_readonly` for queries; it blocks DML, DDL, and Python UDFs.
 

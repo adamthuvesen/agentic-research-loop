@@ -9,7 +9,7 @@
       "transport": "stdio",
       "read_only_mechanism": "statement-allowlist",
       "plan_line": "Snowflake for live metrics and warehouse-backed evidence.",
-      "base_notes": "Query live metrics via the Snowflake MCP server. Prefer semantic views and curated marts when they cover the question; else query staging tables. Verify objects live (describe_semantic_view / SHOW TABLES / DESCRIBE) before querying. Read-only — the server's SQL statement allowlist permits SELECT/DESCRIBE/SHOW/USE only, never ALTER/DELETE/DROP."
+      "base_notes": "Query live metrics via the Snowflake MCP server. Prefer curated marts and semantic views when they cover the question; else query staging tables. Verify objects live (SHOW TABLES / DESCRIBE / SHOW SEMANTIC VIEWS) before querying. Read-only — the server's SQL statement allowlist permits SELECT/DESCRIBE/SHOW/USE only, never ALTER/DELETE/DROP. The semantic-view write tool is disabled in config for read-only safety; query semantic views with SELECT via run_snowflake_query."
     }
   }
 }

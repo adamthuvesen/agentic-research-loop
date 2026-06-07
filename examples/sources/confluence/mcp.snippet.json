@@ -3,10 +3,10 @@
   "server_name": "confluence",
   "read_only_mechanism": "credential-only",
   "claude": {
-    "confluence": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }
+    "confluence": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp/authv2" }
   },
   "cursor": {
-    "confluence": { "url": "https://mcp.atlassian.com/v1/mcp" }
+    "confluence": { "url": "https://mcp.atlassian.com/v1/mcp/authv2" }
   },
-  "codex_toml": "[mcp_servers.confluence]\nurl = \"https://mcp.atlassian.com/v1/mcp\"\nenabled = true"
+  "codex_toml": "[mcp_servers.confluence]\nurl = \"https://mcp.atlassian.com/v1/mcp/authv2\"\nenabled = true"
 }

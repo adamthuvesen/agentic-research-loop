@@ -9,7 +9,7 @@
       "transport": "http-oauth",
       "read_only_mechanism": "credential-only",
       "plan_line": "Datadog for metrics, monitors, logs, traces, and incidents.",
-      "base_notes": "Query metrics, monitors, logs, traces/APM, incidents, dashboards, and SLOs via the official Datadog MCP server. Strong for incident and performance root-cause: when a metric broke its baseline, which monitor alerted, and the correlated logs and traces. Read-only is enforced by a Datadog Read-Only Role (see SETUP.md) — never mute monitors or schedule/cancel downtime."
+      "base_notes": "Query metrics, monitors, logs, traces/APM, incidents, dashboards, and SLOs via the official Datadog (Bits AI) MCP server. Strong for incident and performance root-cause: when a metric broke its baseline, which monitor alerted, and the correlated logs and traces. The managed server DOES expose write tools (mute/create/update/delete monitors, schedule/cancel downtime); read-only is enforced by giving the Datadog Application Key only the 'MCP Read' scope (see SETUP.md) — never mute monitors or schedule/cancel downtime."
     }
   }
 }

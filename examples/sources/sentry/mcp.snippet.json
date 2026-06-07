@@ -1,5 +1,5 @@
 {
-  "_comment": "Official Sentry MCP server (getsentry/sentry-mcp), stdio. Read-only is enforced by a READ-SCOPED Sentry auth token (see SETUP.md) — do NOT use the hosted mcp.sentry.dev OAuth flow, which grants write scopes. Provide SENTRY_AUTH_TOKEN via the environment, never committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "_comment": "Official Sentry MCP server (getsentry/sentry-mcp), stdio. Read-only is enforced by a READ-SCOPED Sentry auth token (see SETUP.md) — do NOT use the hosted mcp.sentry.dev OAuth flow, which grants write scopes. Provide SENTRY_ACCESS_TOKEN via the environment, never committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
   "server_name": "sentry",
   "read_only_mechanism": "scope:org:read,project:read,event:read",
   "claude": {

@@ -102,7 +102,6 @@ def _check_server(name: str) -> CheckResult:
         "linear",
         "notion",
         "slack",
-        "confidence-docs",
         "confidence-experiments",
     }:
         hint += " | First run: in Claude Code use `/mcp` to approve and authenticate per provider."

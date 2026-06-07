@@ -15,7 +15,7 @@ OneDrive) — required for org content.
 2. Authenticate on first use — run the server's login (device-code) flow and
    consent with your work account:
    ```bash
-   npx @softeria/ms-365-mcp-server login   # see the project README; also supports --login
+   npx @softeria/ms-365-mcp-server --login   # device-code login
    ```
    An admin may need to approve the Graph read permissions the first time.
 3. **Defense in depth (recommended):** `--read-only` is the guardrail, but you can

@@ -12,9 +12,9 @@ runner skips permission prompts. Provision read-only access:
 - **Preferred — a read-only-scoped PAT:** create a Personal Access Token with only
   *Read* scopes (Work Items: Read, Code: Read, Build: Read, Wiki: Read, etc.) and
   no write scopes. Azure DevOps then rejects writes the token isn't scoped for.
-  Provide it via the environment for the server to use — see the server README for
-  the exact variable; the Azure CLI's `AZURE_DEVOPS_EXT_PAT` works when the server
-  falls back to CLI auth. Never commit it.
+  Provide it as the **`PERSONAL_ACCESS_TOKEN`** environment variable (base64-encode
+  the Read-scoped PAT), which the server reads for non-interactive auth. Never commit
+  it. (Default auth is interactive browser/Entra login if no token is set.)
 - **Or a view-only account:** sign in (browser/Entra) as a **Stakeholder** or a
   user whose project role is read-only.
 

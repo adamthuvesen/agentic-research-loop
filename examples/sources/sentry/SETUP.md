@@ -22,7 +22,7 @@ search (`search_events`, `search_issues`, `get_issue_details`, `get_trace_detail
    `.cursor/mcp.json`, and `.codex/config.toml`.
 3. Export the read-only token via your environment (never committed config):
    ```bash
-   export SENTRY_AUTH_TOKEN="$(op read 'op://vault/sentry-readonly/token')"
+   export SENTRY_ACCESS_TOKEN="$(op read 'op://vault/sentry-readonly/token')"
    # self-hosted Sentry: also export SENTRY_HOST=sentry.example.com
    ```
 

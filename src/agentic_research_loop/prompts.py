@@ -101,7 +101,7 @@ your open questions. This is your case — own it."""
 GUIDELINES = """## Guidelines
 - Stay read-only with all external systems.
 - Don't modify brief.md.
-- For Snowflake, query through the Snowflake MCP server (read-only; see .mcp.json).
+- Use the MCP server or CLI for whichever sources are enabled (see config/sources.json and .mcp.json); every source is read-only.
 - Write evidence and reasoning to notes.md. Keep the hypothesis ledger, evidence log, dead ends, open questions, and leads current.
 - Only write/update report.md when your evidence is solid — not every cycle.
 - Update thread statuses in plan.md as you work.
@@ -418,7 +418,7 @@ def build_cycle_prompt(
     sections.append(
         GUIDELINES
         if not challenge_cycle
-        else "## Reminder\n- Keep this pass tightly scoped to the current answer.\n- Record the challenge findings in both `notes.md` and `report.md`.\n- Use `<promise>CYCLE_DONE</promise>` only when a material objection remains unresolved."
+        else "## Reminder\n- All sources stay strictly read-only: search, query, and retrieve only — never write.\n- Keep this pass tightly scoped to the current answer.\n- Record the challenge findings in both `notes.md` and `report.md`.\n- Use `<promise>CYCLE_DONE</promise>` only when a material objection remains unresolved."
     )
 
     return "\n\n".join(sections) + "\n"

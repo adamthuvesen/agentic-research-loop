@@ -5,7 +5,9 @@ source selection, and synthesis directly using MCP tools.
 
 ## Agent-executed research
 
-The agent accesses all sources via MCP tools and APIs:
+The agent accesses all sources via MCP tools and APIs. Web tools, `research gsc`,
+and local context are built in; the other sources below are **opt-in bundles** —
+wire one with `research source enable <name>` (see `examples/sources/`):
 
 - Snowflake
 - Notion MCP

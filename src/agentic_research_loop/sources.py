@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
@@ -166,15 +167,31 @@ def _validate_source_spec(name: str, spec: object) -> SourceSpec:
     return spec  # type: ignore[return-value]
 
 
+# Source names must yield a usable ``--<name>-hint`` / ``--no-<name>`` CLI flag,
+# so they share the bundle-name charset (lowercase, digits, '-'/'_').
+_SOURCE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
+
+
 def register_source(name: str, spec: SourceSpec, *, override: bool = False) -> None:
     """Add a source to the registry. Raises on collision unless override=True."""
-    if not name or not name.isascii():
-        raise ValueError(f"Source name {name!r} must be a non-empty ASCII string.")
+    if not _SOURCE_NAME_RE.match(name):
+        raise ValueError(
+            f"Source name {name!r} must match {_SOURCE_NAME_RE.pattern} "
+            "(lowercase letters/digits, '-' or '_', starting alphanumeric)."
+        )
     if name in SOURCE_CONFIGS and not override:
         raise ValueError(
             f"Source {name!r} already exists. Pass override=True to replace it."
         )
-    SOURCE_CONFIGS[name] = _validate_source_spec(name, spec)
+    validated = _validate_source_spec(name, spec)
+    new_key = validated["key"]
+    for other, other_spec in SOURCE_CONFIGS.items():
+        if other != name and other_spec["key"] == new_key:
+            raise ValueError(
+                f"Source {name!r} reuses key {new_key!r} already claimed by source "
+                f"{other!r}; each source needs a unique key."
+            )
+    SOURCE_CONFIGS[name] = validated
 
 
 def _load_user_sources() -> None:

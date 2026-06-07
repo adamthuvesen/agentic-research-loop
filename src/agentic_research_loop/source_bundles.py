@@ -151,12 +151,16 @@ def _codex_has_server(text: str, server: str) -> bool:
 
 def _codex_remove_server(text: str, server: str) -> tuple[str, bool]:
     header = f"[mcp_servers.{server}]"
+    subtable_prefix = f"[mcp_servers.{server}."
     lines = text.splitlines(keepends=True)
     out: list[str] = []
     index = 0
     removed = False
     while index < len(lines):
-        if lines[index].strip() == header:
+        stripped = lines[index].strip()
+        # Remove the server's table and any dotted subtables (e.g. an
+        # `[mcp_servers.<server>.env]` block) so disabling leaves nothing behind.
+        if stripped == header or stripped.startswith(subtable_prefix):
             removed = True
             index += 1
             while index < len(lines) and not lines[index].lstrip().startswith("["):
@@ -172,12 +176,29 @@ def _codex_remove_server(text: str, server: str) -> tuple[str, bool]:
 
 
 def enable_bundle(repo_root: Path, name: str) -> list[str]:
-    """Wire a bundle into the user sources file and the three MCP configs."""
+    """Wire a bundle into the user sources file and the three MCP configs.
+
+    Every target file is read and parsed before any write, so a malformed config
+    aborts cleanly (BundleError) instead of leaving the repo half-wired.
+    """
     source_name, spec, snippet = _load_bundle(repo_root, name)
     server = snippet["server_name"]
-    actions: list[str] = []
 
+    # Parse every target up front; a malformed file raises here, before any write.
     su_path, doc = _user_sources_doc(repo_root)
+    json_targets = []
+    for cfg, label, shapes in (
+        (_CLAUDE_CFG, ".mcp.json", snippet["claude"]),
+        (_CURSOR_CFG, ".cursor/mcp.json", snippet["cursor"]),
+    ):
+        path = repo_root.joinpath(*cfg)
+        data = _read_json(path, {"mcpServers": {}})
+        json_targets.append((path, label, data, shapes))
+    cx_path = repo_root.joinpath(*_CODEX_CFG)
+    cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
+
+    # All targets parsed cleanly; now write.
+    actions: list[str] = []
     existed = source_name in doc["sources"]
     doc["sources"][source_name] = spec
     _write_json(su_path, doc)
@@ -185,20 +206,13 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
         f"{'updated' if existed else 'added'} source '{source_name}' in config/sources.json"
     )
 
-    for cfg, label, shapes in (
-        (_CLAUDE_CFG, ".mcp.json", snippet["claude"]),
-        (_CURSOR_CFG, ".cursor/mcp.json", snippet["cursor"]),
-    ):
-        path = repo_root.joinpath(*cfg)
-        data = _read_json(path, {"mcpServers": {}})
+    for path, label, data, shapes in json_targets:
         servers = data.setdefault("mcpServers", {})
         had = server in servers
         servers[server] = shapes[server]
         _write_json(path, data)
         actions.append(f"{'updated' if had else 'wired'} server '{server}' in {label}")
 
-    cx_path = repo_root.joinpath(*_CODEX_CFG)
-    cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
     if _codex_has_server(cx_text, server):
         actions.append(f"server '{server}' already in .codex/config.toml (left as-is)")
     else:

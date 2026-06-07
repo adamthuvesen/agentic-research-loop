@@ -332,14 +332,16 @@ def main(argv: list[str] | None = None) -> int:
             render_bundle_list,
         )
 
-        if args.source_command == "list":
-            print(render_bundle_list(repo_root))
-            return 0
-        action = enable_bundle if args.source_command == "enable" else disable_bundle
         try:
+            if args.source_command == "list":
+                print(render_bundle_list(repo_root))
+                return 0
+            action = (
+                enable_bundle if args.source_command == "enable" else disable_bundle
+            )
             for line in action(repo_root, args.name):
                 print(f"- {line}")
-        except BundleError as exc:
+        except (BundleError, ValueError, OSError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
         return 0

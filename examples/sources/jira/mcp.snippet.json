@@ -3,10 +3,10 @@
   "server_name": "jira",
   "read_only_mechanism": "credential-only",
   "claude": {
-    "jira": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }
+    "jira": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp/authv2" }
   },
   "cursor": {
-    "jira": { "url": "https://mcp.atlassian.com/v1/mcp" }
+    "jira": { "url": "https://mcp.atlassian.com/v1/mcp/authv2" }
   },
-  "codex_toml": "[mcp_servers.jira]\nurl = \"https://mcp.atlassian.com/v1/mcp\"\nenabled = true"
+  "codex_toml": "[mcp_servers.jira]\nurl = \"https://mcp.atlassian.com/v1/mcp/authv2\"\nenabled = true"
 }
