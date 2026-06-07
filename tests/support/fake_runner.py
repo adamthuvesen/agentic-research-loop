@@ -44,7 +44,7 @@ BRIEF_SCENARIOS: tuple[tuple[str, CycleScenario], ...] = (
     (
         "reopens after challenge",
         CycleScenario(
-            report_summary="The current evidence points toward rollout friction, but the case needs an adversarial review before closing.",
+            report_summary="The current evidence points toward rollout friction, but the case needs a challenge review before closing.",
             ranked_causes="- Rollout friction",
             evidence_highlights="- Timing lines up, but the cohort split is still thin.",
             rejected_leads="- None yet.",
@@ -89,7 +89,7 @@ BRIEF_SCENARIOS: tuple[tuple[str, CycleScenario], ...] = (
         "workspace redesign external context",
         CycleScenario(
             report_summary="The first cycle combined live workspace context, internal notes, and external context to frame the redesign question.",
-            ranked_causes="- No leading cause yet; source triangulation established the context.",
+            ranked_causes="- No leading cause yet; cross-source checks established the context.",
             evidence_highlights="- The strongest output is a timeline stitched across Notion, internal docs, and external signals.",
             rejected_leads="- No causal leads rejected yet.",
             next_actions="- Validate whether the redesign changed the key metric in live data.",

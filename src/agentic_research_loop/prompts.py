@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .advisory import build_advisory_signals
+from .hints import build_cycle_hints
 from .io import extract_section, load_json_object_or_empty, read_text
 from .layout import (
     brief_path,
@@ -16,22 +16,20 @@ from .case_contracts import CaseProfile
 
 RESEARCHER_FRAMING = """# Research Cycle
 
-You are an autonomous researcher. Your job is to make meaningful progress on
-this case — not to do everything, but to do the next smart thing well.
+Each cycle, advance this case with one or two focused threads — not a broad sweep.
 
 ## Scope: Go Deep, Not Wide
 
-Pick **1–2 threads** for this cycle. No more. Your goal is depth, not coverage.
+Pick **1–2 threads** for this cycle. No more. Depth beats coverage.
 
 A thread is a **research question**, not a source check. Querying Snowflake,
 then following up in Confidence for a related experiment, then checking Notion
 for supporting context — that's still one thread if it all serves the same
 question. Don't count source lookups against your thread budget.
 
-A cycle that deeply investigates one finding across multiple sources is more
-valuable than one that superficially covers five threads. If you discover
-something surprising mid-cycle, **follow that thread** — don't just log it and
-move on. That surprise is often your best lead.
+A cycle that investigates one finding across multiple sources beats one that
+skims five threads. If you find something surprising mid-cycle, **follow that
+thread** before parking it as a lead.
 
 Good cycle objectives:
 - Deep-dive a single hypothesis with data from 2–3 source types
@@ -41,11 +39,11 @@ Good cycle objectives:
 - Follow up on a lead from the previous cycle
 - Cross-reference a quantitative finding with qualitative context (Slack, Notion, Linear)
 - Stress-test your working theory with disconfirming evidence
-- Synthesize findings into the report (only when evidence is solid)
+- Write up findings in the report (only when evidence is solid)
 
-Do real work. Query sources. Read data. Reason about what you find. When
-you've made meaningful progress on your chosen threads, stop and write up
-what you learned.
+Query sources, read data, and record what changed. When you have substantive
+progress on your chosen threads, stop and update `notes.md` and `report.md` as
+needed.
 
 ## Cycle Shape: Hypothesis First
 
@@ -60,11 +58,11 @@ At the end of the cycle, update `notes.md` with:
 - any dead ends or discarded leads
 - the next sharpest check
 
-## Think Like a Researcher
+## Research habits
 
 - **Form a working theory early** and actively try to break it.
 - **Follow surprising threads** — if something doesn't fit, that's your best lead.
-- **Triangulate** — don't trust a single source for a critical claim. For any
+- **Cross-check** — don't trust a single source for a critical claim. For any
   high-confidence finding, verify with at least one additional source type
   (e.g. Snowflake numbers + Slack context, or GSC data + Notion strategy docs).
 - **Use the plan as a decision tool** — prioritize threads with the sharpest
@@ -89,13 +87,13 @@ Structure your leads so the next cycle can pick them up:
 ```
 
 **report.md** is the deliverable. Don't write or update report.md until you've
-worked through all high-priority threads, or you're confident the answer is
-solid enough to present. A premature report makes the case feel done
-when it isn't. Build evidence in notes.md across cycles; synthesize into the
-report when the picture is clear.
+worked through all high-priority threads, or the answer is solid enough to
+present. A premature report makes the case feel done when it isn't. Build
+evidence in notes.md across cycles; write up the report when the picture is
+clear.
 
 Maintain a working theory in notes.md. Update it as evidence evolves. Track
-your open questions. This is your case — own it."""
+your open questions."""
 
 
 GUIDELINES = """## Guidelines
@@ -113,10 +111,10 @@ GUIDELINES = """## Guidelines
 
 CHALLENGE_FRAMING = """# Challenge Cycle
 
-You are running the mandatory adversarial review before the case can
-close. This is a focused quality-control pass, not a broad fresh case.
+You are running the mandatory challenge review before the case can close.
+This is a focused quality-control pass, not a fresh investigation.
 
-Start from the current `report.md`, `notes.md`, and `plan.md`. Challenge the
+Start from the current `report.md`, `notes.md`, and `plan.md`. Stress-test the
 answer hard enough to catch overreach, weak support, and fragile caveats without
 inventing fake objections.
 
@@ -225,7 +223,7 @@ def render_stall_block(snapshot: dict[str, Any]) -> str | None:
         [
             "## You've Been Stuck",
             "",
-            f"You've had {stall_count} cycle(s) without meaningful progress. Before diving back in,",
+            f"You've had {stall_count} cycle(s) without visible progress in `notes.md` or `report.md`. Before diving back in,",
             "step back and ask yourself:",
             "",
             "- Am I asking the right question?",
@@ -293,19 +291,17 @@ def render_research_move_block() -> str:
     )
 
 
-def render_advisory_block(
-    case_path: Path, snapshot: dict[str, Any] | None
-) -> str | None:
-    signals = build_advisory_signals(case_path, snapshot=snapshot)
-    if not signals:
+def render_hint_block(case_path: Path, snapshot: dict[str, Any] | None) -> str | None:
+    hints = build_cycle_hints(case_path, snapshot=snapshot)
+    if not hints:
         return None
     return "\n".join(
         [
-            "## Advisory Signals",
+            "## Cycle Hints",
             "",
             "Local artifact checks surfaced these nudges. Use judgment; they do not override the research plan.",
             "",
-            *[f"- {signal}" for signal in signals],
+            *[f"- {hint}" for hint in hints],
         ]
     )
 
@@ -355,7 +351,7 @@ def build_plan_prompt(repo_root: Path, case_path: Path) -> str:
             [
                 "# Research Planning",
                 "",
-                "Read the case brief and produce a comprehensive research plan.",
+                "Read the case brief and produce a structured research plan.",
                 "Do not investigate yet — only plan.",
                 "",
                 "## Context",
@@ -408,9 +404,9 @@ def build_cycle_prompt(
 
     if snapshot is not None and not challenge_cycle:
         sections.append(render_research_move_block())
-        advisory = render_advisory_block(case_path, snapshot)
-        if advisory:
-            sections.append(advisory)
+        hint_block = render_hint_block(case_path, snapshot)
+        if hint_block:
+            sections.append(hint_block)
         stall = render_stall_block(snapshot)
         if stall:
             sections.append(stall)

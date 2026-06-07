@@ -11,7 +11,7 @@ from agentic_research_loop.loop import artifact_snapshot
 from agentic_research_loop.prompts import (
     build_cycle_prompt,
     build_plan_prompt,
-    render_advisory_block,
+    render_hint_block,
     render_plan_block,
     render_research_move_block,
     render_stall_block,
@@ -86,7 +86,7 @@ def test_research_move_block_is_hypothesis_led() -> None:
     assert "Snowflake -> Confidence -> Notion still counts as one thread" in text
 
 
-def test_build_cycle_prompt_includes_hypothesis_and_advisory_blocks(
+def test_build_cycle_prompt_includes_hypothesis_and_hint_blocks(
     tmp_path: Path,
 ) -> None:
     inv = make_case(tmp_path)
@@ -95,7 +95,7 @@ def test_build_cycle_prompt_includes_hypothesis_and_advisory_blocks(
     text = build_cycle_prompt(inv, snapshot=snapshot)
 
     assert "## This Cycle" in text
-    assert "## Advisory Signals" in text
+    assert "## Cycle Hints" in text
     assert "hypothesis ledger" in text
 
 
@@ -169,13 +169,14 @@ def test_build_cycle_prompt_uses_challenge_contract_when_pending(
     assert "# Challenge Cycle" in prompt
     assert "## This Cycle" not in prompt
     assert "## Advisory Signals" not in prompt
+    assert "## Cycle Hints" not in prompt
     assert "strongest competing explanation" in prompt
     assert "weakest-supported important claim" in prompt
     assert "most fragile source, freshness, or caveat dependency" in prompt
     assert "## Challenge Review" in prompt
 
 
-def test_render_advisory_block_propagates_signal_errors(
+def test_render_hint_block_propagates_signal_errors(
     tmp_path: Path, monkeypatch
 ) -> None:
     inv = make_case(tmp_path)
@@ -183,10 +184,10 @@ def test_render_advisory_block_propagates_signal_errors(
     def _boom(*args, **kwargs):
         raise RuntimeError("nope")
 
-    monkeypatch.setattr("agentic_research_loop.prompts.build_advisory_signals", _boom)
+    monkeypatch.setattr("agentic_research_loop.prompts.build_cycle_hints", _boom)
 
     with pytest.raises(RuntimeError, match="nope"):
-        render_advisory_block(inv, artifact_snapshot(inv))
+        render_hint_block(inv, artifact_snapshot(inv))
 
 
 def test_render_shell_placeholders_does_not_re_expand_substituted_values() -> None:

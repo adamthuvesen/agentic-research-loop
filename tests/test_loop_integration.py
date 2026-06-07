@@ -265,13 +265,13 @@ def test_run_terminal_header_says_research(
     assert "Business Research" not in captured.out
 
 
-def test_successful_cycle_with_advisory_still_uses_progress_semantics(
+def test_successful_cycle_with_hints_still_uses_progress_semantics(
     repo_root: Path, monkeypatch
 ) -> None:
     monkeypatch.chdir(repo_root)
     case_path = init_with_question(
         repo_root,
-        "advisory-progress",
+        "hints-progress",
         "Why did registrations drop after the launch?",
     )
     (case_path / "plan.md").write_text(
@@ -441,7 +441,7 @@ def test_challenge_cycle_requires_progress_and_review(
     progress_path.write_text(json.dumps(progress, indent=2) + "\n", encoding="utf-8")
     (case_path / "report.md").write_text(
         "# Research Report\n\n## Executive Summary\n\n"
-        "This report already has enough content to be meaningful, but the challenge "
+        "This report already has enough content to present, but the challenge "
         "cycle still has to write review evidence before it can pass.\n",
         encoding="utf-8",
     )
