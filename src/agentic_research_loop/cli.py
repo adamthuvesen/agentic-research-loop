@@ -204,6 +204,18 @@ def build_parser() -> argparse.ArgumentParser:
     gsc_parser.add_argument("--row-limit", type=_positive_int, default=100)
     gsc_parser.add_argument("--start-row", type=_non_negative_int, default=0)
 
+    source_parser = subparsers.add_parser(
+        "source", help="Manage opt-in source bundles (examples/sources/)"
+    )
+    source_sub = source_parser.add_subparsers(dest="source_command", required=True)
+    enable_p = source_sub.add_parser(
+        "enable", help="Wire a bundle into config/sources.json and the MCP configs"
+    )
+    enable_p.add_argument("name", help="Bundle name, e.g. github")
+    disable_p = source_sub.add_parser("disable", help="Remove a bundle's wiring")
+    disable_p.add_argument("name", help="Bundle name")
+    source_sub.add_parser("list", help="List bundles and whether they are enabled")
+
     return parser
 
 
@@ -308,6 +320,28 @@ def main(argv: list[str] | None = None) -> int:
             print(str(exc), file=sys.stderr)
             return 1
         print(json.dumps(result, indent=2))
+        return 0
+
+    if args.command == "source":
+        import sys
+
+        from .source_bundles import (
+            BundleError,
+            disable_bundle,
+            enable_bundle,
+            render_bundle_list,
+        )
+
+        if args.source_command == "list":
+            print(render_bundle_list(repo_root))
+            return 0
+        action = enable_bundle if args.source_command == "enable" else disable_bundle
+        try:
+            for line in action(repo_root, args.name):
+                print(f"- {line}")
+        except BundleError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
         return 0
 
     return 1

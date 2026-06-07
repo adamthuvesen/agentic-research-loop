@@ -15,6 +15,20 @@ A bundle has three files:
 
 ## Enabling a source
 
+The easy way — `research source enable <name>` does the wiring for you:
+
+```bash
+uv run research source enable github     # merge source.json + wire all 3 MCP configs
+uv run research source list              # show every bundle and which are enabled
+uv run research source disable github    # undo
+```
+
+Then follow the bundle's `SETUP.md` for credentials and read-only setup. The command
+edits your local (git-tracked) MCP configs — that's your opt-in; don't commit them
+back to the shared repo, which keeps its committed configs neutral.
+
+By hand, if you prefer:
+
 1. Merge the bundle's `source.json` into `config/sources.json` (create it from
    `config/sources.json.example` if it does not exist). The source becomes
    available as `--no-<name>` / `--<name>-hint` CLI flags.
