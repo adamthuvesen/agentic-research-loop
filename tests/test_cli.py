@@ -75,7 +75,7 @@ def test_init_registers_source_hint(repo_root: Path, monkeypatch) -> None:
             "root-cause",
             "--mode",
             "autonomous",
-            "--gsc-hint",
+            "--web-search-hint",
             "signup funnel",
         ]
     )
@@ -85,9 +85,8 @@ def test_init_registers_source_hint(repo_root: Path, monkeypatch) -> None:
     sources = __import__("json").loads(
         (case_path / "state" / "sources.json").read_text(encoding="utf-8")
     )
-    assert sources["gsc"]["enabled"] is True
-    assert sources["gsc"]["focus"] == "signup funnel"
     assert sources["web_search"]["enabled"] is True
+    assert sources["web_search"]["focus"] == "signup funnel"
 
 
 def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
@@ -103,8 +102,6 @@ def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
             "guided",
             "--web-search-hint",
             "competitor launch",
-            "--gsc-hint",
-            "user funnel",
         ]
     )
 
@@ -114,7 +111,9 @@ def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
         (case_path / "state" / "sources.json").read_text(encoding="utf-8")
     )
     assert sources["web_search"]["focus"] == "competitor launch"
-    assert sources["gsc"]["focus"] == "user funnel"
+    # the hint also surfaces in the rendered brief, not just state
+    brief_text = (case_path / "brief.md").read_text(encoding="utf-8")
+    assert "competitor launch" in brief_text
 
 
 def test_init_omits_disabled_source_hints_from_brief(
@@ -130,8 +129,8 @@ def test_init_omits_disabled_source_hints_from_brief(
             "exploration",
             "--mode",
             "guided",
-            "--no-gsc",
-            "--gsc-hint",
+            "--no-web-search",
+            "--web-search-hint",
             "Do not search this database",
         ]
     )
@@ -139,7 +138,7 @@ def test_init_omits_disabled_source_hints_from_brief(
     assert exit_code == 0
     case_path = sorted((repo_root / "research").iterdir())[0]
     brief_text = (case_path / "brief.md").read_text(encoding="utf-8")
-    assert "GSC" not in brief_text
+    assert "Web tools" not in brief_text
     assert "Do not search this database" not in brief_text
 
 

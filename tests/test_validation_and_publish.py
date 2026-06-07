@@ -560,25 +560,25 @@ def test_strict_passes_with_na_strongest_rival(repo_root: Path, monkeypatch) -> 
 # --- M1: Source plan derivation ---
 
 
-def test_manual_init_no_gsc_excludes_gsc_from_brief(
+def test_manual_init_no_web_search_excludes_web_from_brief(
     repo_root: Path, monkeypatch
 ) -> None:
     monkeypatch.chdir(repo_root)
     main(
         [
             "init",
-            "no-gsc-test",
+            "no-web-test",
             "--template",
             "exploration",
             "--mode",
             "guided",
-            "--no-gsc",
+            "--no-web-search",
         ]
     )
     path = _first_case(repo_root)
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
-    assert "GSC" not in brief_text
+    assert "Web tools" not in brief_text
 
 
 # --- Design-only strict checks (safe at scaffold time) ---
@@ -761,9 +761,8 @@ def test_manual_init_default_sources_include_builtins(
     path = _first_case(repo_root)
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
-    # After the bundle migration the default built-ins are GSC + web search;
-    # everything else is an opt-in bundle (enable with `research source enable`).
-    assert "GSC" in brief_text
+    # After the bundle migration web search is the only default built-in; every
+    # other source (including GSC) is an opt-in bundle (`research source enable`).
     assert "Web tools" in brief_text
 
 

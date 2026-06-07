@@ -42,7 +42,7 @@ def test_init_from_spec_all_three_files(
             "autonomous",
             "--from-spec",
             str(spec),
-            "--gsc-hint",
+            "--web-search-hint",
             "payments table for ARPU pre/post",
         ]
     )
@@ -198,8 +198,8 @@ def test_init_from_spec_brief_without_source_registry_header(
             "autonomous",
             "--from-spec",
             str(spec),
-            "--gsc-hint",
-            "custom gsc hint",
+            "--web-search-hint",
+            "custom web hint",
         ]
     )
 
@@ -208,6 +208,6 @@ def test_init_from_spec_brief_without_source_registry_header(
     brief_out = (case_path / "brief.md").read_text(encoding="utf-8")
     # Source Registry should be appended since original had no header
     assert "## Source Registry" in brief_out
-    assert "custom gsc hint" in brief_out
+    assert "custom web hint" in brief_out
     # Original content preserved
     assert "in scope: X" in brief_out

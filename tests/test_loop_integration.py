@@ -84,8 +84,6 @@ def test_mixed_source_notion_web_case(repo_root: Path, monkeypatch) -> None:
         template="exploration",
         mode="guided",
         extra_args=[
-            "--gsc-hint",
-            "Workspace redesign",
             "--web-search-hint",
             "competitor launch",
         ],

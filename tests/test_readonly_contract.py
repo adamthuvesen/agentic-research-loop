@@ -72,14 +72,28 @@ def test_bundle_declares_and_enforces_read_only(bundle: Path) -> None:
     mech = classify_read_only_mechanism(spec["read_only_mechanism"])
     assert mech is not None
 
-    # mcp.snippet.json is internally consistent across the three tool shapes.
-    snippet = json.loads((bundle / "mcp.snippet.json").read_text(encoding="utf-8"))
-    server = snippet["server_name"]
-    assert list(snippet["claude"].keys()) == [server], f"{bundle.name}: claude key"
-    assert list(snippet["cursor"].keys()) == [server], f"{bundle.name}: cursor key"
-    assert f"[mcp_servers.{server}]" in snippet["codex_toml"], f"{bundle.name}: codex"
-
     setup = (bundle / "SETUP.md").read_text(encoding="utf-8")
+    snippet_path = bundle / "mcp.snippet.json"
+
+    if snippet_path.is_file():
+        # mcp.snippet.json is internally consistent across the three tool shapes.
+        snippet = json.loads(snippet_path.read_text(encoding="utf-8"))
+        server = snippet["server_name"]
+        assert list(snippet["claude"].keys()) == [server], f"{bundle.name}: claude key"
+        assert list(snippet["cursor"].keys()) == [server], f"{bundle.name}: cursor key"
+        assert f"[mcp_servers.{server}]" in snippet["codex_toml"], (
+            f"{bundle.name}: codex"
+        )
+    else:
+        # MCP-less bundle: a cli/native source (e.g. GSC's `research gsc`) ships only
+        # source.json + SETUP.md. With no shipped MCP config, a config-family token
+        # cannot be enforced, so the mechanism must be a documented one covered by
+        # SETUP.md (checked below).
+        snippet = None
+        assert mech.family == "documented", (
+            f"{bundle.name}: a config-family read_only_mechanism requires an "
+            "mcp.snippet.json to enforce it"
+        )
 
     if mech.family == "config":
         blob = (

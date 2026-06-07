@@ -125,3 +125,54 @@ def test_enable_creates_sources_file_when_absent(repo):
     assert not (repo / "config" / "sources.json").exists()
     sb.enable_bundle(repo, "foo")
     assert (repo / "config" / "sources.json").exists()
+
+
+_BARE_SPEC = {
+    "key": "bare_cli",
+    "hint_field": "focus",
+    "label": "Bare focus",
+    "display_label": "Bare",
+    "freshness_caveat_group": "live",
+    "transport": "cli",
+    "read_only_mechanism": "scope:example.readonly",
+    "plan_line": "Bare CLI source.",
+    "base_notes": "Query via the bare CLI. Read-only.",
+}
+
+
+def _add_mcpless_bundle(repo):
+    """A bundle with no mcp.snippet.json — a cli/native source like GSC."""
+    bundle = repo / "examples" / "sources" / "bare"
+    bundle.mkdir(parents=True)
+    (bundle / "source.json").write_text(json.dumps({"sources": {"bare": _BARE_SPEC}}))
+    (bundle / "SETUP.md").write_text("# Bare (read-only)\nEnforced by scope.\n")
+
+
+def test_mcpless_bundle_enables_without_touching_mcp_configs(repo):
+    _add_mcpless_bundle(repo)
+    actions = sb.enable_bundle(repo, "bare")
+
+    assert _sources(repo)["bare"] == _BARE_SPEC
+    # the three MCP configs keep only their pre-existing server, untouched
+    assert set(_claude(repo)) == {"existing"}
+    assert set(_cursor(repo)) == {"existing"}
+    assert set(_codex(repo)) == {"existing"}
+    assert not any("server" in action for action in actions)
+
+
+def test_mcpless_bundle_disable_removes_only_registry_entry(repo):
+    _add_mcpless_bundle(repo)
+    sb.enable_bundle(repo, "bare")
+    sb.disable_bundle(repo, "bare")
+
+    assert "bare" not in _sources(repo)
+    assert set(_codex(repo)) == {"existing"}
+
+
+def test_mcpless_bundle_listed_with_enabled_state(repo):
+    _add_mcpless_bundle(repo)
+    rows = {r["name"]: r for r in sb.list_bundles(repo)}
+    assert rows["bare"]["enabled"] is False
+    sb.enable_bundle(repo, "bare")
+    rows = {r["name"]: r for r in sb.list_bundles(repo)}
+    assert rows["bare"]["enabled"] is True

@@ -46,9 +46,9 @@ def test_register_source_adds_to_registry(_restore_registry) -> None:
 
 def test_register_source_rejects_collision(_restore_registry) -> None:
     with pytest.raises(ValueError, match="already exists"):
-        register_source("gsc", dict(_VALID_SPEC))  # type: ignore[arg-type]
+        register_source("web-search", dict(_VALID_SPEC))  # type: ignore[arg-type]
     # override=True is allowed
-    register_source("gsc", dict(_VALID_SPEC), override=True)  # type: ignore[arg-type]
+    register_source("web-search", dict(_VALID_SPEC), override=True)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
@@ -112,7 +112,7 @@ def test_user_sources_file_rejects_builtin_collision(
     repo = tmp_path / "repo"
     (repo / "config").mkdir(parents=True)
     (repo / "config" / "sources.json").write_text(
-        json.dumps({"sources": {"gsc": _VALID_SPEC}}), encoding="utf-8"
+        json.dumps({"sources": {"web-search": _VALID_SPEC}}), encoding="utf-8"
     )
     monkeypatch.setattr(sources, "find_repo_root", lambda *a, **k: repo)
     with pytest.raises(ValueError, match="redefines built-in"):
