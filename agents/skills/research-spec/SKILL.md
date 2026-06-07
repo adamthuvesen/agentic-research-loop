@@ -1,12 +1,12 @@
 ---
 name: research-spec
-description: Transform a raw business question into a rich investigation spec with hypotheses, source planning, and research threads. Use before starting an agentic-research-loop investigation.
+description: Transform a raw business question into a detailed investigation spec with hypotheses, source planning, and research threads. Use before starting an agentic-research-loop investigation.
 argument-hint: "<business question>"
 ---
 
 # Investigation Spec
 
-Generate a rich investigation workspace for the agentic-research-loop research engine.
+Generate a detailed investigation case workspace for the agentic-research-loop research engine.
 
 **Question**: $ARGUMENTS
 
@@ -33,7 +33,7 @@ Analyze the question before making any tool calls:
   - `exploration` — what is the state of X? how does Y work?
 - Determine **mode**:
   - `autonomous` for root-cause investigations (bounded cycles until done)
-  - `guided` for exploration and comparison (human steers synthesis)
+  - `guided` for exploration and comparison (human steers the write-up)
   - `quick` for simple lookups (what is X? how many Y?)
 - Check if the user mentioned **local context** — a folder path, file, or
   dataset they want included (e.g., "I have some context in `web/seo/`").
@@ -79,7 +79,7 @@ name but are causally critical.
 ## Phase 2: Discover and Orient
 
 Gather domain context from **all relevant source families** before designing
-the spec. The goal is a 360° picture — quantitative data, qualitative context,
+the spec. The goal is a full picture — quantitative data, qualitative context,
 and confounder awareness. Run searches in parallel where possible.
 
 ### 2a. Quantitative sources (always do this for metric questions)
