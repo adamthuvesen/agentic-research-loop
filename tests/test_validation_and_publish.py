@@ -6,7 +6,7 @@ from pathlib import Path
 from agentic_research_loop.cli import main
 from agentic_research_loop.validation import (
     collect_validation_warnings,
-    report_has_meaningful_content,
+    report_has_substance,
     validate_case,
 )
 
@@ -341,7 +341,7 @@ def test_publish_rejects_incomplete_case(repo_root: Path, monkeypatch) -> None:
         ["init", "test-publish-reject", "--template", "exploration", "--mode", "guided"]
     )
     case_path = _first_case(repo_root)
-    # Replace the report with trivial content that fails the meaningful check
+    # Replace the report with trivial content that fails the substance check
     (case_path / "report.md").write_text("# Report\n\nToo short.\n", encoding="utf-8")
     # Mark as complete so strict validation kicks in
     progress = json.loads(
@@ -360,23 +360,23 @@ def test_publish_rejects_incomplete_case(repo_root: Path, monkeypatch) -> None:
         publish(case_path)
 
 
-def test_report_meaningful_content_requires_executive_summary() -> None:
+def test_report_has_substance_requires_executive_summary() -> None:
     report = (
         "# Research Report\n\n## Question\n\n"
         "Why did registrations drop across all acquisition channels after launch?\n\n"
         "## Current Picture\n\nThis is not the executive summary.\n"
     )
 
-    assert report_has_meaningful_content(report) is False
+    assert report_has_substance(report) is False
 
 
-def test_report_meaningful_content_rejects_placeholder_summary() -> None:
+def test_report_has_substance_rejects_placeholder_summary() -> None:
     report = (
         "# Research Report\n\n## Executive Summary\n\n"
         "Fill in the executive summary before publishing.\n"
     )
 
-    assert report_has_meaningful_content(report) is False
+    assert report_has_substance(report) is False
 
 
 def test_status_command(repo_root: Path, monkeypatch) -> None:

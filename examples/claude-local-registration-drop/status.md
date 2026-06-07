@@ -4,7 +4,7 @@
 - Cycle count: `5`
 - Challenge status: `passed`
 - Sources in play: `Notion, Slack, Linear, web, Snowflake, Confidence, GSC, GA4, local-context`
-- Report state: `meaningful`
+- Report state: `substantive`
 
 ## Current Answer
 
@@ -50,7 +50,7 @@ Registrations fell ~15% (−838/week, ~4,189 fewer over the five weeks through 2
   s→r 65.000→62.955, r→a flat ~60, 90.1/9.9 A/B split) — every prior-cycle number
   holds. Added one genuinely new local move cycles 1–3 missed: the
   **selection-sign argument** (E8), which sharpens the two-causes claim via
-  mechanism, not just temporal shape. Ran the mandatory **adversarial challenge
+  mechanism, not just temporal shape. Ran the mandatory **challenge
   cycle** (see below). Local source now genuinely exhausted.
 - **What would change this:** a device split showing Effect A is *uniform* across
   desktop/mobile (refutes the desktop-CTA mechanism → global cause); a confirmed

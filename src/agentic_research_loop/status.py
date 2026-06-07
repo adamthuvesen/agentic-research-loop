@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import extract_section, load_json_object_or_empty, read_text
-from .validation import report_has_meaningful_content
+from .validation import report_has_substance
 from .layout import (
     cycles_dir,
     notes_path,
@@ -73,7 +73,7 @@ def render_status_markdown(
         else load_json_object_or_empty(sources_path(case_path))
     )
     notes = s["notes"] if "notes" in s else read_text(notes_path(case_path))
-    report_state = "meaningful" if report_has_meaningful_content(report) else "draft"
+    report_state = "substantive" if report_has_substance(report) else "draft"
 
     working_theory = extract_section(notes, "Working Theory")
 

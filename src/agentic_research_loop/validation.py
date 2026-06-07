@@ -10,7 +10,7 @@ from .io import extract_section, load_json, read_text
 from .layout import brief_path, findings_path, plan_path, progress_path, report_path
 from .runtime_state import ProgressState
 
-MIN_MEANINGFUL_CONTENT_LENGTH = 60
+MIN_SUBSTANTIVE_CONTENT_LENGTH = 60
 
 THREAD_PATTERN = re.compile(
     r"^###\s+(T[^\n:]*:[^\n]*?)\n(?P<body>.*?)(?=^###\s+T|\Z)", re.MULTILINE | re.DOTALL
@@ -18,14 +18,14 @@ THREAD_PATTERN = re.compile(
 FIELD_PATTERN = re.compile(r"^\*\*(?P<name>[^*]+):\*\*\s*(?P<value>.+)$", re.MULTILINE)
 
 
-def report_has_meaningful_content(report_text: str) -> bool:
+def report_has_substance(report_text: str) -> bool:
     executive_summary = extract_section(report_text, "Executive Summary")
     if executive_summary is None:
         return False
     placeholder = "fill in the executive summary before publishing"
     if placeholder in executive_summary.lower():
         return False
-    return len(" ".join(executive_summary.split())) >= MIN_MEANINGFUL_CONTENT_LENGTH
+    return len(" ".join(executive_summary.split())) >= MIN_SUBSTANTIVE_CONTENT_LENGTH
 
 
 def validate_progress(payload: Any) -> list[str]:
@@ -130,7 +130,7 @@ def validate_case(
     cycle or report.md.
 
     `strict_completion` is the end-of-case publish gate: everything in
-    `strict_design` plus challenge-cycle outcome and meaningful report.md.
+    `strict_design` plus challenge-cycle outcome and a substantive report.md.
     """
     errors: list[str] = []
     if not brief_path(case_path).exists():
@@ -185,14 +185,14 @@ def validate_case(
                 errors.append("Missing required file: report.md")
             else:
                 report_text = read_text(rp)
-                if not report_has_meaningful_content(report_text):
+                if not report_has_substance(report_text):
                     if extract_section(report_text, "Executive Summary") is None:
                         errors.append(
                             "strict completion requires a non-empty Executive Summary"
                         )
                     else:
                         errors.append(
-                            "strict completion requires meaningful report content"
+                            "strict completion requires substantive report content"
                         )
 
     fp = findings_path(case_path)

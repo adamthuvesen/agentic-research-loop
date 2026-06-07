@@ -4,7 +4,7 @@
 - Cycle count: `4`
 - Challenge status: `passed`
 - Sources in play: `Notion, Slack, Linear, web, Snowflake, Confidence, GSC, GA4, local-context`
-- Report state: `meaningful`
+- Report state: `substantive`
 
 ## Current Answer
 

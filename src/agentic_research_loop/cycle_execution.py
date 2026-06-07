@@ -33,7 +33,7 @@ from .runtime_artifacts import (
     restore_artifacts,
 )
 from .runtime_state import AttemptRecord, CycleSummary
-from .validation import report_has_meaningful_content
+from .validation import report_has_substance
 
 
 @dataclass
@@ -252,7 +252,7 @@ def execute_run_cycle(ctx: CycleContext) -> CycleSummary:
 
         if completion_marker == CASE_COMPLETE_MARKER:
             report_text = read_text(report_path(case_path))
-            if not report_has_meaningful_content(report_text):
+            if not report_has_substance(report_text):
                 record["failure_reason"] = "completion_without_report"
                 partial_progress_changes.update(
                     partial_progress_artifact_texts(case_path, mutable_backup)
