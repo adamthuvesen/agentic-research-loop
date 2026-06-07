@@ -21,8 +21,8 @@ escalate into bounded autonomous work.
 - Do not mutate `brief.md` during autonomous loops unless explicitly asked.
 - For Snowflake work, follow the repo's `AGENTS.md` rule: use the Snowflake MCP server
   rather than improvised querying.
-- For other warehouses, enable the matching bundle — **BigQuery**, **Postgres**, or
-  **DuckDB** (`examples/sources/<name>/`). Treat them like Snowflake: discover objects
+- For other warehouses, enable the matching bundle — **BigQuery**, **Postgres**,
+  **DuckDB**, **Databricks** (Genie), or **Redshift** (`examples/sources/<name>/`). Treat them like Snowflake: discover objects
   live, query SELECT-only, stay read-only.
 - Use Notion MCP for curated context, internal documentation, live workspace pages, databases, and discussions.
 - Use Confluence (enable `examples/sources/confluence/`) for wiki spaces, runbooks, RFCs, and curated internal docs — complements Notion.

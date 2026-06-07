@@ -147,6 +147,10 @@ checks each declares its mechanism) — still scope the credential as defense in
   API); never a secret (`sk_`) or write-scoped key.
 - **Salesforce** — pin `--toolsets=data,users` (drops deploy/Apex tools) **and** log
   the CLI into a **read-only-permission-set** org user; Beta — re-check toolsets.
+- **Databricks** — wire the **Genie** endpoint (`/api/2.0/mcp/genie`, read-only by
+  design); not the SQL server (read+write, UC-grant-guarded).
+- **Redshift** — engine-enforced read-only (every query in `BEGIN READ ONLY`, no write
+  tools); still scope a read-only IAM role + DB user (writes are on AWS's roadmap).
 
 See each bundle's `SETUP.md` for exact steps.
 

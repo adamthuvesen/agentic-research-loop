@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "databricks": {
+      "key": "databricks_mcp",
+      "hint_field": "focus",
+      "label": "Databricks focus",
+      "display_label": "Databricks",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "url-suffix:/api/2.0/mcp/genie",
+      "plan_line": "Databricks (Genie) for warehouse metrics over Unity Catalog tables — read-only NL/SQL queries.",
+      "base_notes": "Query Unity Catalog tables via the Databricks managed Genie MCP server — ask analytical questions in natural language; Genie generates and runs read-only SQL and returns the results plus the SQL. Read-only by design (Genie has no write path). Prefer this over the Databricks SQL MCP server, which is read+write and guarded only by Unity Catalog grants. Queries run under your UC identity, so UC permissions and lineage apply."
+    }
+  }
+}

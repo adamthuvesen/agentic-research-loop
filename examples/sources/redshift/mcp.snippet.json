@@ -1,0 +1,12 @@
+{
+  "_comment": "Official AWS Labs Redshift MCP server (awslabs.redshift-mcp-server), local stdio via uvx. Read-only is engine-enforced — every query runs in a BEGIN READ ONLY transaction and there are no write tools. Provide AWS credentials via the standard chain (AWS_PROFILE / ~/.aws) and set AWS_DEFAULT_REGION in your environment — never inline secrets. See SETUP.md for the read-only IAM role. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "redshift",
+  "read_only_mechanism": "native",
+  "claude": {
+    "redshift": { "type": "stdio", "command": "uvx", "args": ["awslabs.redshift-mcp-server@latest"] }
+  },
+  "cursor": {
+    "redshift": { "type": "stdio", "command": "uvx", "args": ["awslabs.redshift-mcp-server@latest"] }
+  },
+  "codex_toml": "[mcp_servers.redshift]\ncommand = \"uvx\"\nargs = [\"awslabs.redshift-mcp-server@latest\"]\nenabled = true"
+}

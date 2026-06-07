@@ -132,6 +132,8 @@ actually carries the declared mechanism.
 | **Stripe**   | Revenue — subscriptions, invoices, churn, disputes   | restricted read-only key (`rk_`) |
 | **HubSpot**  | CRM — deals, pipeline, contacts, companies           | read-scope OAuth grant (credential-only) \* |
 | **Salesforce** | CRM — opportunities, accounts, pipeline (SOQL)     | `--toolsets data,users` + read-only perm set |
+| **Databricks** | Warehouse over Unity Catalog (Genie NL/SQL)        | Genie endpoint — read-only by design |
+| **Redshift**   | Warehouse — clusters + serverless (SQL)            | engine read-only (`BEGIN READ ONLY`) |
 
 \* Amplitude, Mixpanel, and HubSpot MCP servers are read+write with no read-only flag — the
 account role is the only guardrail (and the autonomous runner skips permission

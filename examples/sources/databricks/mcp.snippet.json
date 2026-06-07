@@ -1,0 +1,12 @@
+{
+  "_comment": "Databricks managed GENIE MCP server (hosted, OAuth) — read-only by design (NL->SQL, no write path). Wire the GENIE endpoint, NOT /api/2.0/mcp/sql (that server is read+write, guarded only by Unity Catalog grants). Replace YOUR-WORKSPACE with your Databricks workspace hostname; optionally pin one space: .../genie/{genie_space_id}. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "databricks",
+  "read_only_mechanism": "url-suffix:/api/2.0/mcp/genie",
+  "claude": {
+    "databricks": { "type": "http", "url": "https://YOUR-WORKSPACE.cloud.databricks.com/api/2.0/mcp/genie" }
+  },
+  "cursor": {
+    "databricks": { "url": "https://YOUR-WORKSPACE.cloud.databricks.com/api/2.0/mcp/genie" }
+  },
+  "codex_toml": "[mcp_servers.databricks]\nurl = \"https://YOUR-WORKSPACE.cloud.databricks.com/api/2.0/mcp/genie\"\nenabled = true"
+}
