@@ -63,8 +63,13 @@ def _bundle_path(repo_root: Path, name: str) -> Path:
     return path
 
 
-def _load_bundle(repo_root: Path, name: str) -> tuple[str, dict, dict]:
-    """Return ``(source_name, spec, snippet)``; validates the spec."""
+def _load_bundle(repo_root: Path, name: str) -> tuple[str, dict, dict | None]:
+    """Return ``(source_name, spec, snippet)``; validates the spec.
+
+    ``snippet`` is ``None`` for an MCP-less bundle — a ``cli`` or ``native`` source
+    (e.g. GSC's ``research gsc`` subcommand) that reaches its system without an MCP
+    server and so ships only ``source.json`` and ``SETUP.md``.
+    """
     path = _bundle_path(repo_root, name)
     payload = json.loads((path / "source.json").read_text(encoding="utf-8"))
     sources = payload.get("sources", payload) if isinstance(payload, dict) else None
@@ -72,7 +77,10 @@ def _load_bundle(repo_root: Path, name: str) -> tuple[str, dict, dict]:
         raise BundleError(f"{name}/source.json must define exactly one source.")
     source_name, spec = next(iter(sources.items()))
     _validate_source_spec(source_name, spec)
-    snippet = json.loads((path / "mcp.snippet.json").read_text(encoding="utf-8"))
+    snippet_path = path / "mcp.snippet.json"
+    if not snippet_path.is_file():
+        return source_name, spec, None
+    snippet = json.loads(snippet_path.read_text(encoding="utf-8"))
     for key in ("server_name", "claude", "cursor", "codex_toml"):
         if key not in snippet:
             raise BundleError(f"{name}/mcp.snippet.json is missing {key!r}.")
@@ -182,20 +190,24 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
     aborts cleanly (BundleError) instead of leaving the repo half-wired.
     """
     source_name, spec, snippet = _load_bundle(repo_root, name)
-    server = snippet["server_name"]
 
     # Parse every target up front; a malformed file raises here, before any write.
+    # An MCP-less bundle (snippet is None) only registers the source spec — there
+    # is no server to wire into the three MCP configs.
     su_path, doc = _user_sources_doc(repo_root)
     json_targets = []
-    for cfg, label, shapes in (
-        (_CLAUDE_CFG, ".mcp.json", snippet["claude"]),
-        (_CURSOR_CFG, ".cursor/mcp.json", snippet["cursor"]),
-    ):
-        path = repo_root.joinpath(*cfg)
-        data = _read_json(path, {"mcpServers": {}})
-        json_targets.append((path, label, data, shapes))
+    server = snippet["server_name"] if snippet is not None else None
     cx_path = repo_root.joinpath(*_CODEX_CFG)
-    cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
+    cx_text = ""
+    if snippet is not None:
+        for cfg, label, shapes in (
+            (_CLAUDE_CFG, ".mcp.json", snippet["claude"]),
+            (_CURSOR_CFG, ".cursor/mcp.json", snippet["cursor"]),
+        ):
+            path = repo_root.joinpath(*cfg)
+            data = _read_json(path, {"mcpServers": {}})
+            json_targets.append((path, label, data, shapes))
+        cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
 
     # All targets parsed cleanly; now write.
     actions: list[str] = []
@@ -213,15 +225,18 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
         _write_json(path, data)
         actions.append(f"{'updated' if had else 'wired'} server '{server}' in {label}")
 
-    if _codex_has_server(cx_text, server):
-        actions.append(f"server '{server}' already in .codex/config.toml (left as-is)")
-    else:
-        block = snippet["codex_toml"].rstrip("\n") + "\n"
-        if cx_text and not cx_text.endswith("\n"):
-            cx_text += "\n"
-        cx_path.parent.mkdir(parents=True, exist_ok=True)
-        cx_path.write_text(cx_text + "\n" + block, encoding="utf-8")
-        actions.append(f"wired server '{server}' in .codex/config.toml")
+    if snippet is not None:
+        if _codex_has_server(cx_text, server):
+            actions.append(
+                f"server '{server}' already in .codex/config.toml (left as-is)"
+            )
+        else:
+            block = snippet["codex_toml"].rstrip("\n") + "\n"
+            if cx_text and not cx_text.endswith("\n"):
+                cx_text += "\n"
+            cx_path.parent.mkdir(parents=True, exist_ok=True)
+            cx_path.write_text(cx_text + "\n" + block, encoding="utf-8")
+            actions.append(f"wired server '{server}' in .codex/config.toml")
 
     actions.append(
         f"next: follow examples/sources/{name}/SETUP.md for credentials and read-only setup"
@@ -232,7 +247,7 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
 def disable_bundle(repo_root: Path, name: str) -> list[str]:
     """Remove a bundle's wiring from the user sources file and MCP configs."""
     source_name, _, snippet = _load_bundle(repo_root, name)
-    server = snippet["server_name"]
+    server = snippet["server_name"] if snippet is not None else None
     actions: list[str] = []
 
     su_path = repo_root.joinpath(*_USER_SOURCES)
@@ -243,24 +258,29 @@ def disable_bundle(repo_root: Path, name: str) -> list[str]:
             _write_json(su_path, doc)
             actions.append(f"removed source '{source_name}' from config/sources.json")
 
-    for cfg, label in ((_CLAUDE_CFG, ".mcp.json"), (_CURSOR_CFG, ".cursor/mcp.json")):
-        path = repo_root.joinpath(*cfg)
-        if not path.exists():
-            continue
-        data = _read_json(path, {"mcpServers": {}})
-        if server in data.get("mcpServers", {}):
-            del data["mcpServers"][server]
-            _write_json(path, data)
-            actions.append(f"removed server '{server}' from {label}")
+    # An MCP-less bundle wired no server, so there is nothing to unwire.
+    if server is not None:
+        for cfg, label in (
+            (_CLAUDE_CFG, ".mcp.json"),
+            (_CURSOR_CFG, ".cursor/mcp.json"),
+        ):
+            path = repo_root.joinpath(*cfg)
+            if not path.exists():
+                continue
+            data = _read_json(path, {"mcpServers": {}})
+            if server in data.get("mcpServers", {}):
+                del data["mcpServers"][server]
+                _write_json(path, data)
+                actions.append(f"removed server '{server}' from {label}")
 
-    cx_path = repo_root.joinpath(*_CODEX_CFG)
-    if cx_path.exists():
-        new_text, removed = _codex_remove_server(
-            cx_path.read_text(encoding="utf-8"), server
-        )
-        if removed:
-            cx_path.write_text(new_text, encoding="utf-8")
-            actions.append(f"removed server '{server}' from .codex/config.toml")
+        cx_path = repo_root.joinpath(*_CODEX_CFG)
+        if cx_path.exists():
+            new_text, removed = _codex_remove_server(
+                cx_path.read_text(encoding="utf-8"), server
+            )
+            if removed:
+                cx_path.write_text(new_text, encoding="utf-8")
+                actions.append(f"removed server '{server}' from .codex/config.toml")
 
     if not actions:
         actions.append(f"'{name}' was not enabled; nothing to do")

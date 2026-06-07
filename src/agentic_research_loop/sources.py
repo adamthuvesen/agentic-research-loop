@@ -101,28 +101,6 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
         "plan_line": "Web tools for external context and public changes.",
         "base_notes": "Search for external context, public incidents, competitor moves, and platform changes. Read-only.",
     },
-    "gsc": {
-        "key": "gsc",
-        "transport": "cli",
-        "read_only_mechanism": "scope:webmasters.readonly",
-        "hint_field": "focus",
-        "label": "GSC focus",
-        "display_label": "GSC",
-        "freshness_caveat_group": "live",
-        "plan_line": "GSC organic search — default warehouse (Snowflake or BigQuery, synced); `research gsc` only as API fallback.",
-        "base_notes": (
-            "Google Search Console data for organic search performance — clicks, impressions, CTR, "
-            "positions by query, page, device, country, and date. Read-only.\n"
-            "**Default:** a warehouse-synced copy (Snowflake or BigQuery, via Fivetran or the GSC bulk export); prefer "
-            "semantic views / marts when they cover the question, else the synced staging "
-            "tables, e.g. a keyword+page report (query + page + country + device + date) and a "
-            "page report (page + country + device + date, no query dimension).\n"
-            "**Fallback:** `research gsc` CLI for fresher data, when sync is lagging, or for API-only slices.\n"
-            "  Example: research gsc --start-date 2026-03-01 --end-date 2026-04-06 --dimensions query,page\n"
-            "  Dimensions: query, page, country, device, searchAppearance, date\n"
-            "  Supports --row-limit and --start-row for pagination."
-        ),
-    },
 }
 
 # The live registry: built-ins plus anything registered at runtime or loaded
