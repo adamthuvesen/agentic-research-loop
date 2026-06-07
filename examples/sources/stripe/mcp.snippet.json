@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Stripe MCP server (@stripe/mcp), local stdio. Read-only is enforced by a RESTRICTED API KEY scoped Read-only (rk_...) — writes are 403'd at the Stripe API (see SETUP.md). Provide STRIPE_SECRET_KEY (set to your restricted read-only key) via the environment, never committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "stripe",
+  "read_only_mechanism": "scope:restricted-key-read",
+  "claude": {
+    "stripe": { "type": "stdio", "command": "npx", "args": ["-y", "@stripe/mcp", "--tools=all"] }
+  },
+  "cursor": {
+    "stripe": { "type": "stdio", "command": "npx", "args": ["-y", "@stripe/mcp", "--tools=all"] }
+  },
+  "codex_toml": "[mcp_servers.stripe]\ncommand = \"npx\"\nargs = [\"-y\", \"@stripe/mcp\", \"--tools=all\"]\nenabled = true"
+}

@@ -129,8 +129,11 @@ actually carries the declared mechanism.
 | **Mixpanel** | Product analytics — funnels, retention, JQL          | Consumer account (credential-only) \* |
 | **LaunchDarkly** | Feature flags, rollout timing, audit log, experiments | Reader-role token + `--scope read` |
 | **Statsig**  | Feature gates, experiments, results                  | `omni_read_only` Console key |
+| **Stripe**   | Revenue — subscriptions, invoices, churn, disputes   | restricted read-only key (`rk_`) |
+| **HubSpot**  | CRM — deals, pipeline, contacts, companies           | read-scope OAuth grant (credential-only) \* |
+| **Salesforce** | CRM — opportunities, accounts, pipeline (SOQL)     | `--toolsets data,users` + read-only perm set |
 
-\* Amplitude and Mixpanel MCP servers are read+write with no read-only flag — the
+\* Amplitude, Mixpanel, and HubSpot MCP servers are read+write with no read-only flag — the
 account role is the only guardrail (and the autonomous runner skips permission
 prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
@@ -141,8 +144,9 @@ them: ship as an `examples/sources/<name>/` bundle instead. Source routing per c
 is stored in `state/sources.json`.
 
 Two extension points: pass `--local-only` to `init` to disable every external
-source and investigate just `--context-path` files, and add your own sources by
-copying a bundle (or `config/sources.json.example`) into `config/sources.json`.
+source and investigate just `--context-path` files, and enable any bundle with
+`uv run research source enable <name>` (`research source list` / `disable` too), or
+copy `config/sources.json.example` for a custom one.
 
 ## Research workspace
 

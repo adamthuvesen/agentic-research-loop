@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "stripe": {
+      "key": "stripe_mcp",
+      "hint_field": "focus",
+      "label": "Stripe focus",
+      "display_label": "Stripe",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:restricted-key-read",
+      "plan_line": "Stripe for revenue — subscriptions, MRR, invoices, churn, payment failures, and disputes.",
+      "base_notes": "Read subscriptions, invoices, payment intents, customers, disputes, prices, and balance via the official Stripe MCP server (list/search/retrieve). Strong for revenue and churn root-cause: MRR moves, subscription cancels, failed payments, disputes. Read-only is enforced by a Restricted API Key scoped Read-only (writes are 403'd at the Stripe API; see SETUP.md). WARNING: the server exposes write tools (create_refund, cancel_subscription, create_invoice) — never call them; the restricted key blocks them."
+    }
+  }
+}

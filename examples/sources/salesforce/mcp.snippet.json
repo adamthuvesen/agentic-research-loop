@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Salesforce DX MCP server (@salesforce/mcp, Beta), local stdio. Read-only is enforced by (1) pinning --toolsets=data,users (removes metadata deploy / Apex / devops write tools) AND (2) a read-only permission set on the CLI-authenticated org user (see SETUP.md). Auth reuses the Salesforce CLI org — run `sf org login web` first. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "salesforce",
+  "read_only_mechanism": "tool-allowlist:--toolsets=data,users",
+  "claude": {
+    "salesforce": { "type": "stdio", "command": "npx", "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG", "--toolsets=data,users"] }
+  },
+  "cursor": {
+    "salesforce": { "type": "stdio", "command": "npx", "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG", "--toolsets=data,users"] }
+  },
+  "codex_toml": "[mcp_servers.salesforce]\ncommand = \"npx\"\nargs = [\"-y\", \"@salesforce/mcp\", \"--orgs\", \"DEFAULT_TARGET_ORG\", \"--toolsets=data,users\"]\nenabled = true"
+}

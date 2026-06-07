@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "salesforce": {
+      "key": "salesforce_mcp",
+      "hint_field": "focus",
+      "label": "Salesforce focus",
+      "display_label": "Salesforce",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "tool-allowlist:--toolsets=data,users",
+      "plan_line": "Salesforce for CRM — opportunities, accounts, pipeline, and ownership via SOQL.",
+      "base_notes": "Read opportunities, accounts, contacts, leads, and custom objects via the official Salesforce DX MCP server using run_soql_query (data toolset). Strong for pipeline, stage, amount, and close-date analysis. Read-only is enforced by pinning --toolsets=data,users (no metadata/deploy/Apex tools) plus a read-only permission set on the authenticated org user (see SETUP.md). SOQL reads only; never deploy metadata or run Apex."
+    }
+  }
+}

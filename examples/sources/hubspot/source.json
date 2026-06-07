@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "hubspot": {
+      "key": "hubspot_mcp",
+      "hint_field": "focus",
+      "label": "HubSpot focus",
+      "display_label": "HubSpot",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "HubSpot for CRM — deals, pipeline, contacts, companies, and engagements.",
+      "base_notes": "Read deals/pipeline, contacts, companies, tickets, line items, products, lists, and engagements (calls/emails/meetings/notes) via the official HubSpot MCP server (list/search/batch-read). Strong for pipeline and B2B churn root-cause. Use only read tools. WARNING: the server exposes write tools (manage_crm_objects, batch create/update) and has no read-only flag — read-only depends on granting only *.read OAuth scopes and the connecting user's role (see SETUP.md); never create, update, or delete records."
+    }
+  }
+}

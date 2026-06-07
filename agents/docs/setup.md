@@ -101,7 +101,9 @@ Sources beyond the built-ins ship as **copy-to-enable bundles** under
 [`examples/sources/`](../../examples/sources/) — the committed MCP configs stay
 neutral. Each bundle has a `source.json` (merge into `config/sources.json`), an
 `mcp.snippet.json` (paste into the three MCP configs), and a `SETUP.md`
-(credentials + read-only setup).
+(credentials + read-only setup). Run `uv run research source enable <name>` to do
+the merge + wiring automatically (`research source list` / `disable` too), then
+follow the bundle's `SETUP.md`.
 
 **Do the credential-only sources first** — for these, *nothing in committed config
 can guarantee read-only*; the account or IAM role you connect is the only guardrail:
@@ -120,6 +122,9 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
   so the **account role is the only guardrail**: use a dedicated **Amplitude Viewer** /
   **Mixpanel Consumer** account and verify a write returns 403 before autonomous use.
   Prefer **PostHog** for a provably read-only product-analytics source.
+- **HubSpot** — **read+write MCP server, no read-only flag.** Create the MCP Auth App
+  and **grant only `*.read` scopes** (HubSpot then 403s writes), and connect a read-only
+  user. The enforcement is real but lives in the grant — not auditable from config.
 
 The rest enforce read-only via a config flag or a read-only scope (the contract test
 checks each declares its mechanism) — still scope the credential as defense in depth:
@@ -138,6 +143,10 @@ checks each declares its mechanism) — still scope the credential as defense in
   API token (writes are 403'd at the API); never a Writer/Developer token.
 - **Statsig** — a Console API key with the **`omni_read_only`** scope (the API rejects
   writes); never an `omni_read_write` key.
+- **Stripe** — a **Restricted API Key (`rk_`)** scoped Read-only (writes 403 at the
+  API); never a secret (`sk_`) or write-scoped key.
+- **Salesforce** — pin `--toolsets=data,users` (drops deploy/Apex tools) **and** log
+  the CLI into a **read-only-permission-set** org user; Beta — re-check toolsets.
 
 See each bundle's `SETUP.md` for exact steps.
 
