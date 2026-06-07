@@ -14,4 +14,4 @@ uv run research run <slug> --runner demo --max-cycles 6
 
 The case runs `plan → explore → build evidence → conclude → challenge`, then
 closes. Read [`report.md`](report.md) for the answer and the `## Challenge Review`
-section for the adversarial pass.
+section for the challenge pass.

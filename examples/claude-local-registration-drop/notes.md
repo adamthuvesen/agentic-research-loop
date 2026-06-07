@@ -40,7 +40,7 @@
   s→r 65.000→62.955, r→a flat ~60, 90.1/9.9 A/B split) — every prior-cycle number
   holds. Added one genuinely new local move cycles 1–3 missed: the
   **selection-sign argument** (E8), which sharpens the two-causes claim via
-  mechanism, not just temporal shape. Ran the mandatory **adversarial challenge
+  mechanism, not just temporal shape. Ran the mandatory **challenge
   cycle** (see below). Local source now genuinely exhausted.
 - **What would change this:** a device split showing Effect A is *uniform* across
   desktop/mobile (refutes the desktop-CTA mechanism → global cause); a confirmed
@@ -128,7 +128,7 @@ cross-source reconciliation pending a live run."
   form-completion step by device, browser, and form version.
 
 ### H3 (T4): Measurement / tracking artifact
-- **Status:** weakened (local reasoning); triangulation blocked
+- **Status:** weakened (local reasoning); cross-check blocked
 - **Why plausible to test:** brief H3 + the launch notes *claim* "no infrastructure
   or tracking change" — a claim that should be verified, not accepted.
 - **Argument against (this cycle):** a tracking/counting change typically deflates
@@ -235,7 +235,7 @@ cross-source reconciliation pending a live run."
   quality held; it is a derived column. Any real downstream-quality question is
   unanswerable from this dataset and needs live activation data.
 
-## Challenge Cycle (cycle 4 — mandatory adversarial stress-test)
+## Challenge Cycle (cycle 4 — mandatory stress-test)
 
 **Strongest competing explanation to the whole case:** *There is no behavioral
 "cause" to recover — the dataset is a deterministic synthetic construction, and
@@ -276,11 +276,11 @@ no further local move that moves confidence. The case is therefore **complete to
 the limit this runner permits**, with the verification work explicitly handed off
 to a live run (device split, magnitude/recency reconciliation, independent
 change-log corroboration). Challenge passed in the sense that conclusions survived
-adversarial review *and* their limits are now precisely stated.
+challenge review *and* their limits are now precisely stated.
 
 ## Challenge Review
 
-Structured adversarial pass for the close decision (expands the narrative in
+Structured challenge pass for the close decision (expands the narrative in
 `## Challenge Cycle` above into the contract's required fields).
 
 - **Strongest competing explanation:** the conclusion is "Homepage v3's

@@ -44,7 +44,7 @@ device split that would confirm the desktop-only CTA mechanism — could not be 
 > Note: this case ran on an explicitly **synthetic/fictional** local dataset, in
 > an offline runner that suppresses all external sources *by design*. Magnitudes
 > and the Effect-B trend are real *in that data* but must be reconciled against
-> live Snowflake/GA4 before they are trusted operationally. An adversarial
+> live Snowflake/GA4 before they are trusted operationally. A challenge
 > challenge cycle confirmed the ranking survives review but fixed the confidence
 > ceiling: this is a strong **single-source, circumstantial** diagnosis, not a
 > verified one — the causal link rests on a bundled launch note no second system
@@ -71,7 +71,7 @@ device split that would confirm the desktop-only CTA mechanism — could not be 
 - **Measurement / tracking artifact** — weakened, not closed. The break is
   isolated to one step rather than deflating the whole funnel, which argues
   against broad instrumentation breakage; but the "no tracking change" claim is
-  self-reported and was not independently triangulated (systems unreachable).
+  self-reported and was not independently cross-checked (systems unreachable).
 - **Traffic volume / seasonality / composition drift** — volume rejected
   (visitors flat). Seasonality and source/medium composition could not be tested
   here (no segmentable live source) and remain genuinely open.
@@ -124,14 +124,14 @@ device split that would confirm the desktop-only CTA mechanism — could not be 
 
 ## Challenge Review
 
-A mandatory adversarial pass stress-tested the conclusion before close.
+A mandatory challenge pass stress-tested the conclusion before close.
 
 - **Rival explanation tested:** the measurement/tracking artifact — that a
   counting or definition change at 2026-03-09 deflated measured signups without a
   real behavior shift. It survives review only as *weakened*, not closed: the
   break is isolated to one funnel step (not a whole-funnel deflation), which is
   hard to produce with broad instrumentation breakage, but the "no tracking
-  change" claim is self-reported and could not be triangulated.
+  change" claim is self-reported and could not be cross-checked.
 - **Weakest claim / most fragile dependency:** the claim that **Effect B is a
   distinct second real-world regression** is the weakest-supported — it could be a
   synthetic decay curve. The most fragile dependency is a single self-reported

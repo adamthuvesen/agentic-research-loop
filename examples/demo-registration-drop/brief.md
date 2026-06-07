@@ -12,12 +12,12 @@ Research: registration-drop
 
 ## Decision Or Deliverable
 
-What decision, update, or deliverable should this case support?
+Decide whether to roll back Homepage v3, restore the above-the-fold CTA, or run an A/B test before broader funnel work.
 
 ## Scope
 
-- In scope:
-- Out of scope:
+- In scope: Weekly registration trend, funnel step rates, and the 2026-03-09 homepage launch.
+- Out of scope: Retention, pricing strategy, and paid acquisition mix.
 
 ## Hypotheses
 
@@ -69,10 +69,11 @@ What decision, update, or deliverable should this case support?
 
 ## Freshness Requirements
 
-- Which facts must be verified live?
-- Which context can come from existing docs?
+- Funnel weekly rates and launch timing come from the bundled local CSV and context notes.
+- Cross-source checks would need a live Snowflake or GA4 run.
 
 ## Success Criteria
 
-- The case question is well scoped.
-- The workspace is ready for human or autonomous follow-through.
+- The drop is quantified and localized to a funnel step.
+- The leading explanation is ranked against the strongest rival.
+- Challenge review passes before the case closes.

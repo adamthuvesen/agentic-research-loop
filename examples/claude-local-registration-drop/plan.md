@@ -109,11 +109,11 @@ against live Snowflake/GA4 before they are trusted, and the definition of a
 **Strongest Rival:** A tracking, tagging, consent, or pipeline change near 2026-03-09 deflated the measured `signups_started`/`registrations` without a real behavior change.
 **Discriminating Test:** Compare the same metric across CSV, Snowflake, and GA4 over the inflection. If all three move together by similar magnitude, measurement is ruled out. Also scan Linear/Notion for any analytics, tagging, or consent/cookie change dated near the launch. The launch notes *claim* "no infrastructure or tracking change" — verify that against an independent record rather than accepting it.
 **Evidence Needed:** Either three-source agreement on the drop (rules measurement out) or a concrete, dated instrumentation change overlapping the inflection (rules it in).
-**Completion Threshold:** done when measurement risk is either ruled out by multi-source agreement or quantified as material; blocked when only one source carries the metric and the claim cannot be triangulated; pivot when a confirmed instrumentation change explains a large share of the drop.
+**Completion Threshold:** done when measurement risk is either ruled out by multi-source agreement or quantified as material; blocked when only one source carries the metric and the claim cannot be cross-checked; pivot when a confirmed instrumentation change explains a large share of the drop.
 **Confounders / Freshness Risks:** Differing definitions across sources can masquerade as a measurement bug; snapshot-vs-live timing differences can create false mismatches.
-**Cross-Check:** This thread *is* the cross-check — its method is source triangulation, feeding confidence back into T1.
+**Cross-Check:** This thread *is* the cross-check — its method is source cross-check, feeding confidence back into T1.
 **Depends on:** T1
-**Status:** in-progress (local reasoning): measurement weakened — break isolated to one step while r→a flat 60% argues against broad instrumentation breakage. Three-source triangulation blocked (offline runner).
+**Status:** in-progress (local reasoning): measurement weakened — break isolated to one step while r→a flat 60% argues against broad instrumentation breakage. Three-source cross-check blocked (offline runner).
 
 ### T5: Rule out seasonality and traffic-composition drift
 **Priority:** medium
