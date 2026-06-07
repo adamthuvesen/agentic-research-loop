@@ -11,16 +11,62 @@ reproducibly without rigid step-by-step choreography.
 The system has three layers:
 
 1. `CLI and repo runtime`
-  - creates cases
-  - runs the autonomous loop
-  - validates and publishes outputs
+
+- creates cases
+- runs the autonomous loop
+- validates and publishes outputs
+
 2. `Agent runtime`
-  - investigates using the available tools and source registry
-  - chooses strategy within the repo constraints
-  - updates the case artifacts
+
+- investigates using the available tools and source registry
+- chooses strategy within the repo constraints
+- updates the case artifacts
+
 3. `Artifacts and contracts`
-  - hold the shared state between human, runtime, and agent
-  - make the work reproducible and reviewable
+
+- hold the shared state between human, runtime, and agent
+- make the work reproducible and reviewable
+
+```mermaid
+flowchart TB
+  human["Human / research-spec skill"]
+
+  subgraph cli ["CLI and repo runtime"]
+    direction TB
+    entry["cli.py / __main__.py<br/>command surface"]
+    scaffold["research.py + from_spec.py + layout.py + templates.py<br/>scaffold case"]
+    loopMod["loop.py<br/>run_loop + planning step"]
+    cycleMod["cycle_execution.py<br/>attempts, retries, artifact restore"]
+    promptMod["prompts.py + runner_context.py<br/>prompt assembly"]
+    runnerMod["runner.py<br/>launch external CLI"]
+    contractMod["case_contracts.py + cycle_markers.py<br/>case kind + markers"]
+    sourcesMod["sources.py<br/>source registry"]
+    reviewMod["validation.py + status.py + publish.py<br/>validate, status, publish"]
+  end
+
+  subgraph agent ["Agent runtime (external, read-only)"]
+    direction TB
+    runnerProc["claude / codex / demo subprocess"]
+    toolset["MCP tools · web search · research gsc · local context"]
+  end
+
+  subgraph store ["Artifacts (research/&lt;date&gt;-&lt;slug&gt;/)"]
+    direction TB
+    md["brief · notes · report · status (md)"]
+    js["progress · sources · status · findings (json)<br/>cycles/*/cycle_summary.json"]
+  end
+
+  human --> entry
+  entry --> scaffold --> store
+  entry --> loopMod
+  entry --> reviewMod
+  loopMod --> cycleMod --> promptMod --> runnerMod --> runnerProc
+  runnerProc --> toolset --> store
+  cycleMod --> contractMod
+  sourcesMod --> promptMod
+  store --> promptMod
+  reviewMod --> store
+```
 
 ## Main Components
 
@@ -28,7 +74,7 @@ The system has three layers:
 
 - [cli.py](../../src/agentic_research_loop/cli.py)
   - user-facing command surface
-- [__main__.py](../../src/agentic_research_loop/__main__.py)
+- [**main**.py](../../src/agentic_research_loop/__main__.py)
   - module entrypoint
 
 ### Research creation and layout
@@ -81,6 +127,30 @@ The system has three layers:
   - durable findings generation
 
 ## Research Lifecycle
+
+```mermaid
+flowchart TB
+  spec["/research-spec skill<br/>discover sources, design hypotheses"]
+  init["research init<br/>scaffold research/&lt;date&gt;-&lt;slug&gt;/"]
+  planQ{"plan.md blank?"}
+  planStep["planning step<br/>writes plan.md only"]
+  build["build cycle prompt<br/>brief + plan + notes + sources + state"]
+  invoke["invoke runner<br/>agent does read-only source work"]
+  validate["validate markers, artifacts,<br/>progress hash (notes/report changed?)"]
+  done{"CASE_COMPLETE emitted?"}
+  challenge["mandatory challenge cycle<br/>stress-test conclusions"]
+  stop{"stop condition?<br/>complete · 3 no-progress · 3 failures · max-cycles"}
+  publishStep["research publish<br/>published.md"]
+
+  spec --> init --> planQ
+  planQ -- yes --> planStep --> build
+  planQ -- no --> build
+  build --> invoke --> validate --> done
+  done -- no --> stop
+  done -- yes --> challenge --> stop
+  stop -- continue --> build
+  stop -- finished --> publishStep
+```
 
 ### 1. Spec and init
 
@@ -147,6 +217,31 @@ process:
 ## Artifact Model
 
 The system uses a dual artifact model.
+
+```mermaid
+flowchart LR
+  subgraph human ["Human-facing (markdown)"]
+    direction TB
+    brief["brief.md — framing contract (protected)"]
+    notes["notes.md — theory, evidence, dead ends"]
+    report["report.md — best current answer"]
+    statusmd["status.md — answer-first summary"]
+  end
+
+  subgraph machine ["Machine-facing (json)"]
+    direction TB
+    progress["progress.json — lifecycle/loop state"]
+    sourcesj["sources.json — sources, hints, local paths"]
+    statusj["status.json — mode/template + run status"]
+    summaries["cycles/*/cycle_summary.json — per-cycle outcomes"]
+    findings["findings.json — structured findings (optional)"]
+  end
+
+  runtime["runtime"] -->|writes| machine
+  agentNode["agent"] -->|writes| human
+  agentNode -.->|may update routing| sourcesj
+  progress -->|gates| statusmd
+```
 
 ### Human-facing artifacts
 
