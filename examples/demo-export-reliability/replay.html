@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Case replay — demo-export-reliability</title>
+<style>
+:root { --bg:#0f1117; --card:#171a23; --ink:#e6e8ee; --muted:#9aa3b2;
+  --line:#262b38; --accent:#6ea8fe; --good:#3fb950; --warn:#d29922; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:40px 22px 80px; }
+header.hero { border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:26px; }
+.kicker { color:var(--accent); font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; font-size:12px; }
+h1.q { font-size:26px; line-height:1.3; margin:.35em 0 .6em; }
+.badges { display:flex; flex-wrap:wrap; gap:8px; }
+.badge { font-size:12.5px; padding:3px 10px; border-radius:999px;
+  border:1px solid var(--line); color:var(--muted); background:var(--card); }
+.badge b { color:var(--ink); font-weight:600; }
+.badge.good { border-color:rgba(63,185,80,.5); color:#9be6a8; }
+section.card { background:var(--card); border:1px solid var(--line);
+  border-radius:12px; padding:6px 22px 18px; margin:20px 0; }
+section.card > h2.section-title { color:var(--muted); font-size:13px;
+  text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--line);
+  padding-bottom:10px; }
+section.challenge { border-color:rgba(210,153,34,.5);
+  box-shadow:0 0 0 1px rgba(210,153,34,.15) inset; }
+section.challenge > h2.section-title { color:var(--warn); }
+h1,h2,h3 { line-height:1.3; }
+.body h2 { font-size:19px; margin:1.2em 0 .4em; }
+.body h3 { font-size:16px; color:var(--muted); margin:1em 0 .3em; }
+.body ul,.body ol { padding-left:22px; }
+.body li { margin:.2em 0; }
+.body code { background:#0b0d13; border:1px solid var(--line); border-radius:5px;
+  padding:1px 5px; font-size:.88em; }
+.body blockquote { margin:.8em 0; padding:.4em 14px; border-left:3px solid var(--warn);
+  background:rgba(210,153,34,.08); color:var(--muted); }
+.body strong { color:#fff; }
+.body hr { border:0; border-top:1px solid var(--line); margin:1.2em 0; }
+footer { color:var(--muted); font-size:12.5px; text-align:center; margin-top:36px; }
+footer code { color:var(--accent); }
+</style></head>
+<body><div class="wrap">
+<header class="hero">
+  <div class="kicker">Agentic Research Loop · case replay</div>
+  <h1 class="q">Why did weekly export job success rate drop in recent weeks?</h1>
+  <div class="badges"><span class="badge">status <b>idle</b></span><span class="badge">cycles <b>4</b></span><span class="badge good">challenge <b>passed</b></span><span class="badge">report <b>substantive</b></span></div>
+</header>
+<section class="card"><h2 class="section-title">Report</h2><div class="body"><h1>Research Report</h1>
+<h2>Question</h2>
+<p>Why did weekly export job success rate drop in recent weeks?</p>
+<h2>Executive Summary</h2>
+<p>Export success rate stepped down from 98.0% to 84.0% after the 2026-03-09 scheduler change that moved <strong>large warehouse export jobs</strong> from overnight into business hours. Scheduled volume held flat (+2.0%), so the loss is a <strong>queue contention</strong> problem, not a demand spike. Average queue wait rose from 8 to 42 minutes in the same window, consistent with heavy jobs competing with interactive load on the shared export queue.</p>
+<h2>Ranked Causes</h2>
+<ol>
+<li><strong>Business-hours scheduling overloaded the export queue</strong> (leading). Timing,</li>
+</ol>
+<p>queue minutes, and flat scheduled volume all point here.</p>
+<ol>
+<li>Residual retry-policy noise (minor) — a smaller Feb tweak did not move the</li>
+</ol>
+<p>inflection.</p>
+<h2>Evidence Highlights</h2>
+<ul>
+<li>Success rate: 98.0% -&gt; 84.0%.</li>
+<li>Scheduled jobs flat (+2.0%).</li>
+<li>Failed jobs up 716.0%.</li>
+<li>Avg queue minutes: 8.0 -&gt; 42.0.</li>
+</ul>
+<h2>Recommended Next Actions</h2>
+<ul>
+<li>Move large warehouse exports back to the overnight window and monitor queue minutes.</li>
+<li>Cap concurrent heavy exports during business hours until queue SLO recovers.</li>
+</ul>
+<h2>Confidence</h2>
+<p>High. The mechanism is well supported by timing, queue pressure, and flat volume.</p></div></section><section class="card challenge"><h2 class="section-title">Challenge Review</h2><div class="body"><h2>Challenge Review</h2>
+<ul>
+<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.</li>
+<li>Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.</li>
+<li>Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.</li>
+<li>Outcome: Resolved. The conclusion survives challenge.</li>
+</ul></div></section><section class="card"><h2 class="section-title">Working notes</h2><div class="body"><h1>Research Notes</h1>
+<h2>Working Theory</h2>
+<ul>
+<li>Current best explanation: The 2026-03-09 scheduler change moved heavy export jobs into business hours, overloading the shared queue and cutting success rate.</li>
+<li>Confidence: high.</li>
+<li>What would change this: a non-scheduler change in the same window, or a metric-definition shift.</li>
+</ul>
+<h2>Evidence Log</h2>
+<ul>
+<li>Success rate: 98.0% -&gt; 84.0% (-14.0 pp).</li>
+<li>Scheduled jobs: +2.0% (flat) — not a volume problem.</li>
+<li>Failed jobs: +716.0% vs pre-change baseline.</li>
+<li>Avg queue minutes: 8.0 -&gt; 42.0 (+425.0%).</li>
+<li>The inflection week matches the documented scheduler change; no counting change in the window.</li>
+</ul>
+<h2>Rejected Leads</h2>
+<ul>
+<li>Volume spike: ruled out, scheduled jobs flat.</li>
+<li>Random variance: the step change aligns to the schedule change and holds for five post weeks.</li>
+</ul>
+<h2>Challenge Review</h2>
+<ul>
+<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.</li>
+<li>Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.</li>
+<li>Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.</li>
+<li>Outcome: Resolved. The conclusion survives challenge.</li>
+</ul></div></section><section class="card"><h2 class="section-title">Research plan</h2><div class="body"><h1>Research Plan</h1>
+<h3>T1: Confirm and localize the export reliability break</h3>
+<p><strong>Priority:</strong> high <strong>Source:</strong> Local files <strong>Objective:</strong> Confirm export success rate fell and check whether volume or queue pressure changed. <strong>Main Explanation:</strong> Queue contention from rescheduled heavy jobs caused more failures. <strong>Strongest Rival:</strong> Job volume rose and overwhelmed capacity, unrelated to the schedule change. <strong>Discriminating Test:</strong> Compare success rate, failure count, and queue minutes before vs after the change week. <strong>Evidence Needed:</strong> A step down in success rate with a matching queue spike while scheduled volume stays flat. <strong>Completion Threshold:</strong> done when the break magnitude and timing are explicit. <strong>Confounders / Freshness Risks:</strong> Partial-week data near the window edges. <strong>Cross-Check:</strong> Reconcile with the scheduler change date in the context notes. <strong>Depends on:</strong> none <strong>Status:</strong> pending</p>
+<h3>T2: Tie the break to the scheduler change</h3>
+<p><strong>Priority:</strong> medium <strong>Source:</strong> Local files (context notes) <strong>Objective:</strong> Check whether the documented schedule change lines up with the inflection. <strong>Main Explanation:</strong> Moving heavy exports into business hours overloaded the shared queue. <strong>Strongest Rival:</strong> An unrelated platform or counting change explains the failures. <strong>Discriminating Test:</strong> Match the inflection week to the documented 2026-03-09 schedule change. <strong>Evidence Needed:</strong> Timing alignment plus a plausible queue-contention mechanism. <strong>Completion Threshold:</strong> done when timing and mechanism are established. <strong>Confounders / Freshness Risks:</strong> Other operational changes in the same window. <strong>Cross-Check:</strong> Confirm no metric-definition change in the window. <strong>Depends on:</strong> T1 <strong>Status:</strong> pending</p></div></section>
+<footer>Self-contained replay generated by <code>viz/generate.py</code>.</footer>
+</div></body></html>
