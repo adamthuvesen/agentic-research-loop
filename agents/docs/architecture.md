@@ -174,38 +174,29 @@ The system uses a dual artifact model.
 
 ## Source System
 
-The system recognizes these source families. Web tools and local context are
-built in; the rest are **opt-in bundles** wired with `research source enable
-<name>` (see `examples/sources/`):
+The source registry in [sources.py](../../src/agentic_research_loop/sources.py)
+defines what the runtime knows about. Only two sources are **built in** — always
+registered without MCP wiring:
 
-- `knowledge`
-  - curated business context and internal documentation via knowledge MCP
-- `Notion MCP`
-  - live workspace content
-- `Slack`
-  - recent discussions, informal context, and decision threads
-- `Linear`
-  - issue tracking, ownership, and project status
-- `web tools`
-  - external context
-- `Snowflake`
-  - live metrics and warehouse-backed evidence
-- `Confidence MCP`
-  - rollouts, experiments, flags, decision history
-- `local context`
-  - local files, exports, definitions, scoped evidence packs
+- **Web search** (`web-search`) — native agent web search for external context
+- **GSC** (`gsc`) — organic search via warehouse-synced data by default; `research gsc` CLI as API fallback
+
+Every other external system ships as an **opt-in bundle** under
+[`examples/sources/`](../../examples/sources/). Enable one with
+`research source enable <name>`; that wires MCP config locally and registers the
+source in `config/sources.json`. Bundles include Notion, Slack, Linear,
+Snowflake, Confidence, GA4, GitHub, Datadog, and others — see
+[`examples/sources/README.md`](../../examples/sources/README.md).
+
+**Local context** is separate from the registry: attach folders or files at init
+(`--context-path`) or in `state/sources.json` under `local_context_folders`.
+No bundle is required; paths are read-only scoped evidence.
 
 `sources.json` stores:
 
-- enabled sources
-- search hints
-- Notion target hint
-- Slack focus hint
-- Linear focus hint
-- web focus
-- Snowflake focus
-- Confidence focus
-- attached local context paths
+- enabled/disabled flags and hints per registered source
+- `local_context_folders` for attached local paths
+- the read-only policy string
 
 The agent is allowed to improve source routing during the case.
 
@@ -216,17 +207,11 @@ source selection, and synthesis directly using MCP tools.
 
 ### Agent-executed research
 
-The agent accesses all sources via MCP tools:
-
-- knowledge
-- Snowflake
-- Notion MCP
-- Slack
-- Linear
-- Confidence MCP
-- web tools
-- local context
-- cross-source synthesis
+The runtime does not query external systems itself. The external agent runner
+accesses sources read-only via MCP tools, the built-in web search tool, the
+`research gsc` CLI fallback, and any attached local context paths. Enabled
+opt-in bundles (Snowflake, Notion, Slack, Linear, Confidence, GA4, etc.) must
+be wired before the agent can use them.
 
 All work lands in the shared artifact model.
 
