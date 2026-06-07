@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from agentic_research_loop.advisory import build_advisory_signals
+from agentic_research_loop.hints import build_cycle_hints
 
 
 def _case(tmp_path: Path) -> Path:
@@ -22,9 +22,9 @@ def _case(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_missing_hypothesis_ledger_signal_after_cycle(tmp_path: Path) -> None:
+def test_missing_hypothesis_ledger_hint_after_cycle(tmp_path: Path) -> None:
     case_path = _case(tmp_path)
-    signals = build_advisory_signals(
+    hints = build_cycle_hints(
         case_path,
         snapshot={
             "notes": (case_path / "notes.md").read_text(encoding="utf-8"),
@@ -33,10 +33,10 @@ def test_missing_hypothesis_ledger_signal_after_cycle(tmp_path: Path) -> None:
         },
     )
 
-    assert any("hypothesis ledger" in signal for signal in signals)
+    assert any("hypothesis ledger" in hint for hint in hints)
 
 
-def test_no_retired_hypothesis_signal_after_multiple_cycles(tmp_path: Path) -> None:
+def test_no_retired_hypothesis_hint_after_multiple_cycles(tmp_path: Path) -> None:
     case_path = _case(tmp_path)
     notes = (
         "# Research Notes\n\n"
@@ -47,7 +47,7 @@ def test_no_retired_hypothesis_signal_after_multiple_cycles(tmp_path: Path) -> N
     )
     (case_path / "notes.md").write_text(notes, encoding="utf-8")
 
-    signals = build_advisory_signals(
+    hints = build_cycle_hints(
         case_path,
         snapshot={
             "notes": notes,
@@ -56,19 +56,19 @@ def test_no_retired_hypothesis_signal_after_multiple_cycles(tmp_path: Path) -> N
         },
     )
 
-    assert any("retire weak explanations" in signal for signal in signals)
+    assert any("retire weak explanations" in hint for hint in hints)
 
 
-def test_thin_evidence_signal_for_meaningful_report(tmp_path: Path) -> None:
+def test_thin_evidence_hint_for_substantive_report(tmp_path: Path) -> None:
     case_path = _case(tmp_path)
     report = (
         "# Research Report\n\n"
         "## Executive Summary\n\n"
         "The current answer points to rollout friction as the leading cause, "
-        "with enough detail to be meaningful but not yet fully evidenced.\n"
+        "with enough detail to present but not yet fully evidenced in the log.\n"
     )
 
-    signals = build_advisory_signals(
+    hints = build_cycle_hints(
         case_path,
         snapshot={
             "notes": "# Research Notes\n\n## Hypotheses\n\n### H1: Rollout friction\n- **Status:** active\n",
@@ -77,10 +77,10 @@ def test_thin_evidence_signal_for_meaningful_report(tmp_path: Path) -> None:
         },
     )
 
-    assert any("evidence log is thin" in signal for signal in signals)
+    assert any("evidence log is thin" in hint for hint in hints)
 
 
-def test_missing_thread_fields_signal(tmp_path: Path) -> None:
+def test_missing_thread_fields_hint(tmp_path: Path) -> None:
     case_path = _case(tmp_path)
     (case_path / "plan.md").write_text(
         "# Research Plan\n\n"
@@ -92,17 +92,15 @@ def test_missing_thread_fields_signal(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    signals = build_advisory_signals(
+    hints = build_cycle_hints(
         case_path,
         snapshot={"notes": "", "report": "", "progress": {"cycle_count": 0}},
     )
 
-    assert any(
-        "High-priority thread design is incomplete" in signal for signal in signals
-    )
+    assert any("High-priority thread design is incomplete" in hint for hint in hints)
 
 
-def test_advisory_signals_are_capped(tmp_path: Path) -> None:
+def test_cycle_hints_are_capped(tmp_path: Path) -> None:
     case_path = _case(tmp_path)
     (case_path / "plan.md").write_text(
         "# Research Plan\n\n"
@@ -115,10 +113,10 @@ def test_advisory_signals_are_capped(tmp_path: Path) -> None:
         "# Research Report\n\n"
         "## Executive Summary\n\n"
         "The latest current live data points to launch friction as the leading "
-        "cause with enough supporting prose to pass the meaningful content check.\n"
+        "cause with enough supporting prose to pass the substantive content check.\n"
     )
 
-    signals = build_advisory_signals(
+    hints = build_cycle_hints(
         case_path,
         snapshot={
             "notes": "# Research Notes\n",
@@ -128,4 +126,4 @@ def test_advisory_signals_are_capped(tmp_path: Path) -> None:
         limit=2,
     )
 
-    assert len(signals) == 2
+    assert len(hints) == 2
