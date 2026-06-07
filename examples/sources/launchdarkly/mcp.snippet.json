@@ -1,0 +1,20 @@
+{
+  "_comment": "Official LaunchDarkly MCP server (@launchdarkly/mcp-server), local stdio. Read-only is enforced by (1) the --scope read flag and (2) a READER-role API token — writes are 403'd at the LaunchDarkly API (see SETUP.md). Provide LAUNCHDARKLY_API_KEY (a Reader-role token) via the environment, never committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "launchdarkly",
+  "read_only_mechanism": "scope:reader",
+  "claude": {
+    "launchdarkly": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@launchdarkly/mcp-server", "--", "mcp", "start", "--scope", "read", "--api-key", "${LAUNCHDARKLY_API_KEY}"]
+    }
+  },
+  "cursor": {
+    "launchdarkly": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@launchdarkly/mcp-server", "--", "mcp", "start", "--scope", "read", "--api-key", "${LAUNCHDARKLY_API_KEY}"]
+    }
+  },
+  "codex_toml": "[mcp_servers.launchdarkly]\ncommand = \"npx\"\nargs = [\"-y\", \"--package\", \"@launchdarkly/mcp-server\", \"--\", \"mcp\", \"start\", \"--scope\", \"read\", \"--api-key\", \"${LAUNCHDARKLY_API_KEY}\"]\nenabled = true"
+}

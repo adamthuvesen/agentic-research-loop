@@ -1,0 +1,20 @@
+{
+  "_comment": "Official Statsig MCP server (hosted Console API) via the mcp-remote shim. Read-only is enforced by an omni_read_only Console API key — writes are 403'd at the Statsig API (see SETUP.md). Provide STATSIG_CONSOLE_API_KEY (an omni_read_only console- key) via the environment, never committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "statsig",
+  "read_only_mechanism": "scope:omni_read_only",
+  "claude": {
+    "statsig": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://api.statsig.com/v1/mcp", "--header", "statsig-api-key:${STATSIG_CONSOLE_API_KEY}"]
+    }
+  },
+  "cursor": {
+    "statsig": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://api.statsig.com/v1/mcp", "--header", "statsig-api-key:${STATSIG_CONSOLE_API_KEY}"]
+    }
+  },
+  "codex_toml": "[mcp_servers.statsig]\ncommand = \"npx\"\nargs = [\"-y\", \"mcp-remote@latest\", \"https://api.statsig.com/v1/mcp\", \"--header\", \"statsig-api-key:${STATSIG_CONSOLE_API_KEY}\"]\nenabled = true"
+}

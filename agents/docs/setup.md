@@ -134,6 +134,10 @@ checks each declares its mechanism) — still scope the credential as defense in
 - **PostHog** — a personal API key with only `*:read` scopes (not the `mcp_server`
   preset, which adds `feature_flag:write`); the read-scoped key blocks writes
   server-side (403), so read-only is enforced by the credential itself.
+- **LaunchDarkly** — run the local server with `--scope read` **and** a **Reader-role**
+  API token (writes are 403'd at the API); never a Writer/Developer token.
+- **Statsig** — a Console API key with the **`omni_read_only`** scope (the API rejects
+  writes); never an `omni_read_write` key.
 
 See each bundle's `SETUP.md` for exact steps.
 

@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "statsig": {
+      "key": "statsig_mcp",
+      "hint_field": "focus",
+      "label": "Statsig focus",
+      "display_label": "Statsig",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:omni_read_only",
+      "plan_line": "Statsig for feature gates, experiments, and results — rollout and experiment causation.",
+      "base_notes": "Read feature-gate definitions (incl. stale-gate detection), experiment configs and results/metrics, dynamic configs, layers/holdouts, and project config via the official Statsig MCP server (Console API). Read-only is enforced by an omni_read_only Console API key (writes are rejected at the API; see SETUP.md). WARNING: the server exposes gate/experiment-mutation tools (Create_Gate, Update_Gate_Entirely, Create/Update_Experiment_Entirely) — never call them; the read-only key blocks them."
+    }
+  }
+}

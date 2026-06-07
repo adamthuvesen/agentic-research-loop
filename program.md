@@ -43,6 +43,7 @@ escalate into bounded autonomous work.
 - Use web tools when the explanation depends on external context.
 - If Confidence MCP is enabled in the sources registry, treat it as a primary
   source for rollout and experiment questions.
+- Use LaunchDarkly or Statsig (enable `examples/sources/launchdarkly/` or `examples/sources/statsig/`) for feature-flag and experiment causation — flag/gate rollout timing, targeting changes, audit history, and experiment results. Use a read-only credential (LaunchDarkly Reader role / Statsig `omni_read_only` key).
 - If local context folders are present in the sources registry, search them
   before broad doc exploration when they are relevant.
 

@@ -127,6 +127,8 @@ actually carries the declared mechanism.
 | **PostHog**  | Product analytics — funnels, retention, HogQL, flags | read-scoped API key (`*:read`) |
 | **Amplitude** | Product analytics — charts, cohorts, experiments   | Viewer account (credential-only) \* |
 | **Mixpanel** | Product analytics — funnels, retention, JQL          | Consumer account (credential-only) \* |
+| **LaunchDarkly** | Feature flags, rollout timing, audit log, experiments | Reader-role token + `--scope read` |
+| **Statsig**  | Feature gates, experiments, results                  | `omni_read_only` Console key |
 
 \* Amplitude and Mixpanel MCP servers are read+write with no read-only flag — the
 account role is the only guardrail (and the autonomous runner skips permission

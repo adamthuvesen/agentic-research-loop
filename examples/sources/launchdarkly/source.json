@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "launchdarkly": {
+      "key": "launchdarkly_mcp",
+      "hint_field": "focus",
+      "label": "LaunchDarkly focus",
+      "display_label": "LaunchDarkly",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:reader",
+      "plan_line": "LaunchDarkly for feature-flag state, rollout timing, audit history, and experiments — rollout causation.",
+      "base_notes": "Read feature-flag configs and status across environments, the change audit log (who toggled what and when — key for 'did a flag rollout cause the metric move'), experiment definitions and iterations, and environments via the official LaunchDarkly MCP server. Read-only is enforced by a Reader-role API token plus `--scope read` (writes are rejected at the API; see SETUP.md). WARNING: the server exposes flag-mutation tools (toggle-flag, create/delete-flag, update-targeting, start/stop-experiment) — never call them; the Reader token blocks them."
+    }
+  }
+}
