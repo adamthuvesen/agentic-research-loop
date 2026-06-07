@@ -17,23 +17,23 @@ network, and no credentials.
 uv sync --dev
 
 # Scaffold a case that investigates the bundled synthetic dataset
-uv run research init registration-drop --template root-cause --mode autonomous \
-  --context-path examples/local-sources
+uv run research init export-reliability --template root-cause --mode autonomous \
+  --context-path examples/local-sources --local-only
 
 # Run it with the offline demo runner (no API keys needed)
 uv run research run <slug> --runner demo --max-cycles 6
 ```
 
-`<slug>` is the dated case name printed by `init` (e.g. `2026-03-21-registration-drop`).
+`<slug>` is the dated case name printed by `init` (e.g. `2026-06-07-export-reliability`).
 
 The run goes `plan → explore → build evidence → conclude → challenge cycle →
 complete`. The figures in the report are computed from the bundled CSV, so the
 output reflects the data rather than canned text.
 
 Prefer not to run anything? The committed result lives in
-[`examples/demo-registration-drop/`](examples/demo-registration-drop/) — read
-[`report.md`](examples/demo-registration-drop/report.md), or open
-[`replay.html`](examples/demo-registration-drop/replay.html) for the whole case
+[`examples/demo-export-reliability/`](examples/demo-export-reliability/) — read
+[`report.md`](examples/demo-export-reliability/report.md), or open
+[`replay.html`](examples/demo-export-reliability/replay.html) for the whole case
 on one page (`uv run python viz/generate.py <case_dir>`).
 
 ## How it works
@@ -74,8 +74,8 @@ the loop over the bundled synthetic data — no MCP servers, no API keys, no
 external sources:
 
 ```bash
-uv run research init registration-drop --template root-cause --mode autonomous \
-  --context-path examples/local-sources
+uv run research init export-reliability --template root-cause --mode autonomous \
+  --context-path examples/local-sources --local-only
 uv run research run <slug> --runner claude-local --max-cycles 8
 ```
 
@@ -85,10 +85,11 @@ context notes, forms and tests hypotheses, writes `notes.md`/`report.md`, and
 runs the mandatory challenge cycle — entirely on your machine. Swap to `--runner
 claude` once you've wired up real sources (see Setup).
 
-A committed snapshot of a real run lives in
-[`examples/claude-local-registration-drop/`](examples/claude-local-registration-drop/)
-— the agent decomposed the drop into two effects, computed a counterfactual
-impact split, and capped its own confidence in the challenge cycle.
+A claude-local worked example will live in
+[`examples/claude-local-export-reliability/`](examples/claude-local-export-reliability/)
+once you run the commands above and copy the completed case markdown into that
+folder (see its README). The scenario uses fictional Northwind Analytics export
+data, not a real customer investigation.
 
 ## Sources
 
