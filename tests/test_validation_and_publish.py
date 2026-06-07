@@ -560,25 +560,25 @@ def test_strict_passes_with_na_strongest_rival(repo_root: Path, monkeypatch) -> 
 # --- M1: Source plan derivation ---
 
 
-def test_manual_init_no_notion_excludes_notion_from_brief(
+def test_manual_init_no_gsc_excludes_gsc_from_brief(
     repo_root: Path, monkeypatch
 ) -> None:
     monkeypatch.chdir(repo_root)
     main(
         [
             "init",
-            "no-notion-test",
+            "no-gsc-test",
             "--template",
             "exploration",
             "--mode",
             "guided",
-            "--no-notion",
+            "--no-gsc",
         ]
     )
     path = _first_case(repo_root)
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
-    assert "Notion" not in brief_text
+    assert "GSC" not in brief_text
 
 
 # --- Design-only strict checks (safe at scaffold time) ---
@@ -744,7 +744,9 @@ def test_strict_completion_error_distinguishes_not_run_from_failed(
     assert not any("has not run one yet" in e for e in failed_errors)
 
 
-def test_manual_init_default_sources_include_all(repo_root: Path, monkeypatch) -> None:
+def test_manual_init_default_sources_include_builtins(
+    repo_root: Path, monkeypatch
+) -> None:
     monkeypatch.chdir(repo_root)
     main(
         [
@@ -759,9 +761,10 @@ def test_manual_init_default_sources_include_all(repo_root: Path, monkeypatch) -
     path = _first_case(repo_root)
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
-    assert "Notion" in brief_text
-    assert "Slack" in brief_text
-    assert "Snowflake" in brief_text
+    # After the bundle migration the default built-ins are GSC + web search;
+    # everything else is an opt-in bundle (enable with `research source enable`).
+    assert "GSC" in brief_text
+    assert "Web tools" in brief_text
 
 
 def test_publish_rejects_missing_executive_summary(

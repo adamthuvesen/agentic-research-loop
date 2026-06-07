@@ -1,0 +1,20 @@
+{
+  "_comment": "Snowflake MCP server (snowflake-labs-mcp), local stdio. Read-only is enforced by the SQL statement allowlist in config/snowflake-mcp-tools.yaml (SELECT/DESCRIBE/SHOW/USE only) — pinned via --service-config-file. Uses your `default` Snowflake connection (~/.snowflake/config.toml); no secret in committed config. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "snowflake",
+  "read_only_mechanism": "statement-allowlist",
+  "claude": {
+    "snowflake": {
+      "type": "stdio",
+      "command": "/usr/bin/env",
+      "args": ["-u", "UV_ENV_FILE", "uvx", "--from", "snowflake-labs-mcp", "mcp-server-snowflake", "--connection-name", "default", "--service-config-file", "config/snowflake-mcp-tools.yaml"]
+    }
+  },
+  "cursor": {
+    "snowflake": {
+      "type": "stdio",
+      "command": "/usr/bin/env",
+      "args": ["-u", "UV_ENV_FILE", "uvx", "--from", "snowflake-labs-mcp", "mcp-server-snowflake", "--connection-name", "default", "--service-config-file", "config/snowflake-mcp-tools.yaml"]
+    }
+  },
+  "codex_toml": "[mcp_servers.snowflake]\ncommand = \"/usr/bin/env\"\nargs = [\"-u\", \"UV_ENV_FILE\", \"uvx\", \"--from\", \"snowflake-labs-mcp\", \"mcp-server-snowflake\", \"--connection-name\", \"default\", \"--service-config-file\", \"config/snowflake-mcp-tools.yaml\"]\nenabled = true"
+}

@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "confidence": {
+      "key": "confidence_mcp",
+      "hint_field": "focus",
+      "label": "Confidence focus",
+      "display_label": "Confidence",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Confidence for experiments, rollouts, and decision history.",
+      "base_notes": "Query rollout timing, experiment state, decision history, and results via the Confidence experiments MCP server. Read-only — never modify experiments or flags."
+    }
+  }
+}

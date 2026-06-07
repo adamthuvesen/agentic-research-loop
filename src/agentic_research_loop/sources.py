@@ -89,39 +89,6 @@ def classify_read_only_mechanism(value: str) -> ReadOnlyMechanism | None:
 
 
 _BUILTIN_SOURCES: dict[str, SourceSpec] = {
-    "notion": {
-        "key": "notion_mcp",
-        "transport": "http-oauth",
-        "read_only_mechanism": "credential-only",
-        "hint_field": "target",
-        "label": "Notion target",
-        "display_label": "Notion",
-        "freshness_caveat_group": "docs",
-        "plan_line": "Notion for workspace pages, databases, and discussions.",
-        "base_notes": "Search Notion pages, databases, and discussions. Read-only — never create or update pages.",
-    },
-    "slack": {
-        "key": "slack_mcp",
-        "transport": "http-oauth",
-        "read_only_mechanism": "credential-only",
-        "hint_field": "focus",
-        "label": "Slack focus",
-        "display_label": "Slack",
-        "freshness_caveat_group": "docs",
-        "plan_line": "Slack for recent discussions, decisions, and informal context. Ephemeral — cite with caveat.",
-        "base_notes": "Search recent discussions, decisions, and informal context. Read-only — never send or schedule messages. Slack is ephemeral — note this when citing.",
-    },
-    "linear": {
-        "key": "linear_mcp",
-        "transport": "http-oauth",
-        "read_only_mechanism": "credential-only",
-        "hint_field": "focus",
-        "label": "Linear focus",
-        "display_label": "Linear",
-        "freshness_caveat_group": "docs",
-        "plan_line": "Linear for project status, issue tracking, and ownership context.",
-        "base_notes": "Search project status, issue tracking, cycle planning, and ownership context. Read-only — never create or update issues.",
-    },
     "web-search": {
         "key": "web_search",
         "transport": "native",
@@ -132,34 +99,6 @@ _BUILTIN_SOURCES: dict[str, SourceSpec] = {
         "freshness_caveat_group": "web",
         "plan_line": "Web tools for external context and public changes.",
         "base_notes": "Search for external context, public incidents, competitor moves, and platform changes. Read-only.",
-    },
-    "snowflake": {
-        "key": "snowflake",
-        "transport": "stdio",
-        "read_only_mechanism": "statement-allowlist",
-        "hint_field": "focus",
-        "label": "Snowflake focus",
-        "display_label": "Snowflake",
-        "freshness_caveat_group": "live",
-        "plan_line": "Snowflake for live metrics and warehouse-backed evidence.",
-        "base_notes": (
-            "Query live metrics via the Snowflake MCP server (configured in .mcp.json). "
-            "Prefer semantic views and curated marts when they cover the question; else "
-            "query staging tables. Verify objects live (describe_semantic_view / "
-            "SHOW TABLES / DESCRIBE) before querying. "
-            "Read-only — SELECT queries only, never ALTER/DELETE/DROP."
-        ),
-    },
-    "confidence": {
-        "key": "confidence_mcp",
-        "transport": "http-oauth",
-        "read_only_mechanism": "credential-only",
-        "hint_field": "focus",
-        "label": "Confidence focus",
-        "display_label": "Confidence",
-        "freshness_caveat_group": "live",
-        "plan_line": "Confidence for experiments, rollouts, and decision history.",
-        "base_notes": "Query rollout timing, experiment state, decision history, and results. Read-only — never modify experiments or flags.",
     },
     "gsc": {
         "key": "gsc",

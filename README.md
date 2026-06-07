@@ -98,23 +98,23 @@ flag, an OAuth scope, or, where only the credential can guarantee it, a read-onl
 account. A test (`tests/test_readonly_contract.py`) checks that the shipped config
 actually carries the declared mechanism.
 
-**Built in** (wired by default, or no MCP server needed):
+**Built in** (no MCP server needed — always available):
 
-| Source          | What it provides                                                         | Read-only          |
-| --------------- | ------------------------------------------------------------------------ | ------------------ |
-| **Notion**      | Workspace pages, databases, discussions                                  | read account/scope |
-| **Slack**       | Decisions, thread context, informal signals                              | read account/scope |
-| **Linear**      | Issue state, project progress, ownership                                 | read account/scope |
-| **Snowflake**   | Live metric evidence                                                     | SQL statement allowlist |
-| **Confidence**  | Experiments, flags, rollouts, decision history                           | read account/scope |
-| **GSC**         | Organic search — warehouse-synced default; `research gsc` CLI fallback   | `webmasters.readonly` scope |
-| **Web**         | External context                                                         | native read-only tool |
-| **Local files** | CSVs, markdown, exports scoped to the question                           | read-only |
+| Source          | What it provides                                                       | Read-only |
+| --------------- | ---------------------------------------------------------------------- | --------- |
+| **GSC**         | Organic search — warehouse-synced default; `research gsc` CLI fallback | `webmasters.readonly` scope |
+| **Web**         | External context                                                       | native read-only tool |
+| **Local files** | CSVs, markdown, exports scoped to the question                         | read-only |
 
-**Opt-in bundles** ([`examples/sources/<name>/`](examples/sources/) — copy to enable):
+**Opt-in bundles** ([`examples/sources/<name>/`](examples/sources/) — `research source enable <name>`):
 
 | Source       | What it provides                              | Read-only mechanism |
 | ------------ | --------------------------------------------- | ------------------- |
+| **Notion**   | Workspace pages, databases, discussions       | read account (credential-only) |
+| **Slack**    | Decisions, thread context, informal signals   | read account (credential-only) |
+| **Linear**   | Issue state, project progress, ownership      | read account (credential-only) |
+| **Confidence** | Experiments, flags, rollouts, decision history | read account (credential-only) |
+| **Snowflake** | Live metric evidence                          | SQL statement allowlist |
 | **GitHub**   | Issues, PRs, commits, code search             | `/readonly` endpoint (strict filter) |
 | **Jira**     | Issue state, projects, ownership              | view-only account (credential-only) |
 | **Postgres** | Application-DB / live metric evidence         | `--access-mode=restricted` |
@@ -140,10 +140,10 @@ account role is the only guardrail (and the autonomous runner skips permission
 prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
-`.cursor/mcp.json`) are the canonical source of truth for built-in servers — edit
-all three when adding or removing one; a test flags drift. New sources stay out of
-them: ship as an `examples/sources/<name>/` bundle instead. Source routing per case
-is stored in `state/sources.json`.
+`.cursor/mcp.json`) **ship neutral** — no servers wired by default, so a clone carries
+nobody's stack. Every source is an opt-in bundle; `uv run research source enable <name>`
+wires one into all three configs locally (`research source list` / `disable` too).
+Source routing per case is stored in `state/sources.json`.
 
 Two extension points: pass `--local-only` to `init` to disable every external
 source and investigate just `--context-path` files, and enable any bundle with

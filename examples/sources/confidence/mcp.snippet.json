@@ -1,0 +1,12 @@
+{
+  "_comment": "Confidence experiments MCP server (hosted, OAuth) — rollout/experiment data. Read-only is credential-enforced (connect read-only; never modify experiments or flags). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "confidence-experiments",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "confidence-experiments": { "type": "http", "url": "https://mcp.confidence.dev/mcp/experiments" }
+  },
+  "cursor": {
+    "confidence-experiments": { "url": "https://mcp.confidence.dev/mcp/experiments" }
+  },
+  "codex_toml": "[mcp_servers.confidence-experiments]\nurl = \"https://mcp.confidence.dev/mcp/experiments\"\nenabled = true"
+}

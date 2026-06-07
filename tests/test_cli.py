@@ -64,7 +64,7 @@ def test_init_sets_consecutive_failures_to_zero(repo_root: Path, monkeypatch) ->
     assert progress["consecutive_failures"] == 0
 
 
-def test_init_registers_confidence_source(repo_root: Path, monkeypatch) -> None:
+def test_init_registers_source_hint(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
 
     exit_code = main(
@@ -75,7 +75,7 @@ def test_init_registers_confidence_source(repo_root: Path, monkeypatch) -> None:
             "root-cause",
             "--mode",
             "autonomous",
-            "--confidence-hint",
+            "--gsc-hint",
             "signup funnel",
         ]
     )
@@ -85,9 +85,8 @@ def test_init_registers_confidence_source(repo_root: Path, monkeypatch) -> None:
     sources = __import__("json").loads(
         (case_path / "state" / "sources.json").read_text(encoding="utf-8")
     )
-    assert sources["confidence_mcp"]["enabled"] is True
-    assert sources["confidence_mcp"]["focus"] == "signup funnel"
-    assert sources["notion_mcp"]["enabled"] is True
+    assert sources["gsc"]["enabled"] is True
+    assert sources["gsc"]["focus"] == "signup funnel"
     assert sources["web_search"]["enabled"] is True
 
 
@@ -102,11 +101,9 @@ def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
             "exploration",
             "--mode",
             "guided",
-            "--notion-hint",
-            "Onboarding DB",
             "--web-search-hint",
             "competitor launch",
-            "--snowflake-hint",
+            "--gsc-hint",
             "user funnel",
         ]
     )
@@ -116,9 +113,8 @@ def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
     sources = __import__("json").loads(
         (case_path / "state" / "sources.json").read_text(encoding="utf-8")
     )
-    assert sources["notion_mcp"]["target"] == "Onboarding DB"
     assert sources["web_search"]["focus"] == "competitor launch"
-    assert sources["snowflake"]["focus"] == "user funnel"
+    assert sources["gsc"]["focus"] == "user funnel"
 
 
 def test_init_omits_disabled_source_hints_from_brief(
@@ -134,8 +130,8 @@ def test_init_omits_disabled_source_hints_from_brief(
             "exploration",
             "--mode",
             "guided",
-            "--no-notion",
-            "--notion-hint",
+            "--no-gsc",
+            "--gsc-hint",
             "Do not search this database",
         ]
     )
@@ -143,7 +139,7 @@ def test_init_omits_disabled_source_hints_from_brief(
     assert exit_code == 0
     case_path = sorted((repo_root / "research").iterdir())[0]
     brief_text = (case_path / "brief.md").read_text(encoding="utf-8")
-    assert "Notion" not in brief_text
+    assert "GSC" not in brief_text
     assert "Do not search this database" not in brief_text
 
 

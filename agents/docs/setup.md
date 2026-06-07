@@ -1,16 +1,14 @@
 # First-time setup
 
-This repo **commits shared MCP configuration** (no API keys or personal tokens). Each collaborator still **authenticates personally** to Slack, Notion, Linear, Confidence, and Snowflake. Nothing in git replaces your OAuth sign-ins or Snowflake login.
+This repo **ships neutral MCP configs** — no servers wired by default. Sources are opt-in bundles under `examples/sources/`; enable the ones you need with `uv run research source enable <name>`, then **authenticate personally** to each (OAuth, an API key, a Snowflake login). Nothing in git carries credentials.
 
 ## What you get from `git clone`
 
-- `.mcp.json` — hand-maintained **Claude Code** project MCP config (repo root).
-- `.codex/config.toml` — hand-maintained **Codex** project MCP config ([Codex MCP](https://developers.openai.com/codex/mcp)).
-- `.cursor/mcp.json` — hand-maintained **Cursor** project MCP config (Cursor drives OAuth via its own UI, so this file does not carry a `callbackPort`).
+- `.mcp.json` / `.codex/config.toml` / `.cursor/mcp.json` — **neutral** project MCP configs for Claude Code / Codex / Cursor (no servers by default). `research source enable <name>` wires a bundle's server into all three.
 - `.claude/`, `.codex/`, and `.cursor/` — committed project agent layout (e.g. Claude `settings.json`). **Skills:** `.claude/skills`, `.codex/skills`, and `.cursor/skills` are the same committed symlink to `agents/skills/`, so Claude Code, Codex, and Cursor all load repo skills from clone with no extra sync.
 - `config/snowflake-mcp-tools.yaml` — Snowflake MCP tool allowlists (read-only SQL posture).
 
-Each of the three MCP config files is its own canonical source of truth for its tool. There is no generator, no intermediate registry — edit in place in each tool's native format. `uv run pytest -q` will fail if the three files disagree on the set of MCP server names, which catches the "added to one, forgot the others" mistake.
+The three MCP config files ship **neutral** and stay that way in git. To wire a source, run `uv run research source enable <name>` — it edits all three locally from the bundle's `mcp.snippet.json` (don't commit your enabled configs back). `uv run pytest -q` still checks the three files agree on server names.
 
 ## Prerequisites
 
@@ -37,7 +35,7 @@ uv run pytest -q # optional
 
 ## Cursor
 
-Opening the repo in Cursor should surface all servers from the committed `.cursor/mcp.json` automatically. Cursor handles OAuth via its own Settings → MCP panel using a fixed redirect URI — complete Slack (and any other OAuth server) sign-in there on first use. Do not commit secrets or personal OAuth state.
+The committed `.cursor/mcp.json` ships neutral. After you `research source enable <name>`, Cursor surfaces the wired servers; complete OAuth in its Settings → MCP panel (fixed redirect URI) on first use. Do not commit secrets or personal OAuth state.
 
 ## Autonomous `research run` / `plan` and agent CLIs
 
@@ -47,10 +45,10 @@ The default external agent is **Claude** (`config/runners/claude.json` uses `--d
 
 Official reference: [Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp).
 
-1. Open a terminal in this repository.
-2. Run `claude`.
-3. Run `/mcp`, approve project servers, and complete OAuth for each HTTP provider when prompted.
-4. Snowflake uses the `default` connection in your Snowflake config (see below).
+1. Enable the sources you want: `uv run research source enable <name>` (see `research source list`).
+2. Open a terminal in this repository and run `claude`.
+3. Run `/mcp`, approve the servers you enabled, and complete OAuth for each HTTP provider when prompted.
+4. Each bundle's `SETUP.md` covers its credentials (Snowflake uses your `default` connection; see below).
 
 ## MCP: Codex (optional)
 
@@ -59,7 +57,7 @@ Official references: [Codex MCP](https://developers.openai.com/codex/mcp), [Code
 Codex only loads **project-scoped** `.codex/config.toml` when this repository is marked as a **trusted** project. If tools do not appear, confirm trust first.
 
 1. Mark this repo as a trusted project in Codex.
-2. Use `codex mcp` (and `codex mcp login <server-name>` for OAuth HTTP servers such as Slack) per Codex docs. The committed TOML sets `mcp_oauth_callback_port` for Slack; complete OAuth locally — tokens are **not** stored in git.
+2. Enable sources with `research source enable <name>`, then `codex mcp login <server-name>` for OAuth HTTP servers. Slack needs a top-level `mcp_oauth_callback_port` — its bundle `SETUP.md` says where to add it. Complete OAuth locally — tokens are **not** stored in git.
 
 ## Snowflake
 
@@ -160,16 +158,16 @@ See each bundle's `SETUP.md` for exact steps.
 uv run python scripts/check_claude_setup.py
 ```
 
-This checks `uv`, optional `codex` presence, Snowflake profile, and (when `claude` is installed) `claude mcp get` for each server listed in `.mcp.json`. Failures on Slack/Notion/etc. are normal until you complete OAuth in your IDE. Repo-level drift across the three MCP config files is caught by `uv run pytest -q`, not this script.
+This checks `uv`, optional `codex` presence, Snowflake profile, and (when `claude` is installed) `claude mcp get` for any servers you've enabled. With neutral configs and nothing enabled yet it has little to check; failures on an enabled HTTP server are normal until you complete OAuth in your IDE.
 
-## Adding a new MCP server
+## Adding a new source
 
-Each of the three files is its tool's canonical MCP config. To add a server, edit all three directly:
+Sources are **bundles**, not committed config. To add one, create
+`examples/sources/<name>/` with three files (copy an existing bundle; see
+[`examples/sources/README.md`](../../examples/sources/README.md)):
 
-1. **`.mcp.json`** (Claude Code) — add an entry under `mcpServers`. Use `type: "stdio"` + `command`/`args` for local servers, or `type: "http"` + `url` (and `oauth.callbackPort` if the server needs OAuth with a fixed callback).
-2. **`.codex/config.toml`** — add a `[mcp_servers.<name>]` block with either `command`/`args` (stdio) or `url` (http), plus `enabled = true`. If the server uses OAuth with a callback port and no existing server already sets `mcp_oauth_callback_port`, add that at the top level.
-3. **`.cursor/mcp.json`** — add an entry under `mcpServers`. stdio needs an explicit `"type": "stdio"` plus `command`/`args`. HTTP entries are bare `{"url": "..."}` — do not include `type: "http"` or an `oauth` block (Cursor handles OAuth through its own UI with a fixed redirect URI).
+1. **`source.json`** — the registry spec (`transport`, `read_only_mechanism`, `base_notes`, …).
+2. **`mcp.snippet.json`** — the server block in all three tool shapes (`claude`, `cursor`, `codex_toml`). stdio needs `command`/`args`; HTTP needs `url` (+ `oauth` in the `claude` shape if it uses a fixed callback, like Slack).
+3. **`SETUP.md`** — credentials + how read-only is enforced (must mention read-only).
 
-Worked example: the `slack` entry across all three files shows the http + OAuth shape; the `snowflake` entry shows stdio.
-
-After editing, run `uv run pytest -q`. The consistency test (`tests/test_mcp_configs_consistent.py`) fails if the three files disagree on the set of server names.
+Then `uv run research source enable <name>` wires it into all three MCP configs. `uv run pytest -q` runs the read-only contract test (`tests/test_readonly_contract.py`) over every bundle plus the three-file consistency check.

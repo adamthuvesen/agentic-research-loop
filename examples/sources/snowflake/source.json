@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "snowflake": {
+      "key": "snowflake",
+      "hint_field": "focus",
+      "label": "Snowflake focus",
+      "display_label": "Snowflake",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "statement-allowlist",
+      "plan_line": "Snowflake for live metrics and warehouse-backed evidence.",
+      "base_notes": "Query live metrics via the Snowflake MCP server. Prefer semantic views and curated marts when they cover the question; else query staging tables. Verify objects live (describe_semantic_view / SHOW TABLES / DESCRIBE) before querying. Read-only — the server's SQL statement allowlist permits SELECT/DESCRIBE/SHOW/USE only, never ALTER/DELETE/DROP."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "notion": {
+      "key": "notion_mcp",
+      "hint_field": "target",
+      "label": "Notion target",
+      "display_label": "Notion",
+      "freshness_caveat_group": "docs",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Notion for workspace pages, databases, and discussions.",
+      "base_notes": "Search Notion pages, databases, and discussions. Read-only — never create or update pages."
+    }
+  }
+}

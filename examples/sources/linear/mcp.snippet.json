@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Linear MCP server (hosted, OAuth). Read-only is credential-enforced — connect a read-only Linear account; there is no read-only flag (see SETUP.md). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "linear",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "linear": { "type": "http", "url": "https://mcp.linear.app/mcp" }
+  },
+  "cursor": {
+    "linear": { "url": "https://mcp.linear.app/mcp" }
+  },
+  "codex_toml": "[mcp_servers.linear]\nurl = \"https://mcp.linear.app/mcp\"\nenabled = true"
+}

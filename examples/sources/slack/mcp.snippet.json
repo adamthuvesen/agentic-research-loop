@@ -1,0 +1,16 @@
+{
+  "_comment": "Official Slack MCP server (hosted, OAuth). Read-only is credential-enforced — grant the Slack app read (search/history) scopes only; never send/schedule. Set oauth.clientId to your Slack client id. Codex needs a top-level mcp_oauth_callback_port (see SETUP.md). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "slack",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "slack": {
+      "type": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "oauth": { "clientId": "YOUR_SLACK_CLIENT_ID", "callbackPort": 3118 }
+    }
+  },
+  "cursor": {
+    "slack": { "url": "https://mcp.slack.com/mcp" }
+  },
+  "codex_toml": "[mcp_servers.slack]\nurl = \"https://mcp.slack.com/mcp\"\nenabled = true"
+}

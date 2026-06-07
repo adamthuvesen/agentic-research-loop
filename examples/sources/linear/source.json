@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "linear": {
+      "key": "linear_mcp",
+      "hint_field": "focus",
+      "label": "Linear focus",
+      "display_label": "Linear",
+      "freshness_caveat_group": "docs",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Linear for project status, issue tracking, and ownership context.",
+      "base_notes": "Search project status, issue tracking, cycle planning, and ownership context. Read-only — never create or update issues."
+    }
+  }
+}

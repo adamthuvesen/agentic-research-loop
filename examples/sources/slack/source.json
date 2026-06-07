@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "slack": {
+      "key": "slack_mcp",
+      "hint_field": "focus",
+      "label": "Slack focus",
+      "display_label": "Slack",
+      "freshness_caveat_group": "docs",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Slack for recent discussions, decisions, and informal context. Ephemeral — cite with caveat.",
+      "base_notes": "Search recent discussions, decisions, and informal context. Read-only — never send or schedule messages. Slack is ephemeral — note this when citing."
+    }
+  }
+}

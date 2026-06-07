@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Notion MCP server (hosted, OAuth). Read-only is credential-enforced — grant the integration read access to the pages/databases you want searchable; there is no read-only flag (see SETUP.md). Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "notion",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "notion": { "type": "http", "url": "https://mcp.notion.com/mcp" }
+  },
+  "cursor": {
+    "notion": { "url": "https://mcp.notion.com/mcp" }
+  },
+  "codex_toml": "[mcp_servers.notion]\nurl = \"https://mcp.notion.com/mcp\"\nenabled = true"
+}
