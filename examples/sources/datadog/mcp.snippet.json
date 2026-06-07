@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Datadog managed MCP server (remote, OAuth). Read-only is enforced by roles/IAM, NOT a config flag — authenticate a principal with the Datadog Read-Only Role (see SETUP.md). This is a preview ('unstable') API path and may change. Choose your regional endpoint. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "datadog",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "datadog": { "type": "http", "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp" }
+  },
+  "cursor": {
+    "datadog": { "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp" }
+  },
+  "codex_toml": "[mcp_servers.datadog]\nurl = \"https://mcp.datadoghq.com/api/unstable/mcp-server/mcp\"\nenabled = true"
+}

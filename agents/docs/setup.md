@@ -110,15 +110,21 @@ can guarantee read-only*; the account or IAM role you connect is the only guardr
   create/edit/transition). The remote server has no read-only flag.
 - **BigQuery** — authenticate a principal with only **BigQuery Data Viewer + Job
   User**, and prefer the `execute_sql_readonly` tool.
+- **Confluence** — same Atlassian server as Jira; provision a **view-only account**
+  (Confluence read; no add/edit/comment).
+- **Datadog** — authenticate a principal with the **Datadog Read-Only Role** (or
+  `*_read` app-key scopes). Preview API — may change.
 
-The rest enforce read-only in config (and the contract test verifies it) — still
-scope the credential as defense in depth:
+The rest enforce read-only via a config flag or a read-only scope (the contract test
+checks each declares its mechanism) — still scope the credential as defense in depth:
 
 - **GitHub** — `/readonly` endpoint (strict filter); pair with a read-only PAT.
 - **Postgres** — `--access-mode=restricted`; pair with a SELECT-only role and pass
   `DATABASE_URI` via the environment, never committed config.
 - **DuckDB** — read-only by default (omit `--read-write`).
 - **GA4** — `analytics.readonly` ADC scope.
+- **Sentry** — a read-scoped auth token (`org:read`, `project:read`, `event:read`);
+  not the hosted OAuth flow, which grants write.
 
 See each bundle's `SETUP.md` for exact steps.
 

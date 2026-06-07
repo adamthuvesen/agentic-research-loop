@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "sentry": {
+      "key": "sentry_mcp",
+      "hint_field": "focus",
+      "label": "Sentry focus",
+      "display_label": "Sentry",
+      "freshness_caveat_group": "live",
+      "transport": "stdio",
+      "read_only_mechanism": "scope:org:read,project:read,event:read",
+      "plan_line": "Sentry for errors, events, stack traces, and releases — engineering root-cause.",
+      "base_notes": "Search issues, events, stack traces, and releases via the official Sentry MCP server (search_events / search_issues / get_issue_details / get_trace_details). Strong for engineering root-cause: when an error spiked, which release introduced it, and the failing stack frame. Read-only — authenticate with a read-scoped token; never resolve, assign, or update issues, or create projects."
+    }
+  }
+}

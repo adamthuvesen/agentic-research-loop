@@ -121,6 +121,9 @@ actually carries the declared mechanism.
 | **DuckDB**   | Local files (CSV/Parquet), embedded analytics | read-only by default |
 | **BigQuery** | Warehouse metrics (incl. GA4/GSC exports)     | IAM: Data Viewer + Job User |
 | **GA4**      | Site analytics — sessions, users, conversions | `analytics.readonly` scope |
+| **Sentry**   | Errors, events, stack traces, releases        | read-scoped token (`*:read`) |
+| **Datadog**  | Metrics, monitors, logs, traces, incidents    | Datadog Read-Only Role (credential-only) |
+| **Confluence** | Wiki spaces, pages, curated docs            | view-only account (credential-only) |
 
 The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
 `.cursor/mcp.json`) are the canonical source of truth for built-in servers — edit

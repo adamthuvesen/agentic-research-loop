@@ -25,10 +25,12 @@ escalate into bounded autonomous work.
   **DuckDB** (`examples/sources/<name>/`). Treat them like Snowflake: discover objects
   live, query SELECT-only, stay read-only.
 - Use Notion MCP for curated context, internal documentation, live workspace pages, databases, and discussions.
+- Use Confluence (enable `examples/sources/confluence/`) for wiki spaces, runbooks, RFCs, and curated internal docs — complements Notion.
 - Use Slack when the question depends on recent decisions, incident threads, or informal context that has not landed in docs yet.
 - Use Linear when the question depends on issue state, project progress, cycle planning, or ownership context.
 - Use GitHub (enable `examples/sources/github/`) when the question depends on code, pull requests, commits, or who changed what — strong for engineering root-cause.
 - Use Jira (enable `examples/sources/jira/`) when work is tracked there instead of Linear — issue state, projects, and ownership.
+- Use Sentry or Datadog (enable `examples/sources/sentry/` or `examples/sources/datadog/`) for incident, error, and performance root-cause — Sentry for errors, events, stack traces, and releases; Datadog for metrics, monitors, logs, traces, and incidents.
 - Use Google Search Console (GSC) for organic search traffic, query performance,
   CTR, impressions, and ranking trends. **Default:** query GSC-shaped data in your **warehouse** (Snowflake or BigQuery)
   (e.g. the GSC-synced staging schema, or the GSC BigQuery bulk export).

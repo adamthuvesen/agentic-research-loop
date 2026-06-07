@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "datadog": {
+      "key": "datadog_mcp",
+      "hint_field": "focus",
+      "label": "Datadog focus",
+      "display_label": "Datadog",
+      "freshness_caveat_group": "live",
+      "transport": "http-oauth",
+      "read_only_mechanism": "credential-only",
+      "plan_line": "Datadog for metrics, monitors, logs, traces, and incidents.",
+      "base_notes": "Query metrics, monitors, logs, traces/APM, incidents, dashboards, and SLOs via the official Datadog MCP server. Strong for incident and performance root-cause: when a metric broke its baseline, which monitor alerted, and the correlated logs and traces. Read-only is enforced by a Datadog Read-Only Role (see SETUP.md) — never mute monitors or schedule/cancel downtime."
+    }
+  }
+}

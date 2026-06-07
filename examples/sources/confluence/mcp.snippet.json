@@ -1,0 +1,12 @@
+{
+  "_comment": "Official Atlassian remote MCP server (covers Confluence AND Jira) — http + OAuth. NO read-only flag: read-only is enforced by the connected account's permissions (see SETUP.md). This is the SAME endpoint as the jira bundle; if Jira is already enabled you can reuse one server entry for both. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "server_name": "confluence",
+  "read_only_mechanism": "credential-only",
+  "claude": {
+    "confluence": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }
+  },
+  "cursor": {
+    "confluence": { "url": "https://mcp.atlassian.com/v1/mcp" }
+  },
+  "codex_toml": "[mcp_servers.confluence]\nurl = \"https://mcp.atlassian.com/v1/mcp\"\nenabled = true"
+}
