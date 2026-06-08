@@ -83,7 +83,7 @@ def test_research_move_block_is_hypothesis_led() -> None:
     assert "1-2 active hypotheses" in text
     assert "strongest rival explanation" in text
     assert "evidence that would change your confidence" in text
-    assert "Snowflake -> Confidence -> Notion still counts as one thread" in text
+    assert "still counts as one thread" in text
 
 
 def test_build_cycle_prompt_includes_hypothesis_and_hint_blocks(

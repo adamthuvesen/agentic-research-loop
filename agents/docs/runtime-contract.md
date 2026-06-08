@@ -5,21 +5,20 @@ source selection, and synthesis directly using MCP tools.
 
 ## Agent-executed research
 
-The agent accesses all sources via MCP tools and APIs. Web tools are built in and
-local context attaches at invocation (`--context-path`); every other source below
-is an **opt-in bundle** — wire one with `research source enable <name>` (see
-`examples/sources/`):
+The agent accesses all sources via MCP tools and APIs. Web search is built in and
+local context attaches at invocation (`--context-path`); every other source is an
+**opt-in bundle** — wire one with `research source enable <name>`. The bundle
+catalog lives in `examples/sources/`, and `program.md` maps which source family
+fits which question (warehouses, product analytics, experiments/flags, docs,
+comms, issue tracking, observability, revenue/CRM, search/web traffic). Discover
+the set enabled for a case with `research source list`; it is recorded in
+`state/sources.json`.
 
-- Snowflake
-- Notion MCP
-- Slack
-- Linear
-- Confidence MCP
-- Google Search Console (enable `examples/sources/gsc/`) — **default:** Snowflake (GSC-synced tables; use the Snowflake MCP server and warehouse discovery). **Fallback:** `research gsc` CLI when you need fresher data than the sync, suspect Fivetran lag, or API-only dimensions
-- Google Analytics 4 — official GA4 MCP server (enable the `examples/sources/ga4/` bundle)
-- web tools
-- local context
-- higher-level synthesis and source strategy
+Where a source is also synced into a warehouse (for example Google Search
+Console), prefer the warehouse copy and fall back to the live API (`research gsc`)
+only for fresher-than-sync data or API-only dimensions.
+
+Beyond source access, the agent owns higher-level synthesis and source strategy.
 
 These flows should land in the same artifacts:
 

@@ -305,10 +305,10 @@ source selection, and synthesis directly using MCP tools.
 ### Agent-executed research
 
 The runtime does not query external systems itself. The external agent runner
-accesses sources read-only via MCP tools, the built-in web search tool, the
-`research gsc` CLI fallback, and any attached local context paths. Enabled
-opt-in bundles (Snowflake, Notion, Slack, Linear, Confidence, GA4, etc.) must
-be wired before the agent can use them.
+accesses sources read-only via MCP tools, the built-in web search tool, CLI
+fallbacks (e.g. `research gsc`), and any attached local context paths. Enabled
+opt-in bundles must be wired (`research source enable <name>`) before the agent
+can use them.
 
 All work lands in the shared artifact model.
 
@@ -320,7 +320,7 @@ The system is intentionally opinionated about a few things:
 
 - `brief.md` is protected during autonomous loops
 - external-system work is read-only
-- Snowflake work must use the Snowflake MCP server
+- warehouse work uses the bundle's MCP server (e.g. the Snowflake bundle's allowlisted server), not improvised queries
 - structured findings go in `state/findings.json` when that file is in use
 - status, prompt rendering, and publish tolerate malformed optional cycle
   summary history so humans can still inspect or publish otherwise valid cases

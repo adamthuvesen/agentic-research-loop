@@ -188,7 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     gsc_parser = subparsers.add_parser(
         "gsc",
-        help="GSC Search Analytics API (fallback — prefer Snowflake for synced GSC data)",
+        help="GSC Search Analytics API (fallback — prefer your warehouse for synced GSC data)",
     )
     gsc_parser.add_argument(
         "--start-date", required=True, type=_iso_date, help="YYYY-MM-DD"

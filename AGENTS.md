@@ -8,7 +8,7 @@ Start with `program.md` for the operating model, then use `README.md` for the CL
 
 This repo is a **read/search-only consumer** of all external systems.
 
-Slack, Notion, Linear, and Confidence MCP servers are read-only by design. If a workflow seems to require writing to an external system, stop and ask the user.
+Every source bundle is read-only by design. If a workflow seems to require writing to an external system, stop and ask the user.
 
 ## Core behavior
 
@@ -28,9 +28,9 @@ After `git clone`, the **same tree** is wired into each tool via **committed sym
 
 Do not duplicate skill content under `.claude/`, `.codex/`, or `.cursor/`—extend `agents/skills/` only.
 
-## Snowflake
+## Warehouses
 
-Use the Snowflake MCP server (configured in `.mcp.json`; tool allowlists in `config/snowflake-mcp-tools.yaml`). It is self-contained — no dependency on any sibling repo. Read-only — never write to Snowflake from this repo.
+When a warehouse bundle is enabled, query it through its MCP server, not improvised connections — and never write. Snowflake's read-only is enforced by the committed SQL allowlist in `config/snowflake-mcp-tools.yaml` (SELECT/DESCRIBE/SHOW/USE only, pinned via `--service-config-file`); BigQuery, Postgres, Redshift, Databricks, and DuckDB each enforce read-only through their own bundle's mechanism (see `examples/sources/<name>/SETUP.md`). Each is self-contained — no dependency on any sibling repo.
 
 ## Research operating rules
 
@@ -74,7 +74,7 @@ The `research feedback` command and `state/feedback.json` are removed. Steer by 
 
 - `state/findings.json` is optional. Do not assume it exists on a newly scaffolded research.
 - When reading research state, prefer the repo's optional IO helpers for files that may not exist yet.
-- If `state/findings.json` is used, each finding should include a valid `source_type` when possible. Current publish-time caveats recognize `snowflake`, `confidence`, `gsc`, `web_search`, and `notion`.
+- If `state/findings.json` is used, each finding should include a valid `source_type` when possible — match it to a registered source key (see `research source list`). Publish derives each finding's freshness caveat from that source's caveat group, so any enabled source is recognized.
 - Do not casually rename report section headers that publishing relies on. These headings have special meaning:
   - `Executive Summary`
   - `Conclusions` or `Conclusion`

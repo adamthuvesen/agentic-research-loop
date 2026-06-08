@@ -22,8 +22,8 @@ Each cycle, advance this case with one or two focused threads — not a broad sw
 
 Pick **1–2 threads** for this cycle. No more. Depth beats coverage.
 
-A thread is a **research question**, not a source check. Querying Snowflake,
-then following up in Confidence for a related experiment, then checking Notion
+A thread is a **research question**, not a source check. Querying a warehouse,
+then following up on a related experiment or flag change, then checking a doc
 for supporting context — that's still one thread if it all serves the same
 question. Don't count source lookups against your thread budget.
 
@@ -33,11 +33,11 @@ thread** before parking it as a lead.
 
 Good cycle objectives:
 - Deep-dive a single hypothesis with data from 2–3 source types
-- Follow an unexpected finding into adjacent tables, related experiments
-  (Confidence), or supporting docs (Notion, Slack) before logging it as a lead
-  and moving on — this is one thread, not three
+- Follow an unexpected finding into adjacent tables, related experiments, or
+  supporting docs before logging it as a lead and moving on — this is one
+  thread, not three
 - Follow up on a lead from the previous cycle
-- Cross-reference a quantitative finding with qualitative context (Slack, Notion, Linear)
+- Cross-reference a quantitative finding with qualitative context (comms, docs, issue tracking)
 - Stress-test your working theory with disconfirming evidence
 - Write up findings in the report (only when evidence is solid)
 
@@ -64,7 +64,7 @@ At the end of the cycle, update `notes.md` with:
 - **Follow surprising threads** — if something doesn't fit, that's your best lead.
 - **Cross-check** — don't trust a single source for a critical claim. For any
   high-confidence finding, verify with at least one additional source type
-  (e.g. Snowflake numbers + Slack context, or GSC data + Notion strategy docs).
+  (e.g. a warehouse metric plus the comms or docs that explain it).
 - **Use the plan as a decision tool** — prioritize threads with the sharpest
   discriminating tests, and stop when a thread's completion threshold is met.
 - **Know when you're saturating** — if three searches return the same signal,
@@ -285,7 +285,7 @@ def render_research_move_block() -> str:
             "- the evidence that would change your confidence",
             "- the source path most likely to produce that evidence",
             "",
-            "A research question may span multiple source checks. Snowflake -> Confidence -> Notion still counts as one thread when all checks test the same explanation.",
+            "A research question may span multiple source checks. A warehouse query, then a related experiment, then a supporting doc still counts as one thread when all checks test the same explanation.",
             "If a source reveals something surprising, follow it far enough to sharpen or falsify the hypothesis before parking it as a lead.",
         ]
     )

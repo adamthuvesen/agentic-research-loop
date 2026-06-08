@@ -115,8 +115,9 @@ def main() -> int:
         _check_command("claude"),
         _check_command("uv"),
         _check_codex_cli_optional(),
-        _check_snowflake_profile(),
     ]
+    if "snowflake" in servers:
+        checks.append(_check_snowflake_profile())
     if claude_available:
         checks.extend(_check_server(name) for name in servers)
     else:
