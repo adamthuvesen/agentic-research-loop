@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -229,6 +230,9 @@ def _run_case(repo_root: Path, args: argparse.Namespace) -> int:
         max_cycles=args.max_cycles,
     )
     print_run_footer([summary.to_payload() for summary in summaries])
+    progress = load_json_optional(case_path / "state" / "progress.json")
+    if isinstance(progress, dict) and progress.get("stop_reason") == "planning_failed":
+        return 1
     return 0
 
 
@@ -288,7 +292,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "publish":
         case_path = resolve_case_path(repo_root, args.case)
-        output_path = publish(case_path)
+        try:
+            output_path = publish(case_path)
+        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
         print(f"Published finding to {output_path}")
         return 0
 
@@ -303,7 +311,6 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "gsc":
-        import sys
         from .google_api import gsc_query, GoogleApiError, GoogleAuthError
 
         if args.start_date > args.end_date:
@@ -323,8 +330,6 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "source":
-        import sys
-
         from .source_bundles import (
             BundleError,
             disable_bundle,

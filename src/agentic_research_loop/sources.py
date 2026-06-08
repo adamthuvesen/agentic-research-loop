@@ -246,14 +246,18 @@ def build_sources_config(
         config[spec["key"]] = entry
 
     config["local_context_folders"] = [
-        {
-            "path": str(_resolve_local_context_path(path)),
-            "notes": "Search and read local context files. Read-only.",
-        }
-        for path in (local_context_paths or [])
+        _local_context_entry(path) for path in (local_context_paths or [])
     ]
 
     return config
+
+
+def _local_context_entry(path: str) -> dict[str, str]:
+    resolved = _resolve_local_context_path(path)
+    return {
+        "path": str(resolved),
+        "notes": _local_context_notes(resolved),
+    }
 
 
 def _resolve_local_context_path(path: str) -> Path:
@@ -261,6 +265,34 @@ def _resolve_local_context_path(path: str) -> Path:
     if not resolved.exists() or not (resolved.is_file() or resolved.is_dir()):
         raise FileNotFoundError(f"Local context path does not exist: {resolved}")
     return resolved
+
+
+_SENSITIVE_PATH_PARTS = frozenset(
+    {
+        ".aws",
+        ".azure",
+        ".config",
+        ".docker",
+        ".gnupg",
+        ".kube",
+        ".ssh",
+        "Library",
+    }
+)
+
+
+def _local_context_notes(path: Path) -> str:
+    notes = "Search and read local context files. Read-only."
+    home = Path.home().resolve()
+    if path == Path(path.anchor) or path == home:
+        return (
+            notes + " Broad path attached intentionally; avoid unrelated private files."
+        )
+    if any(part in _SENSITIVE_PATH_PARTS for part in path.parts):
+        return (
+            notes + " Sensitive-looking path attached; avoid secrets and credentials."
+        )
+    return notes
 
 
 def source_plan_lines(config: dict) -> list[str]:
@@ -286,5 +318,8 @@ def source_plan_lines(config: dict) -> list[str]:
         path = str(entry.get("path", "")).strip()
         if path:
             lines.append(f"Local context folder: {path}")
+        notes = str(entry.get("notes", "")).strip()
+        if notes and notes != "Search and read local context files. Read-only.":
+            lines.append(f"Local context note: {notes}")
 
     return lines

@@ -5,9 +5,13 @@ import os
 import re
 import shlex
 import subprocess
+import threading
 from pathlib import Path
 from typing import Any
 
+
+DEFAULT_MAX_OUTPUT_BYTES = 5 * 1024 * 1024
+DEFAULT_AGENT_MESSAGE_TAIL_BYTES = 512 * 1024
 
 BUILTIN_RUNNERS = {
     "claude": "config/runners/claude.json",
@@ -67,6 +71,18 @@ def load_runner_config(path: Path) -> dict[str, Any]:
     if not isinstance(prompt_via_stdin, bool):
         raise ValueError(f"'prompt_via_stdin' must be a boolean: {path}")
 
+    max_output_bytes = payload.get("max_output_bytes", DEFAULT_MAX_OUTPUT_BYTES)
+    if not isinstance(max_output_bytes, int) or max_output_bytes <= 0:
+        raise ValueError(f"'max_output_bytes' must be a positive integer: {path}")
+
+    agent_message_tail_bytes = payload.get(
+        "agent_message_tail_bytes", DEFAULT_AGENT_MESSAGE_TAIL_BYTES
+    )
+    if not isinstance(agent_message_tail_bytes, int) or agent_message_tail_bytes <= 0:
+        raise ValueError(
+            f"'agent_message_tail_bytes' must be a positive integer: {path}"
+        )
+
     return {
         "command": command,
         "command_template": command_template,
@@ -74,6 +90,8 @@ def load_runner_config(path: Path) -> dict[str, Any]:
         "env": env,
         "timeout_seconds": timeout_seconds,
         "prompt_via_stdin": prompt_via_stdin,
+        "max_output_bytes": max_output_bytes,
+        "agent_message_tail_bytes": agent_message_tail_bytes,
     }
 
 
@@ -92,6 +110,55 @@ def render_shell_placeholders(value: str, context: dict[str, str]) -> str:
         return shlex.quote(context[key]) if key in context else m.group(0)
 
     return re.sub(r"\{(\w+)\}", _replace, value)
+
+
+class _StreamCapture:
+    def __init__(self, path: Path, *, max_bytes: int, tail_bytes: int) -> None:
+        self.path = path
+        self.max_bytes = max_bytes
+        self.tail_bytes = tail_bytes
+        self.total_bytes = 0
+        self.truncated = False
+        self.tail = bytearray()
+
+    def capture(self, stream: Any) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        written = 0
+        with self.path.open("wb") as handle:
+            while True:
+                chunk = stream.read(65536)
+                if not chunk:
+                    break
+                self.total_bytes += len(chunk)
+                if written < self.max_bytes:
+                    keep = chunk[: self.max_bytes - written]
+                    handle.write(keep)
+                    written += len(keep)
+                self.tail.extend(chunk)
+                if len(self.tail) > self.tail_bytes:
+                    del self.tail[: len(self.tail) - self.tail_bytes]
+            if self.total_bytes > self.max_bytes:
+                self.truncated = True
+                handle.write(
+                    b"\n[agentic-research-loop: output truncated after "
+                    + str(self.max_bytes).encode("ascii")
+                    + b" bytes]\n"
+                )
+
+    def tail_text(self) -> str:
+        return bytes(self.tail).decode("utf-8", errors="replace")
+
+
+def _write_stdin(stream: Any, text: str) -> None:
+    try:
+        stream.write(text.encode("utf-8"))
+    except BrokenPipeError:
+        pass
+    finally:
+        try:
+            stream.close()
+        except BrokenPipeError:
+            pass
 
 
 def invoke_runner(
@@ -123,54 +190,71 @@ def invoke_runner(
     kwargs: dict[str, Any] = {
         "cwd": repo_root,
         "env": env,
-        "capture_output": True,
-        "text": True,
-        "encoding": "utf-8",
-        "errors": "replace",
-        "timeout": runner_config["timeout_seconds"],
+        "stdin": subprocess.PIPE if runner_config["prompt_via_stdin"] else None,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
         "shell": shell,
     }
-    if runner_config["prompt_via_stdin"]:
-        kwargs["input"] = prompt_text
 
+    stdout_capture = _StreamCapture(
+        stdout_path,
+        max_bytes=runner_config["max_output_bytes"],
+        tail_bytes=runner_config["agent_message_tail_bytes"],
+    )
+    stderr_capture = _StreamCapture(
+        stderr_path,
+        max_bytes=runner_config["max_output_bytes"],
+        tail_bytes=runner_config["agent_message_tail_bytes"],
+    )
+
+    process = subprocess.Popen(command, **kwargs)
+    stdout_thread = threading.Thread(
+        target=stdout_capture.capture, args=(process.stdout,), daemon=True
+    )
+    stderr_thread = threading.Thread(
+        target=stderr_capture.capture, args=(process.stderr,), daemon=True
+    )
+    stdout_thread.start()
+    stderr_thread.start()
+
+    stdin_thread: threading.Thread | None = None
+    if runner_config["prompt_via_stdin"] and process.stdin is not None:
+        stdin_thread = threading.Thread(
+            target=_write_stdin, args=(process.stdin, prompt_text), daemon=True
+        )
+        stdin_thread.start()
+
+    timed_out = False
+    returncode: int | None
     try:
-        completed = subprocess.run(command, **kwargs)
-        stdout = completed.stdout or ""
-        stderr = completed.stderr or ""
-        stdout_path.write_text(stdout, encoding="utf-8")
-        stderr_path.write_text(stderr, encoding="utf-8")
-        if not agent_message_path.exists() and stdout.strip():
-            agent_message_path.write_text(stdout, encoding="utf-8")
-        return {
-            "timed_out": False,
-            "returncode": completed.returncode,
-            "stdout_path": str(stdout_path),
-            "stderr_path": str(stderr_path),
-            "agent_message_path": str(agent_message_path)
-            if agent_message_path.exists()
-            else None,
-            "command": command,
-        }
-    except subprocess.TimeoutExpired as exc:
-        stdout = (
-            exc.stdout
-            if isinstance(exc.stdout, str)
-            else (exc.stdout or b"").decode("utf-8", errors="replace")
-        )
-        stderr = (
-            exc.stderr
-            if isinstance(exc.stderr, str)
-            else (exc.stderr or b"").decode("utf-8", errors="replace")
-        )
-        stdout_path.write_text(stdout, encoding="utf-8")
-        stderr_path.write_text(stderr, encoding="utf-8")
-        return {
-            "timed_out": True,
-            "returncode": None,
-            "stdout_path": str(stdout_path),
-            "stderr_path": str(stderr_path),
-            "agent_message_path": str(agent_message_path)
-            if agent_message_path.exists()
-            else None,
-            "command": command,
-        }
+        returncode = process.wait(timeout=runner_config["timeout_seconds"])
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        process.kill()
+        process.wait()
+        returncode = None
+
+    if stdin_thread is not None:
+        stdin_thread.join()
+    stdout_thread.join()
+    stderr_thread.join()
+
+    if not agent_message_path.exists():
+        stdout_tail = stdout_capture.tail_text()
+        if stdout_tail.strip():
+            agent_message_path.write_text(stdout_tail, encoding="utf-8")
+
+    return {
+        "timed_out": timed_out,
+        "returncode": returncode,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "agent_message_path": str(agent_message_path)
+        if agent_message_path.exists()
+        else None,
+        "command": command,
+        "stdout_bytes": stdout_capture.total_bytes,
+        "stderr_bytes": stderr_capture.total_bytes,
+        "stdout_truncated": stdout_capture.truncated,
+        "stderr_truncated": stderr_capture.truncated,
+    }

@@ -6,7 +6,8 @@ from pathlib import Path
 
 from tests.support.loop_helpers import init_with_question, make_case
 
-from agentic_research_loop.loop import is_plan_blank, run_plan_step
+from agentic_research_loop.cli import main
+from agentic_research_loop.loop import is_plan_blank, run_loop, run_plan_step
 
 
 def test_plan_step_restores_non_plan_artifacts(repo_root: Path, monkeypatch) -> None:
@@ -104,6 +105,93 @@ sys.exit(2)
 
     assert run_plan_step(repo_root, case_path, runner_name="claude") is False
     assert (case_path / "plan.md").read_text(encoding="utf-8") == original_plan
+
+
+def test_run_loop_stops_when_initial_plan_fails(repo_root: Path, monkeypatch) -> None:
+    monkeypatch.chdir(repo_root)
+    case_path = init_with_question(
+        repo_root,
+        "plan-fails-before-cycle",
+        "Do failed planners start a research cycle?",
+    )
+
+    failing_planner = repo_root / "failing_initial_planner.py"
+    failing_planner.write_text(
+        """
+import sys
+from pathlib import Path
+
+case_dir = Path(sys.argv[1])
+(case_dir / "plan.md").write_text(
+    "# Research Plan\\n\\n### T1: Partial invalid plan\\n",
+    encoding="utf-8",
+)
+sys.exit(2)
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (repo_root / "config" / "runners" / "claude.json").write_text(
+        json.dumps(
+            {
+                "command": ["python3", str(failing_planner), "{case_dir}"],
+                "prompt_via_stdin": True,
+                "timeout_seconds": 30,
+                "env": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    summaries = run_loop(repo_root, case_path, runner_name="claude", max_cycles=1)
+    progress = json.loads(
+        (case_path / "state" / "progress.json").read_text(encoding="utf-8")
+    )
+
+    assert summaries == []
+    assert progress["cycle_count"] == 0
+    assert progress["stop_reason"] == "planning_failed"
+    assert not (case_path / "state" / "cycles" / "0001").exists()
+
+
+def test_cli_run_returns_failure_when_initial_plan_fails(
+    repo_root: Path, monkeypatch
+) -> None:
+    monkeypatch.chdir(repo_root)
+    case_path = init_with_question(
+        repo_root,
+        "plan-fails-cli",
+        "Does the CLI report planning failure?",
+    )
+
+    failing_planner = repo_root / "failing_cli_planner.py"
+    failing_planner.write_text(
+        """
+import sys
+sys.exit(2)
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (repo_root / "config" / "runners" / "claude.json").write_text(
+        json.dumps(
+            {
+                "command": ["python3", str(failing_planner)],
+                "prompt_via_stdin": True,
+                "timeout_seconds": 30,
+                "env": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    exit_code = main(["run", case_path.name, "--max-cycles", "1"])
+
+    assert exit_code == 1
 
 
 def test_is_plan_blank_returns_false_for_prose_mentioning_sentinel(

@@ -92,6 +92,17 @@ def test_build_sources_config_rejects_unknown_source() -> None:
         build_sources_config(enabled={"nope": True})
 
 
+def test_local_context_notes_flag_sensitive_paths(tmp_path: Path) -> None:
+    sensitive_dir = tmp_path / ".ssh"
+    sensitive_dir.mkdir()
+
+    config = build_sources_config(local_context_paths=[str(sensitive_dir)])
+    entry = config["local_context_folders"][0]
+
+    assert entry["path"] == str(sensitive_dir.resolve())
+    assert "Sensitive-looking path attached" in entry["notes"]
+
+
 def test_user_sources_file_is_loaded(tmp_path, monkeypatch, _restore_registry) -> None:
     repo = tmp_path / "repo"
     (repo / "config").mkdir(parents=True)

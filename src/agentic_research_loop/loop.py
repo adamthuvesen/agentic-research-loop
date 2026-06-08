@@ -303,8 +303,21 @@ def run_loop(
     progress = _progress_payload(case_path)
     print_run_header(case_path.name, runner_name, max_cycles)
     if progress.get("cycle_count", 0) == 0 and is_plan_blank(case_path):
-        run_plan_step(repo_root, case_path, runner_name=runner_name)
+        plan_written = run_plan_step(repo_root, case_path, runner_name=runner_name)
         progress = _progress_payload(case_path)
+        if not plan_written:
+            progress["stop_reason"] = "planning_failed"
+            write_json(progress_path(case_path), progress)
+            status_payload = _status_payload(case_path)
+            status_payload["stop_reason"] = "planning_failed"
+            status_payload["status"] = "idle"
+            write_status(case_path, status_payload)
+            print_run_summary(
+                [],
+                "planning_failed",
+                elapsed_seconds=time.monotonic() - run_started_at,
+            )
+            return results
     next_cycle_number = progress.get("cycle_count", 0) + 1
     while True:
         progress = _progress_payload(case_path)

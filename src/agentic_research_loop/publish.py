@@ -4,7 +4,7 @@ from typing import Any
 
 from .io import (
     extract_section,
-    load_json_object_or_empty,
+    load_json,
     load_json_optional,
     read_text,
     read_text_optional,
@@ -104,9 +104,9 @@ def _report_section_lines(report_text: str, heading: str) -> list[str]:
 def _research_shifts(case_path: Path) -> list[str]:
     shifts: list[str] = []
     for summary_path in sorted(cycles_dir(case_path).glob("*/cycle_summary.json"))[-5:]:
-        summary = load_json_object_or_empty(summary_path)
-        if not summary:
-            continue
+        summary = load_json(summary_path)
+        if not isinstance(summary, dict):
+            raise ValueError(f"Cycle summary must be a JSON object: {summary_path}")
         result = str(summary.get("result", "unknown"))
         made_progress = summary.get("made_progress", False)
         progress_text = "progress" if made_progress else "no progress"

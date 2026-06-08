@@ -149,7 +149,9 @@ def test_publish_creates_finding(repo_root: Path, monkeypatch) -> None:
     assert "Research Caveats" in finding_text
 
 
-def test_publish_skips_malformed_cycle_summaries(repo_root: Path, monkeypatch) -> None:
+def test_publish_fails_on_malformed_cycle_summaries(
+    repo_root: Path, monkeypatch, capsys
+) -> None:
     monkeypatch.chdir(repo_root)
     main(
         [
@@ -179,9 +181,11 @@ def test_publish_skips_malformed_cycle_summaries(repo_root: Path, monkeypatch) -
 
     exit_code = main(["publish", case_path.name])
 
-    assert exit_code == 0
-    published = (case_path / "published.md").read_text(encoding="utf-8")
-    assert "No recorded case shifts." in published
+    assert exit_code == 1
+    assert (
+        "Expecting property name enclosed in double quotes" in capsys.readouterr().err
+    )
+    assert not (case_path / "published.md").exists()
 
 
 def test_validate_fails_for_missing_brief(repo_root: Path, monkeypatch) -> None:
