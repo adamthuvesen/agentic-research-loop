@@ -7,9 +7,8 @@ spec, runs bounded agentic cycles, and produces a research report with findings.
 It uses the same "keep going until the job is done" loop pattern as Ralph
 Wiggum, with autoresearch-style reasoning at each step.
 
-The repo ships with a **fully offline demo** — a deterministic runner over
-synthetic data — so you can see the whole loop work end-to-end with no LLM, no
-network, and no credentials.
+The repo ships with a fully offline demo, a deterministic runner over
+synthetic data, so you can see the whole loop work end-to-end.
 
 ## Quick start (offline demo)
 
