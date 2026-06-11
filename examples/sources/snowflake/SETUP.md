@@ -14,7 +14,7 @@ only** — never `ALTER`/`DELETE`/`DROP`. A test
 
 1. `uv run research source enable snowflake` (or merge the bundle by hand).
 2. Create a personal `default` connection in `~/.snowflake/config.toml` (copy
-   [`agents/docs/examples/snowflake-config.toml.example`](../../../agents/docs/examples/snowflake-config.toml.example)).
+   [`.agents/docs/examples/snowflake-config.toml.example`](../../../.agents/docs/examples/snowflake-config.toml.example)).
    `externalbrowser` auth keeps credentials out of committed config.
 
 ## Notes

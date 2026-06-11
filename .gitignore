@@ -23,11 +23,11 @@ research/
 # User-defined sources (copy config/sources.json.example to start)
 config/sources.json
 
-# Agent docs — only allow curated paths under agents/docs/
-agents/docs/*
-!agents/docs/examples/
-!agents/docs/examples/**
-!agents/docs/architecture.md
-!agents/docs/setup.md
-!agents/docs/runtime-contract.md
-!agents/docs/runtime-playbook.md
+# Agent docs — only allow curated paths under .agents/docs/
+.agents/docs/*
+!.agents/docs/examples/
+!.agents/docs/examples/**
+!.agents/docs/architecture.md
+!.agents/docs/setup.md
+!.agents/docs/runtime-contract.md
+!.agents/docs/runtime-playbook.md

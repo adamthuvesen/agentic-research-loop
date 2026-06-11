@@ -5,7 +5,7 @@ This repo **ships neutral MCP configs** — no servers wired by default. Sources
 ## What you get from `git clone`
 
 - `.mcp.json` / `.codex/config.toml` / `.cursor/mcp.json` — **neutral** project MCP configs for Claude Code / Codex / Cursor (no servers by default). `research source enable <name>` wires a bundle's server into all three.
-- `.claude/`, `.codex/`, and `.cursor/` — committed project agent layout (e.g. Claude `settings.json`). **Skills:** `.claude/skills`, `.codex/skills`, and `.cursor/skills` are the same committed symlink to `agents/skills/`, so Claude Code, Codex, and Cursor all load repo skills from clone with no extra sync.
+- `.claude/`, `.codex/`, and `.cursor/` — committed project agent layout (e.g. Claude `settings.json`). **Skills:** `.claude/skills`, `.codex/skills`, and `.cursor/skills` are the same committed symlink to `.agents/skills/`, so Claude Code, Codex, and Cursor all load repo skills from clone with no extra sync.
 - `config/snowflake-mcp-tools.yaml` — Snowflake MCP tool allowlists (read-only SQL posture).
 
 The three MCP config files ship **neutral** and stay that way in git. To wire a source, run `uv run research source enable <name>` — it edits all three locally from the bundle's `mcp.snippet.json` (don't commit your enabled configs back). `uv run pytest -q` still checks the three files agree on server names.
