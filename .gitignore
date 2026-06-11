@@ -20,6 +20,10 @@ research/
 # Personal, per-machine Claude settings
 .claude/settings.local.json
 
+# Local-only per-tool MCP configs, created by `research source enable`
+.cursor/
+.codex/
+
 # User-defined sources (copy config/sources.json.example to start)
 config/sources.json
 
