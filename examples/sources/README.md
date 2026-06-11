@@ -1,7 +1,7 @@
 # Source bundles (opt-in)
 
-Each subdirectory here is a **copy-to-enable** source. The committed MCP configs
-(`.mcp.json`, `.codex/config.toml`, `.cursor/mcp.json`) stay neutral — you only
+Each subdirectory here is a **copy-to-enable** source. The committed `.mcp.json`
+stays neutral (`.codex/config.toml` / `.cursor/mcp.json` are local-only) — you only
 wire a source you actually use. Onboarding is "add what you have," not "delete
 what you don't."
 

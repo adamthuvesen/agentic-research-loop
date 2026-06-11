@@ -4,11 +4,11 @@ This repo **ships neutral MCP configs** — no servers wired by default. Sources
 
 ## What you get from `git clone`
 
-- `.mcp.json` / `.codex/config.toml` / `.cursor/mcp.json` — **neutral** project MCP configs for Claude Code / Codex / Cursor (no servers by default). `research source enable <name>` wires a bundle's server into all three.
-- `.claude/`, `.codex/`, and `.cursor/` — committed project agent layout (e.g. Claude `settings.json`). **Skills:** `.claude/skills`, `.codex/skills`, and `.cursor/skills` are the same committed symlink to `.agents/skills/`, so Claude Code, Codex, and Cursor all load repo skills from clone with no extra sync.
+- `.mcp.json` — **neutral** project MCP config for Claude Code (no servers by default). `research source enable <name>` wires a bundle's server into it, and creates local (uncommitted) `.codex/config.toml` and `.cursor/mcp.json` for Codex / Cursor.
+- `.claude/skills` — committed symlink to `.agents/skills/`, so Claude Code loads repo skills from clone with no extra sync.
 - `config/snowflake-mcp-tools.yaml` — Snowflake MCP tool allowlists (read-only SQL posture).
 
-The three MCP config files ship **neutral** and stay that way in git. To wire a source, run `uv run research source enable <name>` — it edits all three locally from the bundle's `mcp.snippet.json` (don't commit your enabled configs back). `uv run pytest -q` still checks the three files agree on server names.
+`.mcp.json` ships **neutral** and stays that way in git. To wire a source, run `uv run research source enable <name>` — it edits `.mcp.json` and creates/edits the local `.codex/config.toml` and `.cursor/mcp.json` from the bundle's `mcp.snippet.json` (don't commit your enabled configs back). `uv run pytest -q` still checks the files agree on server names.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ From the repository root:
 ./scripts/setup-dev.sh
 ```
 
-This runs `uv sync --dev` and the setup checker. The MCP config files are already committed — the script does not modify them. The checker may exit non-zero if you have not completed personal auth yet; see below.
+This runs `uv sync --dev` and the setup checker. The script does not modify MCP configs — use `research source enable` for that. The checker may exit non-zero if you have not completed personal auth yet; see below.
 
 ## Python / CLI
 
@@ -35,7 +35,7 @@ uv run pytest -q # optional
 
 ## Cursor
 
-The committed `.cursor/mcp.json` ships neutral. After you `research source enable <name>`, Cursor surfaces the wired servers; complete OAuth in its Settings → MCP panel (fixed redirect URI) on first use. Do not commit secrets or personal OAuth state.
+`research source enable <name>` creates a local `.cursor/mcp.json` (not committed) and wires the server into it; Cursor then surfaces the wired servers — complete OAuth in its Settings → MCP panel (fixed redirect URI) on first use. Do not commit secrets or personal OAuth state.
 
 ## Autonomous `research run` / `plan` and agent CLIs
 

@@ -1,7 +1,0 @@
-# Committed Codex MCP config — ships neutral.
-# Sources are opt-in bundles under examples/sources/. Wire one with
-#   uv run research source enable <name>
-# (or paste a bundle's mcp.snippet.json `codex_toml` block here).
-# HTTP OAuth (e.g. Slack, Atlassian): run `codex mcp login <server-name>` after
-# trusting this project, and add a top-level `mcp_oauth_callback_port` if the server
-# needs a fixed callback (see the bundle's SETUP.md).

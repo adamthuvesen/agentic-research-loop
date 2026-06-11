@@ -1,5 +1,7 @@
-"""The three committed MCP config files SHALL agree on the set of server names.
+"""The MCP config files SHALL agree on the set of server names.
 
+Only `.mcp.json` is committed; `.codex/config.toml` and `.cursor/mcp.json` are
+created locally by `research source enable` and treated as empty when absent.
 Per-tool shape differences (Codex `enabled = true`, Cursor dropping `oauth`, etc.)
 are intentional and not checked here. Only the set of server names is compared.
 """
@@ -23,11 +25,15 @@ def _claude_names() -> set[str]:
 
 
 def _codex_names() -> set[str]:
+    if not CODEX_PATH.exists():
+        return set()
     payload = tomllib.loads(CODEX_PATH.read_text())
     return set(payload.get("mcp_servers", {}).keys())
 
 
 def _cursor_names() -> set[str]:
+    if not CURSOR_PATH.exists():
+        return set()
     payload = json.loads(CURSOR_PATH.read_text())
     return set(payload["mcpServers"].keys())
 
@@ -58,11 +64,12 @@ def test_mcp_config_files_list_the_same_server_names() -> None:
 
 
 def test_committed_mcp_configs_ship_neutral() -> None:
-    """The committed configs SHALL ship with zero servers (opt-in only).
+    """The committed config SHALL ship with zero servers (opt-in only).
 
-    ``research source enable`` wires servers locally; the shared repo keeps these
-    three files empty so a clone carries nobody's stack. The consistency check
-    above passes even if all three drift together, so pin emptiness explicitly.
+    ``research source enable`` wires servers locally; the shared repo keeps
+    ``.mcp.json`` empty so a clone carries nobody's stack. The Codex/Cursor
+    files are local-only — if they exist they must be neutral too, so an
+    enabled bundle never lands back in a commit unnoticed.
     """
     assert _claude_names() == set(), ".mcp.json must ship neutral (no servers)"
     assert _codex_names() == set(), ".codex/config.toml must ship neutral"

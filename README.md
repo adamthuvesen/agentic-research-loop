@@ -145,10 +145,11 @@ with `--context-path` (CSVs, markdown, exports scoped to the question, read-only
 read-only flag — the account/PAT is the only read-only rule (and the autonomous runner skips
 permission prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
-The three committed MCP configs (`.mcp.json`, `.codex/config.toml`,
-`.cursor/mcp.json`) **ship neutral** — no servers wired by default, so a clone carries
-nobody's stack. Every source is an opt-in bundle; `uv run research source enable <name>`
-wires one into all three configs locally (`research source list` / `disable` too).
+The committed MCP config (`.mcp.json`) **ships neutral** — no servers wired by
+default, so a clone carries nobody's stack. Every source is an opt-in bundle;
+`uv run research source enable <name>` wires one into `.mcp.json` and the local
+(uncommitted) `.codex/config.toml` and `.cursor/mcp.json`
+(`research source list` / `disable` too).
 Source routing per case is stored in `state/sources.json`.
 
 Two extension points: pass `--local-only` to `init` to disable every external

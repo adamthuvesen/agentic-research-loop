@@ -1,13 +1,15 @@
 """Enable/disable opt-in source bundles from ``examples/sources/<name>/``.
 
 A bundle is wired by merging its registry spec into ``config/sources.json`` (the
-gitignored user sources file) and its MCP server block into the three committed
-MCP configs (``.mcp.json``, ``.cursor/mcp.json``, ``.codex/config.toml``). This
-automates the manual copy-paste documented in ``examples/sources/README.md``.
+gitignored user sources file) and its MCP server block into the three MCP configs
+(``.mcp.json``, ``.cursor/mcp.json``, ``.codex/config.toml``), creating the
+per-tool files if absent. This automates the manual copy-paste documented in
+``examples/sources/README.md``.
 
-These edits are a local opt-in: the MCP configs are tracked by git, so enabling a
-bundle dirties them in your working tree. That is expected — do not commit them
-back to the shared repo, which keeps its committed configs neutral.
+These edits are a local opt-in: ``.mcp.json`` is tracked by git, so enabling a
+bundle dirties it in your working tree; ``.cursor/mcp.json`` and
+``.codex/config.toml`` are local-only. Do not commit enabled configs back to the
+shared repo, which keeps its committed config neutral.
 """
 
 from __future__ import annotations

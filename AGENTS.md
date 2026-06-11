@@ -20,13 +20,11 @@ Every source bundle is read-only by design. If a workflow seems to require writi
 
 Shared repo-local skills live in `.agents/skills/`. Treat that directory as the canonical source of truth.
 
-After `git clone`, the **same tree** is wired into each tool via **committed symlinks** (no copy step):
+After `git clone`, the same tree is wired into Claude Code via a **committed symlink** (no copy step):
 
 - **Claude Code:** `.claude/skills` → `../.agents/skills`
-- **Codex:** `.codex/skills` → `../.agents/skills`
-- **Cursor:** `.cursor/skills` → `../.agents/skills`
 
-Do not duplicate skill content under `.claude/`, `.codex/`, or `.cursor/`—extend `.agents/skills/` only.
+Other tools (Codex, Cursor) can point at `.agents/skills/` with a local, uncommitted symlink. Do not duplicate skill content under per-tool directories — extend `.agents/skills/` only.
 
 ## Warehouses
 
