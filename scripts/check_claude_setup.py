@@ -3,8 +3,9 @@
 
 The list of MCP servers is read from the committed `.mcp.json`
 (Claude Code's canonical MCP config). `.codex/config.toml` and `.cursor/mcp.json`
-are their own canonical files for their respective tools. Drift across the three
-is caught by `tests/test_mcp_configs_consistent.py`, not this script.
+are local-only files created by `research source enable` for their respective
+tools. Drift across the three is caught by `tests/test_mcp_configs_consistent.py`,
+not this script.
 
 Run from repo root: ``uv run python scripts/check_claude_setup.py``
 """

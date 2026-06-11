@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # One-shot local setup after clone: Python deps + readiness check.
 #
-# MCP configs (`.mcp.json`, `.codex/config.toml`, `.cursor/mcp.json`) are committed
-# sources of truth — this script does not modify them.
+# This script does not modify MCP configs (`.mcp.json` is committed neutral;
+# `.codex/config.toml` / `.cursor/mcp.json` are local-only) — use `research source enable`.
 #
 # Exit behavior: if `check_claude_setup.py` fails (e.g. OAuth not done yet), this script
 # still exits 0 so you can run it repeatedly while finishing Slack/Snowflake setup.
