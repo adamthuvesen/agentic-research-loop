@@ -21,8 +21,8 @@ fi
 echo "Installing Python deps (dev)..."
 uv sync --dev
 
-echo "Running setup checker (see agents/docs/setup.md if anything fails)..."
+echo "Running setup checker (see .agents/docs/setup.md if anything fails)..."
 uv run python scripts/check_claude_setup.py || true
 
 echo ""
-echo "Done. Next: read agents/docs/setup.md — Claude Code (`/mcp`), optional Codex (trust project + \`codex mcp\`), OAuth / Snowflake."
+echo "Done. Next: read .agents/docs/setup.md — Claude Code (`/mcp`), optional Codex (trust project + \`codex mcp\`), OAuth / Snowflake."

@@ -140,7 +140,7 @@ def main() -> int:
     if failed:
         print("Next steps:")
         print(
-            "- See `agents/docs/setup.md` for Claude Code (`/mcp`) and optional Codex (`codex mcp`) auth."
+            "- See `.agents/docs/setup.md` for Claude Code (`/mcp`) and optional Codex (`codex mcp`) auth."
         )
         print(
             "- For Snowflake, ensure `~/.snowflake/config.toml` has a personal `default` connection."

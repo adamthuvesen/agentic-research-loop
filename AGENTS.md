@@ -2,7 +2,7 @@
 
 This repo is `agentic-research-loop`, an autonomous case engine for bounded research cycles.
 
-Start with `program.md` for the operating model, then use `README.md` for the CLI surface and `agents/docs/runtime-contract.md` for the runtime contract.
+Start with `program.md` for the operating model, then use `README.md` for the CLI surface and `.agents/docs/runtime-contract.md` for the runtime contract.
 
 ## READ-ONLY RULE
 
@@ -18,15 +18,15 @@ Every source bundle is read-only by design. If a workflow seems to require writi
 
 ## Shared Skills
 
-Shared repo-local skills live in `agents/skills/`. Treat that directory as the canonical source of truth.
+Shared repo-local skills live in `.agents/skills/`. Treat that directory as the canonical source of truth.
 
 After `git clone`, the **same tree** is wired into each tool via **committed symlinks** (no copy step):
 
-- **Claude Code:** `.claude/skills` → `../agents/skills`
-- **Codex:** `.codex/skills` → `../agents/skills`
-- **Cursor:** `.cursor/skills` → `../agents/skills`
+- **Claude Code:** `.claude/skills` → `../.agents/skills`
+- **Codex:** `.codex/skills` → `../.agents/skills`
+- **Cursor:** `.cursor/skills` → `../.agents/skills`
 
-Do not duplicate skill content under `.claude/`, `.codex/`, or `.cursor/`—extend `agents/skills/` only.
+Do not duplicate skill content under `.claude/`, `.codex/`, or `.cursor/`—extend `.agents/skills/` only.
 
 ## Warehouses
 

@@ -185,9 +185,9 @@ Machine state under `state/`:
 ## Using a real agent runner
 
 To run live investigations with Claude Code or Codex against your own sources,
-follow **[`agents/docs/setup.md`](agents/docs/setup.md)** for MCP/OAuth and
+follow **[`.agents/docs/setup.md`](.agents/docs/setup.md)** for MCP/OAuth and
 (optionally) a Snowflake connection. The `/research-spec` skill
-(`agents/skills/research-spec/`) discovers sources and designs hypotheses before
+(`.agents/skills/research-spec/`) discovers sources and designs hypotheses before
 scaffolding. GSC and GA4 are opt-in bundles (`research source enable gsc` / `ga4`);
 the `research gsc` CLI then reads `GSC_SITE` and `GCP_QUOTA_PROJECT` from the
 environment, while GA4 is served by the official GA4 MCP.
@@ -202,10 +202,10 @@ uv run ruff check . && uv run ruff format --check . && uv run pytest -q
 
 ## Documentation
 
-- **[Architecture](agents/docs/architecture.md)** — components and lifecycle
-- **[Runtime contract](agents/docs/runtime-contract.md)** — loop, progress, challenge cycle
-- **[Runtime playbook](agents/docs/runtime-playbook.md)** — practical runner behavior
-- **[Setup](agents/docs/setup.md)** — MCP, Snowflake, verification
+- **[Architecture](.agents/docs/architecture.md)** — components and lifecycle
+- **[Runtime contract](.agents/docs/runtime-contract.md)** — loop, progress, challenge cycle
+- **[Runtime playbook](.agents/docs/runtime-playbook.md)** — practical runner behavior
+- **[Setup](.agents/docs/setup.md)** — MCP, Snowflake, verification
 
 ## License
 
