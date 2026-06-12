@@ -1,14 +1,9 @@
 # Agentic Research Loop
 
-Autonomous research engine for business questions.
-
-Ask a question, point it at your sources, and let it run. It creates a case
-spec, runs bounded agentic cycles, and produces a research report with findings.
-It uses the same "keep going until the job is done" loop pattern as Ralph
-Wiggum, with autoresearch-style reasoning at each step.
-
-The repo ships with a fully offline demo, a deterministic runner over
-synthetic data, so you can see the whole loop work end-to-end.
+Autonomous research engine for business questions. Ask a question, point it at
+your sources, and let it run: it creates a case spec, runs bounded agentic
+cycles, and produces a research report with findings. A fully offline demo
+runner over synthetic data shows the whole loop end-to-end.
 
 ## Quick start (offline demo)
 
@@ -25,15 +20,13 @@ uv run research run <slug> --runner demo --max-cycles 6
 
 `<slug>` is the dated case name printed by `init` (e.g. `2026-06-07-export-reliability`).
 
-The run goes `plan → explore → build evidence → conclude → challenge cycle →
-complete`. The figures in the report are computed from the bundled CSV, so the
-output reflects the data rather than canned text.
-
-Prefer not to run anything? The committed result lives in
+The run goes plan → explore → build evidence → conclude → challenge cycle →
+complete, and the report's figures are computed from the bundled CSV. Prefer
+not to run anything? The committed result lives in
 [`examples/demo-export-reliability/`](examples/demo-export-reliability/) — read
-[`report.md`](examples/demo-export-reliability/report.md), or open
-[`replay.html`](examples/demo-export-reliability/replay.html) for the whole case
-on one page (`uv run python viz/generate.py <case_dir>`).
+[`report.md`](examples/demo-export-reliability/report.md) or open
+[`replay.html`](examples/demo-export-reliability/replay.html)
+(`uv run python viz/generate.py <case_dir>`).
 
 ## How it works
 
@@ -62,33 +55,15 @@ one completion marker — `<promise>CYCLE_DONE</promise>` or
 | `claude`       | Claude Code CLI with your full MCP source stack.                                       |
 | `codex`        | Codex CLI (`codex exec`) with your full MCP source stack.                              |
 
-Point `--runner` at the one you want. `demo` shows the loop with zero setup;
-`claude-local` runs a **real** agentic investigation over the bundled data; `claude`
-and `codex` do real investigations against your live sources once configured.
-
-## Run it for real with Claude (local, no setup)
-
-If you have Claude Code installed and signed in, you can watch a real agent run
-the loop over the bundled synthetic data — no MCP servers, no API keys, no
-external sources:
-
-```bash
-uv run research init export-reliability --template root-cause --mode autonomous \
-  --context-path examples/local-sources --local-only
-uv run research run <slug> --runner claude-local --max-cycles 8
-```
-
-The `claude-local` runner pins Claude Code to local file tools only
-(`--strict-mcp-config` with an empty MCP config), so the agent reads the CSV and
-context notes, forms and tests hypotheses, writes `notes.md`/`report.md`, and
-runs the mandatory challenge cycle — entirely on your machine. Swap to `--runner
-claude` once you've wired up real sources (see Setup).
-
-A claude-local worked example will live in
+To run the loop with a **real agent** and still zero setup (just Claude Code
+installed and signed in), re-run the quick start with
+`--runner claude-local --max-cycles 8`. It pins Claude Code to local file tools
+(`--strict-mcp-config` with an empty MCP config), so the agent investigates the
+bundled data, writes `notes.md`/`report.md`, and runs the challenge cycle
+entirely on your machine — see
 [`examples/claude-local-export-reliability/`](examples/claude-local-export-reliability/)
-once you run the commands above and copy the completed case markdown into that
-folder (see its README). The scenario uses fictional Northwind Analytics export
-data, not a real customer investigation.
+for the worked example. `claude` and `codex` run against your live sources once
+configured (see below).
 
 ## Sources
 
@@ -146,16 +121,12 @@ read-only flag — the account/PAT is the only read-only rule (and the autonomou
 permission prompts); see their `SETUP.md`. PostHog enforces read-only in the API key itself.
 
 The committed MCP config (`.mcp.json`) **ships neutral** — no servers wired by
-default, so a clone carries nobody's stack. Every source is an opt-in bundle;
-`uv run research source enable <name>` wires one into `.mcp.json` and the local
-(uncommitted) `.codex/config.toml` and `.cursor/mcp.json`
-(`research source list` / `disable` too).
-Source routing per case is stored in `state/sources.json`.
-
-Two extension points: pass `--local-only` to `init` to disable every external
-source and investigate just `--context-path` files, and enable any bundle with
-`uv run research source enable <name>` (`research source list` / `disable` too), or
-copy `config/sources.json.example` for a custom one.
+default. `uv run research source enable <name>` wires a bundle into `.mcp.json`
+and the local (uncommitted) `.codex/config.toml` and `.cursor/mcp.json`
+(`research source list` / `disable` too); per-case routing lives in
+`state/sources.json`. Pass `--local-only` to `init` to investigate just
+`--context-path` files, or copy `config/sources.json.example` for a custom
+source registry.
 
 ## Research workspace
 
@@ -185,13 +156,11 @@ Machine state under `state/`:
 
 ## Using a real agent runner
 
-To run live investigations with Claude Code or Codex against your own sources,
-follow **[`.agents/docs/setup.md`](.agents/docs/setup.md)** for MCP/OAuth and
-(optionally) a Snowflake connection. The `/research-spec` skill
-(`.agents/skills/research-spec/`) discovers sources and designs hypotheses before
-scaffolding. GSC and GA4 are opt-in bundles (`research source enable gsc` / `ga4`);
-the `research gsc` CLI then reads `GSC_SITE` and `GCP_QUOTA_PROJECT` from the
-environment, while GA4 is served by the official GA4 MCP.
+For live investigations with Claude Code or Codex against your own sources,
+follow **[`.agents/docs/setup.md`](.agents/docs/setup.md)** (MCP/OAuth,
+optional Snowflake). Start cases with the `/research-spec` skill
+(`.agents/skills/research-spec/`) — it discovers sources and designs hypotheses
+before scaffolding.
 
 ## Development
 

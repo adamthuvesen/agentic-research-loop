@@ -4,11 +4,9 @@ This repo **ships neutral MCP configs** — no servers wired by default. Sources
 
 ## What you get from `git clone`
 
-- `.mcp.json` — **neutral** project MCP config for Claude Code (no servers by default). `research source enable <name>` wires a bundle's server into it, and creates local (uncommitted) `.codex/config.toml` and `.cursor/mcp.json` for Codex / Cursor.
+- `.mcp.json` — **neutral** project MCP config for Claude Code (no servers by default). `research source enable <name>` wires a bundle's server into it and creates local (uncommitted) `.codex/config.toml` and `.cursor/mcp.json` for Codex / Cursor. Don't commit your enabled configs back; `uv run pytest -q` checks the files agree on server names.
 - `.claude/skills` — committed symlink to `.agents/skills/`, so Claude Code loads repo skills from clone with no extra sync.
 - `config/snowflake-mcp-tools.yaml` — Snowflake MCP tool allowlists (read-only SQL posture).
-
-`.mcp.json` ships **neutral** and stays that way in git. To wire a source, run `uv run research source enable <name>` — it edits `.mcp.json` and creates/edits the local `.codex/config.toml` and `.cursor/mcp.json` from the bundle's `mcp.snippet.json` (don't commit your enabled configs back). `uv run pytest -q` still checks the files agree on server names.
 
 ## Prerequisites
 
@@ -21,17 +19,10 @@ This repo **ships neutral MCP configs** — no servers wired by default. Sources
 From the repository root:
 
 ```bash
-./scripts/setup-dev.sh
+./scripts/setup-dev.sh   # uv sync --dev + setup checker
 ```
 
-This runs `uv sync --dev` and the setup checker. The script does not modify MCP configs — use `research source enable` for that. The checker may exit non-zero if you have not completed personal auth yet; see below.
-
-## Python / CLI
-
-```bash
-uv sync --dev
-uv run pytest -q # optional
-```
+The script does not modify MCP configs — use `research source enable` for that. The checker may exit non-zero until you complete personal auth (see below). Prefer manual? `uv sync --dev`, then `uv run pytest -q` (optional).
 
 ## Cursor
 
@@ -89,13 +80,10 @@ the `webmasters.readonly` scope, and the `GSC_SITE` / `GCP_QUOTA_PROJECT` env.
 
 ## Opt-in source bundles
 
-Sources beyond the built-ins ship as **copy-to-enable bundles** under
-[`examples/sources/`](../../examples/sources/) — the committed MCP configs stay
-neutral. Each bundle has a `source.json` (merge into `config/sources.json`), an
-`mcp.snippet.json` (paste into the three MCP configs), and a `SETUP.md`
-(credentials + read-only setup). Run `uv run research source enable <name>` to do
-the merge + wiring automatically (`research source list` / `disable` too), then
-follow the bundle's `SETUP.md`.
+Sources beyond the built-ins ship as bundles under
+[`examples/sources/`](../../examples/sources/), each with a `source.json`,
+`mcp.snippet.json`, and `SETUP.md`. `uv run research source enable <name>` does
+the wiring; then follow the bundle's `SETUP.md` for credentials.
 
 **Do the credential-only sources first** — for these, *nothing in committed config
 can guarantee read-only*; the account or IAM role you connect is the only read-only rule:
