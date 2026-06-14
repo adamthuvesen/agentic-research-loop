@@ -1,11 +1,8 @@
 # Agentic Research Loop
 
-A small runner for bounded research work. Give it a question and a set of
-read-only sources: it creates a case workspace, runs investigation cycles, and
-keeps the working notes and report visible as it goes.
+An autonomous research runner for bounded investigations. Give it a question and a set of read-only sources, and it creates a workspace, investigates the problem, and keeps its notes and report up to date as it goes.
 
-The repo includes a fully offline demo over synthetic data, so you can try the
-loop without API keys or external services.
+The repository includes an offline demo over synthetic data, so you can try the full workflow without API keys or external services.
 
 ## Quick start (offline demo)
 
