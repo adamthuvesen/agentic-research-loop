@@ -1,7 +1,7 @@
 # Agentic Research Loop
 
-A small case runner for bounded research work. Give it a question and a set of
-read-only sources; it creates a case workspace, runs investigation cycles, and
+A small runner for bounded research work. Give it a question and a set of
+read-only sources: it creates a case workspace, runs investigation cycles, and
 keeps the working notes and report visible as it goes.
 
 The repo includes a fully offline demo over synthetic data, so you can try the
