@@ -18,6 +18,14 @@ uv run research run <slug> --runner demo --max-cycles 6
 ```
 
 `<slug>` is the dated case name printed by `init` (e.g. `2026-06-07-export-reliability`).
+This demo uses no keys and no network.
+
+Expected output:
+
+- `research/<slug>/notes.md` — working notes and evidence
+- `research/<slug>/report.md` — final answer, including the challenge review
+- `research/<slug>/status.md` — short status summary
+- `research/<slug>/state/cycles/` — prompts, outputs, and cycle summaries
 
 The run plans, explores, builds evidence, concludes, and then stress-tests the
 answer in a challenge cycle. The report's figures are computed from the bundled
@@ -25,7 +33,7 @@ CSV. Prefer not to run anything? The committed result lives in
 [`examples/demo-export-reliability/`](examples/demo-export-reliability/) — read
 [`report.md`](examples/demo-export-reliability/report.md) or open
 [`replay.html`](examples/demo-export-reliability/replay.html)
-(`uv run python viz/generate.py <case_dir>`).
+(`uv run python viz/generate.py <case_dir>` writes `<case_dir>/replay.html`).
 
 ## How it works
 
