@@ -2,7 +2,20 @@
 
 This repo is `agentic-research-loop`, an autonomous case engine for bounded research cycles.
 
-Start with `program.md` for the operating model, then use `README.md` for the CLI surface and `.agents/docs/runtime-contract.md` for the runtime contract.
+User-level guidance (tone, principles, git etiquette) lives in `~/.claude/CLAUDE.md` and `~/dotfiles/agents/AGENTS.md` and is *not* duplicated here. This file is for project-specific facts.
+
+## Read The Docs First
+
+Before working in an area, read the matching doc:
+
+- **Operating model / case lifecycle** → [program.md](program.md)
+- **CLI surface (`research ...`)** → [README.md](README.md)
+- **Runtime contract (cycles, progress, challenge, schemas)** → [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md)
+- **Architecture** → [.agents/docs/architecture.md](.agents/docs/architecture.md)
+- **First-time setup / source bundles** → [.agents/docs/setup.md](.agents/docs/setup.md)
+- **Day-to-day loop behavior (source strategy, hypotheses, challenge)** → [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md)
+
+If a doc disagrees with code, fix the doc in the same change.
 
 ## READ-ONLY RULE
 
@@ -44,25 +57,11 @@ When a warehouse bundle is enabled, query it through its MCP server, not improvi
 
 ## Research design contract
 
-Autonomous root-cause cases enforce a stronger design contract at planning time:
-
-- Each high-priority hypothesis must include a **discriminating test**.
-- Each plan thread must name the **strongest competing explanation** and the evidence to distinguish it.
-- Each thread must define a **completion threshold** for when to mark it done, blocked, or pivoted.
-- The brief and plan must surface known **confounders** and required **cross-source cross-checks**.
-
-Validation (`research validate --strict`) enforces these requirements.
+Autonomous root-cause cases enforce a stronger design contract at planning time (discriminating tests, rival explanations, completion thresholds, confounders), and `research validate --strict` enforces it. Details: [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Planning step).
 
 ## Challenge cycle
 
-Before an autonomous case can close, a mandatory challenge cycle stress-tests the conclusions:
-
-- Identifies the strongest competing explanation
-- Flags the weakest-supported claim and most fragile dependency
-- Declares whether objections are resolved or still open
-- If unresolved material risks remain, the case reopens for more cycles
-
-Do not skip or shortcut the challenge cycle. The case only completes when the challenge passes.
+A mandatory challenge cycle stress-tests conclusions before any autonomous case can close — do not skip or shortcut it. Details: [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md) and [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Challenge cycle).
 
 ## Steering
 
