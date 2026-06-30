@@ -160,38 +160,47 @@ Only query live sources if a concrete objection needs a quick verification. Do
 not restart the whole case."""
 
 
-def render_state_digest(case_path: Path, snapshot: dict[str, Any]) -> str:
-    brief_text = read_text(brief_path(case_path))
+def _question_line_from_brief(brief_text: str) -> str:
     question_body = extract_section(brief_text, "Question")
     if question_body:
-        question_line = question_body.splitlines()[0]
-    else:
-        question_line = next(
-            (
-                line.strip()
-                for line in brief_text.splitlines()
-                if line.strip()
-                and not line.strip().startswith("#")
-                and line.strip() != "---"
-            ),
-            "Unknown",
-        )
+        return question_body.splitlines()[0]
+    return next(
+        (
+            line.strip()
+            for line in brief_text.splitlines()
+            if line.strip()
+            and not line.strip().startswith("#")
+            and line.strip() != "---"
+        ),
+        "Unknown",
+    )
 
+
+def _last_cycle_line(case_path: Path) -> str:
+    cycle_summaries = sorted(cycles_dir(case_path).glob("*/cycle_summary.json"))
+    if not cycle_summaries:
+        return "none yet"
+    last_summary = load_json_object_or_empty(cycle_summaries[-1])
+    if not last_summary:
+        return "none yet"
+    return str(last_summary.get("result", "unknown"))
+
+
+def _append_quoted_section(lines: list[str], title: str, body: str | None) -> None:
+    if body:
+        lines += ["", title, f"> {body}"]
+
+
+def render_state_digest(case_path: Path, snapshot: dict[str, Any]) -> str:
+    brief_text = read_text(brief_path(case_path))
+    question_line = _question_line_from_brief(brief_text)
     cycle_count = snapshot.get("progress", {}).get("cycle_count", 0)
     notes = snapshot.get("notes", "")
-
     working_theory = extract_section(notes, "Working Theory")
     open_questions = extract_section(notes, "Open Questions") or extract_section(
         notes, "Next Checks"
     )
     leads = extract_section(notes, "Leads")
-
-    last_cycle_line = "none yet"
-    cycle_summaries = sorted(cycles_dir(case_path).glob("*/cycle_summary.json"))
-    if cycle_summaries:
-        last_summary = load_json_object_or_empty(cycle_summaries[-1])
-        if last_summary:
-            last_cycle_line = str(last_summary.get("result", "unknown"))
 
     lines = [
         "## Where You Left Off",
@@ -200,16 +209,12 @@ def render_state_digest(case_path: Path, snapshot: dict[str, Any]) -> str:
         f"**Cycle**: {cycle_count}",
     ]
 
-    if working_theory:
-        lines += ["", "**Your working theory** (from notes.md):", f"> {working_theory}"]
-
-    lines += ["", f"**What happened last cycle**: {last_cycle_line}"]
-
-    if open_questions:
-        lines += ["", "**Open questions** (from notes.md):", f"> {open_questions}"]
-
-    if leads:
-        lines += ["", "**Pending leads** (from notes.md):", f"> {leads}"]
+    _append_quoted_section(
+        lines, "**Your working theory** (from notes.md):", working_theory
+    )
+    lines += ["", f"**What happened last cycle**: {_last_cycle_line(case_path)}"]
+    _append_quoted_section(lines, "**Open questions** (from notes.md):", open_questions)
+    _append_quoted_section(lines, "**Pending leads** (from notes.md):", leads)
 
     return "\n".join(lines)
 

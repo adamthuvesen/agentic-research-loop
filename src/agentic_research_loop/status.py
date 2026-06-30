@@ -54,12 +54,9 @@ def challenge_status(progress: dict[str, Any]) -> str:
     return str(progress.get("last_challenge_outcome") or "not run")
 
 
-def render_status_markdown(
-    case_path: Path,
-    status_payload: dict[str, Any],
-    *,
-    snapshot: dict[str, Any] | None = None,
-) -> str:
+def _status_inputs(
+    case_path: Path, snapshot: dict[str, Any] | None
+) -> tuple[dict[str, Any], str, dict[str, Any], str]:
     s = snapshot or {}
     progress = (
         s["progress"]
@@ -73,11 +70,18 @@ def render_status_markdown(
         else load_json_object_or_empty(sources_path(case_path))
     )
     notes = s["notes"] if "notes" in s else read_text(notes_path(case_path))
+    return progress, report, sources, notes
+
+
+def _overview_lines(
+    case_path: Path,
+    status_payload: dict[str, Any],
+    progress: dict[str, Any],
+    sources: dict[str, Any],
+    report: str,
+) -> list[str]:
     report_state = "substantive" if report_has_substance(report) else "draft"
-
-    working_theory = extract_section(notes, "Working Theory")
-
-    lines = [
+    return [
         f"# Research Status: {case_path.name}",
         "",
         f"- Status: `{status_payload.get('status', 'unknown')}`",
@@ -92,15 +96,23 @@ def render_status_markdown(
         "",
     ]
 
-    if working_theory:
-        lines += [
-            "## Working Theory",
-            "",
-            working_theory,
-            "",
-        ]
 
-    lines += [
+def _working_theory_lines(notes: str) -> list[str]:
+    working_theory = extract_section(notes, "Working Theory")
+    if not working_theory:
+        return []
+    return [
+        "## Working Theory",
+        "",
+        working_theory,
+        "",
+    ]
+
+
+def _system_lines(
+    case_path: Path, status_payload: dict[str, Any], progress: dict[str, Any]
+) -> list[str]:
+    return [
         "## Recent Cycles",
         "",
         *recent_cycle_lines(case_path),
@@ -111,4 +123,16 @@ def render_status_markdown(
         f"- Active cycle: `{status_payload.get('active_cycle_id') or 'n/a'}`",
         f"- Stop reason: `{progress.get('stop_reason') or status_payload.get('stop_reason') or 'n/a'}`",
     ]
+
+
+def render_status_markdown(
+    case_path: Path,
+    status_payload: dict[str, Any],
+    *,
+    snapshot: dict[str, Any] | None = None,
+) -> str:
+    progress, report, sources, notes = _status_inputs(case_path, snapshot)
+    lines = _overview_lines(case_path, status_payload, progress, sources, report)
+    lines += _working_theory_lines(notes)
+    lines += _system_lines(case_path, status_payload, progress)
     return "\n".join(lines) + "\n"

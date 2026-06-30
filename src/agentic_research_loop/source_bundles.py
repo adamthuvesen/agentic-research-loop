@@ -25,6 +25,10 @@ _USER_SOURCES = ("config", "sources.json")
 _CLAUDE_CFG = (".mcp.json",)
 _CURSOR_CFG = (".cursor", "mcp.json")
 _CODEX_CFG = (".codex", "config.toml")
+_MCP_JSON_CONFIGS = (
+    (_CLAUDE_CFG, ".mcp.json", "claude"),
+    (_CURSOR_CFG, ".cursor/mcp.json", "cursor"),
+)
 
 _NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
@@ -185,6 +189,92 @@ def _codex_remove_server(text: str, server: str) -> tuple[str, bool]:
     return "".join(out), removed
 
 
+def _mcp_json_targets(
+    repo_root: Path, snippet: dict
+) -> list[tuple[Path, str, dict, dict]]:
+    targets = []
+    for cfg, label, snippet_key in _MCP_JSON_CONFIGS:
+        path = repo_root.joinpath(*cfg)
+        data = _read_json(path, {"mcpServers": {}})
+        targets.append((path, label, data, snippet[snippet_key]))
+    return targets
+
+
+def _write_user_source(su_path: Path, doc: dict, source_name: str, spec: dict) -> str:
+    existed = source_name in doc["sources"]
+    doc["sources"][source_name] = spec
+    _write_json(su_path, doc)
+    return (
+        f"{'updated' if existed else 'added'} source '{source_name}' "
+        "in config/sources.json"
+    )
+
+
+def _wire_mcp_json_targets(
+    targets: list[tuple[Path, str, dict, dict]], server: str
+) -> list[str]:
+    actions: list[str] = []
+    for path, label, data, shapes in targets:
+        servers = data.setdefault("mcpServers", {})
+        had = server in servers
+        servers[server] = shapes[server]
+        _write_json(path, data)
+        actions.append(f"{'updated' if had else 'wired'} server '{server}' in {label}")
+    return actions
+
+
+def _wire_codex_server(
+    cx_path: Path, cx_text: str, *, server: str, codex_toml: str
+) -> str:
+    if _codex_has_server(cx_text, server):
+        return f"server '{server}' already in .codex/config.toml (left as-is)"
+    block = codex_toml.rstrip("\n") + "\n"
+    if cx_text and not cx_text.endswith("\n"):
+        cx_text += "\n"
+    cx_path.parent.mkdir(parents=True, exist_ok=True)
+    cx_path.write_text(cx_text + "\n" + block, encoding="utf-8")
+    return f"wired server '{server}' in .codex/config.toml"
+
+
+def _remove_user_source(repo_root: Path, source_name: str) -> list[str]:
+    su_path = repo_root.joinpath(*_USER_SOURCES)
+    if not su_path.exists():
+        return []
+    _, doc = _user_sources_doc(repo_root)
+    if source_name not in doc["sources"]:
+        return []
+    del doc["sources"][source_name]
+    _write_json(su_path, doc)
+    return [f"removed source '{source_name}' from config/sources.json"]
+
+
+def _remove_mcp_json_servers(repo_root: Path, server: str) -> list[str]:
+    actions: list[str] = []
+    for cfg, label, _ in _MCP_JSON_CONFIGS:
+        path = repo_root.joinpath(*cfg)
+        if not path.exists():
+            continue
+        data = _read_json(path, {"mcpServers": {}})
+        if server in data.get("mcpServers", {}):
+            del data["mcpServers"][server]
+            _write_json(path, data)
+            actions.append(f"removed server '{server}' from {label}")
+    return actions
+
+
+def _remove_codex_server(repo_root: Path, server: str) -> list[str]:
+    cx_path = repo_root.joinpath(*_CODEX_CFG)
+    if not cx_path.exists():
+        return []
+    new_text, removed = _codex_remove_server(
+        cx_path.read_text(encoding="utf-8"), server
+    )
+    if not removed:
+        return []
+    cx_path.write_text(new_text, encoding="utf-8")
+    return [f"removed server '{server}' from .codex/config.toml"]
+
+
 def enable_bundle(repo_root: Path, name: str) -> list[str]:
     """Wire a bundle into the user sources file and the three MCP configs.
 
@@ -197,48 +287,28 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
     # An MCP-less bundle (snippet is None) only registers the source spec — there
     # is no server to wire into the three MCP configs.
     su_path, doc = _user_sources_doc(repo_root)
-    json_targets = []
     server = snippet["server_name"] if snippet is not None else None
     cx_path = repo_root.joinpath(*_CODEX_CFG)
     cx_text = ""
+    json_targets = []
     if snippet is not None:
-        for cfg, label, shapes in (
-            (_CLAUDE_CFG, ".mcp.json", snippet["claude"]),
-            (_CURSOR_CFG, ".cursor/mcp.json", snippet["cursor"]),
-        ):
-            path = repo_root.joinpath(*cfg)
-            data = _read_json(path, {"mcpServers": {}})
-            json_targets.append((path, label, data, shapes))
+        json_targets = _mcp_json_targets(repo_root, snippet)
         cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
 
     # All targets parsed cleanly; now write.
     actions: list[str] = []
-    existed = source_name in doc["sources"]
-    doc["sources"][source_name] = spec
-    _write_json(su_path, doc)
-    actions.append(
-        f"{'updated' if existed else 'added'} source '{source_name}' in config/sources.json"
-    )
-
-    for path, label, data, shapes in json_targets:
-        servers = data.setdefault("mcpServers", {})
-        had = server in servers
-        servers[server] = shapes[server]
-        _write_json(path, data)
-        actions.append(f"{'updated' if had else 'wired'} server '{server}' in {label}")
+    actions.append(_write_user_source(su_path, doc, source_name, spec))
 
     if snippet is not None:
-        if _codex_has_server(cx_text, server):
-            actions.append(
-                f"server '{server}' already in .codex/config.toml (left as-is)"
+        actions.extend(_wire_mcp_json_targets(json_targets, server))
+        actions.append(
+            _wire_codex_server(
+                cx_path,
+                cx_text,
+                server=server,
+                codex_toml=snippet["codex_toml"],
             )
-        else:
-            block = snippet["codex_toml"].rstrip("\n") + "\n"
-            if cx_text and not cx_text.endswith("\n"):
-                cx_text += "\n"
-            cx_path.parent.mkdir(parents=True, exist_ok=True)
-            cx_path.write_text(cx_text + "\n" + block, encoding="utf-8")
-            actions.append(f"wired server '{server}' in .codex/config.toml")
+        )
 
     actions.append(
         f"next: follow examples/sources/{name}/SETUP.md for credentials and read-only setup"
@@ -250,39 +320,12 @@ def disable_bundle(repo_root: Path, name: str) -> list[str]:
     """Remove a bundle's wiring from the user sources file and MCP configs."""
     source_name, _, snippet = _load_bundle(repo_root, name)
     server = snippet["server_name"] if snippet is not None else None
-    actions: list[str] = []
-
-    su_path = repo_root.joinpath(*_USER_SOURCES)
-    if su_path.exists():
-        _, doc = _user_sources_doc(repo_root)
-        if source_name in doc["sources"]:
-            del doc["sources"][source_name]
-            _write_json(su_path, doc)
-            actions.append(f"removed source '{source_name}' from config/sources.json")
+    actions = _remove_user_source(repo_root, source_name)
 
     # An MCP-less bundle wired no server, so there is nothing to unwire.
     if server is not None:
-        for cfg, label in (
-            (_CLAUDE_CFG, ".mcp.json"),
-            (_CURSOR_CFG, ".cursor/mcp.json"),
-        ):
-            path = repo_root.joinpath(*cfg)
-            if not path.exists():
-                continue
-            data = _read_json(path, {"mcpServers": {}})
-            if server in data.get("mcpServers", {}):
-                del data["mcpServers"][server]
-                _write_json(path, data)
-                actions.append(f"removed server '{server}' from {label}")
-
-        cx_path = repo_root.joinpath(*_CODEX_CFG)
-        if cx_path.exists():
-            new_text, removed = _codex_remove_server(
-                cx_path.read_text(encoding="utf-8"), server
-            )
-            if removed:
-                cx_path.write_text(new_text, encoding="utf-8")
-                actions.append(f"removed server '{server}' from .codex/config.toml")
+        actions.extend(_remove_mcp_json_servers(repo_root, server))
+        actions.extend(_remove_codex_server(repo_root, server))
 
     if not actions:
         actions.append(f"'{name}' was not enabled; nothing to do")

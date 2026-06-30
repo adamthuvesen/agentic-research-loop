@@ -20,6 +20,7 @@ from .status import render_status_markdown
 from .validation import collect_validation_warnings, validate_case
 
 _SOURCE_NAMES = sorted(VALID_SOURCES)
+_RUNNER_CHOICES = ("claude", "codex", "demo", "claude-local")
 
 
 def _positive_int(value: str) -> int:
@@ -96,6 +97,31 @@ def _source_kwargs(args: argparse.Namespace) -> dict:
     }
 
 
+def _add_case_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("case", help="Case id or path")
+
+
+def _add_runner_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--runner",
+        choices=_RUNNER_CHOICES,
+        default="claude",
+        help="External agent CLI (default: claude).",
+    )
+
+
+def _add_run_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    name: str,
+    *,
+    help_text: str,
+) -> None:
+    run_parser = subparsers.add_parser(name, help=help_text)
+    _add_case_arg(run_parser)
+    _add_runner_arg(run_parser)
+    run_parser.add_argument("--max-cycles", type=_positive_int, default=10)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Autonomous research case engine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -125,34 +151,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_source_args(init_parser)
 
-    run_parser = subparsers.add_parser("run", help="Run autonomous cycles for a case")
-    run_parser.add_argument("case", help="Case id or path")
-    run_parser.add_argument(
-        "--runner",
-        choices=("claude", "codex", "demo", "claude-local"),
-        default="claude",
-        help="External agent CLI (default: claude).",
+    _add_run_parser(
+        subparsers,
+        "run",
+        help_text="Run autonomous cycles for a case",
     )
-    run_parser.add_argument("--max-cycles", type=_positive_int, default=10)
-
-    resume_parser = subparsers.add_parser(
+    _add_run_parser(
+        subparsers,
         "resume",
-        help="Resume an autonomous case (alias of run)",
+        help_text="Resume an autonomous case (alias of run)",
     )
-    resume_parser.add_argument("case", help="Case id or path")
-    resume_parser.add_argument(
-        "--runner",
-        choices=("claude", "codex", "demo", "claude-local"),
-        default="claude",
-        help="External agent CLI (default: claude).",
-    )
-    resume_parser.add_argument("--max-cycles", type=_positive_int, default=10)
 
     status_parser = subparsers.add_parser("status", help="Show case status")
-    status_parser.add_argument("case", help="Case id or path")
+    _add_case_arg(status_parser)
 
     validate_parser = subparsers.add_parser("validate", help="Validate a case")
-    validate_parser.add_argument("case", help="Case id or path")
+    _add_case_arg(validate_parser)
     validate_parser.add_argument(
         "--strict",
         action="store_true",
@@ -173,18 +187,13 @@ def build_parser() -> argparse.ArgumentParser:
     publish_parser = subparsers.add_parser(
         "publish", help="Publish a case as a durable finding"
     )
-    publish_parser.add_argument("case", help="Case id or path")
+    _add_case_arg(publish_parser)
 
     plan_parser = subparsers.add_parser(
         "plan", help="Generate a research plan for a case"
     )
-    plan_parser.add_argument("case", help="Case id or path")
-    plan_parser.add_argument(
-        "--runner",
-        choices=("claude", "codex", "demo", "claude-local"),
-        default="claude",
-        help="External agent CLI (default: claude).",
-    )
+    _add_case_arg(plan_parser)
+    _add_runner_arg(plan_parser)
 
     gsc_parser = subparsers.add_parser(
         "gsc",
@@ -236,125 +245,150 @@ def _run_case(repo_root: Path, args: argparse.Namespace) -> int:
     return 0
 
 
+def _init_case(repo_root: Path, args: argparse.Namespace) -> int:
+    result = create_manual(
+        repo_root,
+        args.slug,
+        template=args.template,
+        mode=args.mode,
+        from_spec_path=args.from_spec,
+        **_source_kwargs(args),
+    )
+    print(f"Created case: {result.case_id}")
+    print(f"Path: {result.path}")
+    return 0
+
+
+def _show_status(repo_root: Path, args: argparse.Namespace) -> int:
+    case_path = resolve_case_path(repo_root, args.case)
+    status_file = case_path / "state" / "status.json"
+    try:
+        status_payload = load_json_optional(status_file)
+    except (json.JSONDecodeError, OSError):
+        status_payload = None
+    if not isinstance(status_payload, dict):
+        print(f"Error: status.json not found or invalid at {status_file}")
+        return 1
+    print(render_status_markdown(case_path, status_payload))
+    return 0
+
+
+def _validate_case_command(repo_root: Path, args: argparse.Namespace) -> int:
+    case_path = resolve_case_path(repo_root, args.case)
+    warnings = collect_validation_warnings(case_path)
+    errors = validate_case(
+        case_path,
+        strict_completion=args.strict,
+        strict_design=args.design,
+    )
+    if warnings and not (args.strict or args.design):
+        print("Validation warnings:")
+        for warning in warnings:
+            print(f"- {warning}")
+    if errors:
+        print("Validation failed:")
+        for error in errors:
+            print(f"- {error}")
+        return 1
+    print(f"Validation passed: {case_path}")
+    return 0
+
+
+def _publish_case(repo_root: Path, args: argparse.Namespace) -> int:
+    case_path = resolve_case_path(repo_root, args.case)
+    try:
+        output_path = publish(case_path)
+    except (ValueError, json.JSONDecodeError, OSError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(f"Published finding to {output_path}")
+    return 0
+
+
+def _plan_case(repo_root: Path, args: argparse.Namespace) -> int:
+    case_path = resolve_case_path(repo_root, args.case)
+    success = run_plan_step(repo_root, case_path, runner_name=args.runner)
+    if success:
+        print(f"Research plan written to {case_path.name}/plan.md")
+        return 0
+    print(f"Planning step did not produce a plan for {case_path.name}")
+    return 1
+
+
+def _gsc_query_command(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> int:
+    from .google_api import gsc_query, GoogleApiError, GoogleAuthError
+
+    if args.start_date > args.end_date:
+        parser.error("--start-date must be on or before --end-date")
+    try:
+        result = gsc_query(
+            start_date=args.start_date,
+            end_date=args.end_date,
+            dimensions=args.dimensions,
+            row_limit=args.row_limit,
+            start_row=args.start_row,
+        )
+    except (GoogleApiError, GoogleAuthError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def _source_command(repo_root: Path, args: argparse.Namespace) -> int:
+    from .source_bundles import (
+        BundleError,
+        disable_bundle,
+        enable_bundle,
+        render_bundle_list,
+    )
+
+    try:
+        if args.source_command == "list":
+            print(render_bundle_list(repo_root))
+            return 0
+        action = enable_bundle if args.source_command == "enable" else disable_bundle
+        for line in action(repo_root, args.name):
+            print(f"- {line}")
+    except (BundleError, ValueError, OSError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     repo_root = find_repo_root()
 
     if args.command == "init":
-        result = create_manual(
-            repo_root,
-            args.slug,
-            template=args.template,
-            mode=args.mode,
-            from_spec_path=args.from_spec,
-            **_source_kwargs(args),
-        )
-        print(f"Created case: {result.case_id}")
-        print(f"Path: {result.path}")
-        return 0
+        return _init_case(repo_root, args)
 
     if args.command in {"run", "resume"}:
         return _run_case(repo_root, args)
 
     if args.command == "status":
-        case_path = resolve_case_path(repo_root, args.case)
-        status_file = case_path / "state" / "status.json"
-        try:
-            status_payload = load_json_optional(status_file)
-        except (json.JSONDecodeError, OSError):
-            status_payload = None
-        if not isinstance(status_payload, dict):
-            print(f"Error: status.json not found or invalid at {status_file}")
-            return 1
-        print(render_status_markdown(case_path, status_payload))
-        return 0
+        return _show_status(repo_root, args)
 
     if args.command == "validate":
-        case_path = resolve_case_path(repo_root, args.case)
-        warnings = collect_validation_warnings(case_path)
-        errors = validate_case(
-            case_path,
-            strict_completion=args.strict,
-            strict_design=args.design,
-        )
-        if warnings and not (args.strict or args.design):
-            print("Validation warnings:")
-            for warning in warnings:
-                print(f"- {warning}")
-        if errors:
-            print("Validation failed:")
-            for error in errors:
-                print(f"- {error}")
-            return 1
-        print(f"Validation passed: {case_path}")
-        return 0
+        return _validate_case_command(repo_root, args)
 
     if args.command == "publish":
-        case_path = resolve_case_path(repo_root, args.case)
-        try:
-            output_path = publish(case_path)
-        except (ValueError, json.JSONDecodeError, OSError) as exc:
-            print(f"Error: {exc}", file=sys.stderr)
-            return 1
-        print(f"Published finding to {output_path}")
-        return 0
+        return _publish_case(repo_root, args)
 
     if args.command == "plan":
-        case_path = resolve_case_path(repo_root, args.case)
-        success = run_plan_step(repo_root, case_path, runner_name=args.runner)
-        if success:
-            print(f"Research plan written to {case_path.name}/plan.md")
-        else:
-            print(f"Planning step did not produce a plan for {case_path.name}")
-            return 1
-        return 0
+        return _plan_case(repo_root, args)
 
     if args.command == "gsc":
-        from .google_api import gsc_query, GoogleApiError, GoogleAuthError
-
-        if args.start_date > args.end_date:
-            parser.error("--start-date must be on or before --end-date")
-        try:
-            result = gsc_query(
-                start_date=args.start_date,
-                end_date=args.end_date,
-                dimensions=args.dimensions,
-                row_limit=args.row_limit,
-                start_row=args.start_row,
-            )
-        except (GoogleApiError, GoogleAuthError) as exc:
-            print(str(exc), file=sys.stderr)
-            return 1
-        print(json.dumps(result, indent=2))
-        return 0
+        return _gsc_query_command(parser, args)
 
     if args.command == "source":
-        from .source_bundles import (
-            BundleError,
-            disable_bundle,
-            enable_bundle,
-            render_bundle_list,
-        )
-
-        try:
-            if args.source_command == "list":
-                print(render_bundle_list(repo_root))
-                return 0
-            action = (
-                enable_bundle if args.source_command == "enable" else disable_bundle
-            )
-            for line in action(repo_root, args.name):
-                print(f"- {line}")
-        except (BundleError, ValueError, OSError) as exc:
-            print(f"Error: {exc}", file=sys.stderr)
-            return 1
-        return 0
+        return _source_command(repo_root, args)
 
     return 1
 
 
 def _entry() -> None:
-    import sys
-
     sys.exit(main())

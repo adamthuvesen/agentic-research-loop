@@ -19,28 +19,46 @@ from .layout import (
 from .templates import finding_template
 from .validation import validate_case
 
+_DEFAULT_FRESHNESS_CAVEAT = "This finding should be re-checked against live systems before being treated as current."
+_FALLBACK_FRESHNESS_CAVEAT = (
+    "Re-verify this finding when the underlying source systems or definitions change."
+)
+_CAVEAT_TEXT = {
+    "live": "Live metrics and rollout state may change as source systems update.",
+    "web": "External context may age quickly and should be re-verified before reusing the conclusion.",
+    "docs": "Internal documentation may lag operational reality for fast-moving questions.",
+}
 
-def _source_list(findings: Any) -> list[str]:
+
+def _finding_items(findings: Any) -> list[dict[str, Any]]:
     if not isinstance(findings, list):
         return []
+    return [item for item in findings if isinstance(item, dict)]
+
+
+def _first_truthy_value(item: dict[str, Any], keys: tuple[str, ...]) -> str:
+    for key in keys:
+        value = item.get(key)
+        if value:
+            return str(value).strip()
+    return ""
+
+
+def _source_list(findings: Any) -> list[str]:
     sources: list[str] = []
-    for item in findings:
-        if not isinstance(item, dict):
-            continue
-        ref = str(item.get("source_ref") or item.get("source") or "").strip()
+    for item in _finding_items(findings):
+        ref = _first_truthy_value(item, ("source_ref", "source"))
         if ref and ref not in sources:
             sources.append(ref)
     return sources
 
 
 def _source_family_list(findings: Any) -> list[str]:
-    if not isinstance(findings, list) or not findings:
-        return ["none recorded"]
     families = sorted(
         {
             str(item.get("source_type", "")).strip()
-            for item in findings
-            if isinstance(item, dict) and str(item.get("source_type", "")).strip()
+            for item in _finding_items(findings)
+            if str(item.get("source_type", "")).strip()
         }
     )
     return families or ["none recorded"]
@@ -50,18 +68,9 @@ def _freshness_caveats(findings: Any) -> list[str]:
     from .sources import SOURCE_CONFIGS
 
     if not isinstance(findings, list) or not findings:
-        return [
-            "This finding should be re-checked against live systems before being treated as current."
-        ]
+        return [_DEFAULT_FRESHNESS_CAVEAT]
     source_types = {
-        str(item.get("source_type", "")).strip()
-        for item in findings
-        if isinstance(item, dict)
-    }
-    _CAVEAT_TEXT = {
-        "live": "Live metrics and rollout state may change as source systems update.",
-        "web": "External context may age quickly and should be re-verified before reusing the conclusion.",
-        "docs": "Internal documentation may lag operational reality for fast-moving questions.",
+        str(item.get("source_type", "")).strip() for item in _finding_items(findings)
     }
     # Build source_type → caveat_group lookup from config (key field matches source_type in findings)
     type_to_group: dict[str, str] = {}
@@ -71,9 +80,7 @@ def _freshness_caveats(findings: Any) -> list[str]:
             type_to_group[spec["key"]] = group
     groups_present = {type_to_group[st] for st in source_types if st in type_to_group}
     caveats = [_CAVEAT_TEXT[g] for g in ("live", "web", "docs") if g in groups_present]
-    return caveats or [
-        "Re-verify this finding when the underlying source systems or definitions change."
-    ]
+    return caveats or [_FALLBACK_FRESHNESS_CAVEAT]
 
 
 def _reverification_triggers(findings: Any) -> list[str]:

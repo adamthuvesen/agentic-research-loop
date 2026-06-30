@@ -241,13 +241,9 @@ def run_cycle(
     )
 
 
-def apply_cycle_result(
-    case_path: Path, summary: CycleSummary, runner_name: str
-) -> dict[str, Any]:
-    progress_state = _progress_state(case_path)
-    progress = progress_state.to_payload()
-    status_payload = _status_payload(case_path)
-    progress["cycle_count"] = progress.get("cycle_count", 0) + 1
+def _idle_status_after_cycle(
+    status_payload: dict[str, Any], summary: CycleSummary, runner_name: str
+) -> None:
     status_payload.update(
         {
             "runner_name": runner_name,
@@ -257,38 +253,78 @@ def apply_cycle_result(
             "last_attempt_outcome": summary.result,
         }
     )
-    if summary.result in {"progress", "complete", CHALLENGE_REQUIRED_RESULT}:
+
+
+def _apply_progress_streaks(progress: dict[str, Any], result: str) -> None:
+    if result in {"progress", "complete", CHALLENGE_REQUIRED_RESULT}:
         progress["consecutive_no_progress_cycles"] = 0
         progress["consecutive_failures"] = 0
-    elif summary.result == "no_progress":
+    elif result == "no_progress":
         progress["consecutive_no_progress_cycles"] = (
             progress.get("consecutive_no_progress_cycles", 0) + 1
         )
         progress["consecutive_failures"] = 0
-    elif summary.result == "failed":
+    elif result == "failed":
         progress["consecutive_no_progress_cycles"] = 0
         progress["consecutive_failures"] = progress.get("consecutive_failures", 0) + 1
 
+
+def _apply_challenge_progress(progress: dict[str, Any], summary: CycleSummary) -> None:
     if summary.result == CHALLENGE_REQUIRED_RESULT:
         progress["pending_challenge_cycle"] = True
         progress["last_challenge_outcome"] = "queued"
-    elif summary.challenge_cycle and summary.result != "failed":
-        progress["pending_challenge_cycle"] = False
-        if summary.result == "complete":
-            progress["last_challenge_outcome"] = "passed"
-        elif summary.completion_marker == "CYCLE_DONE":
-            progress["last_challenge_outcome"] = "reopened"
-
+        return
+    if not summary.challenge_cycle or summary.result == "failed":
+        return
+    progress["pending_challenge_cycle"] = False
     if summary.result == "complete":
+        progress["last_challenge_outcome"] = "passed"
+    elif summary.completion_marker == "CYCLE_DONE":
+        progress["last_challenge_outcome"] = "reopened"
+
+
+def _apply_completion_progress(progress: dict[str, Any], result: str) -> None:
+    if result == "complete":
         progress["status"] = "complete"
         progress["stop_reason"] = "case_complete"
     elif progress.get("status") == "complete":
         progress["status"] = "active"
         progress["stop_reason"] = None
+
+
+def apply_cycle_result(
+    case_path: Path, summary: CycleSummary, runner_name: str
+) -> dict[str, Any]:
+    progress_state = _progress_state(case_path)
+    progress = progress_state.to_payload()
+    status_payload = _status_payload(case_path)
+    progress["cycle_count"] = progress.get("cycle_count", 0) + 1
+    _idle_status_after_cycle(status_payload, summary, runner_name)
+    _apply_progress_streaks(progress, summary.result)
+    _apply_challenge_progress(progress, summary)
+    _apply_completion_progress(progress, summary.result)
     progress = ProgressState.from_payload(progress).to_payload()
     write_json(progress_path(case_path), progress)
     write_status(case_path, status_payload)
     return progress
+
+
+def _mark_loop_stopped(case_path: Path, progress: dict[str, Any], reason: str) -> None:
+    progress["stop_reason"] = reason
+    write_json(progress_path(case_path), progress)
+    status_payload = _status_payload(case_path)
+    status_payload["stop_reason"] = reason
+    status_payload["status"] = "idle"
+    write_status(case_path, status_payload)
+
+
+def _run_initial_plan_if_needed(
+    repo_root: Path, case_path: Path, runner_name: str
+) -> bool:
+    progress = _progress_payload(case_path)
+    if progress.get("cycle_count", 0) != 0 or not is_plan_blank(case_path):
+        return True
+    return run_plan_step(repo_root, case_path, runner_name=runner_name)
 
 
 def run_loop(
@@ -302,22 +338,16 @@ def run_loop(
     run_started_at = time.monotonic()
     progress = _progress_payload(case_path)
     print_run_header(case_path.name, runner_name, max_cycles)
-    if progress.get("cycle_count", 0) == 0 and is_plan_blank(case_path):
-        plan_written = run_plan_step(repo_root, case_path, runner_name=runner_name)
+    if not _run_initial_plan_if_needed(repo_root, case_path, runner_name):
         progress = _progress_payload(case_path)
-        if not plan_written:
-            progress["stop_reason"] = "planning_failed"
-            write_json(progress_path(case_path), progress)
-            status_payload = _status_payload(case_path)
-            status_payload["stop_reason"] = "planning_failed"
-            status_payload["status"] = "idle"
-            write_status(case_path, status_payload)
-            print_run_summary(
-                [],
-                "planning_failed",
-                elapsed_seconds=time.monotonic() - run_started_at,
-            )
-            return results
+        _mark_loop_stopped(case_path, progress, "planning_failed")
+        print_run_summary(
+            [],
+            "planning_failed",
+            elapsed_seconds=time.monotonic() - run_started_at,
+        )
+        return results
+    progress = _progress_payload(case_path)
     next_cycle_number = progress.get("cycle_count", 0) + 1
     while True:
         progress = _progress_payload(case_path)
@@ -327,12 +357,7 @@ def run_loop(
             progress, challenge_required=case_requires_challenge(case_path)
         )
         if should_end:
-            progress["stop_reason"] = reason
-            write_json(progress_path(case_path), progress)
-            status_payload = _status_payload(case_path)
-            status_payload["stop_reason"] = reason
-            status_payload["status"] = "idle"
-            write_status(case_path, status_payload)
+            _mark_loop_stopped(case_path, progress, reason)
             break
         summary = run_cycle(
             repo_root, case_path, runner_name, cycle_number=next_cycle_number
