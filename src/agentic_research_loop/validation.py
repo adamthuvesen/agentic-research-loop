@@ -11,6 +11,20 @@ from .layout import brief_path, findings_path, plan_path, progress_path, report_
 from .runtime_state import ProgressState
 
 MIN_SUBSTANTIVE_CONTENT_LENGTH = 60
+_ROOT_CAUSE_BRIEF_SECTIONS = (
+    (
+        "## Hypotheses",
+        "autonomous root-cause brief should include a `## Hypotheses` section",
+    ),
+    (
+        "## Known Confounders",
+        "autonomous root-cause brief should capture `## Known Confounders`",
+    ),
+    (
+        "## Required Cross-Checks",
+        "autonomous root-cause brief should capture `## Required Cross-Checks`",
+    ),
+)
 
 THREAD_PATTERN = re.compile(
     r"^###\s+(T[^\n:]*:[^\n]*?)\n(?P<body>.*?)(?=^###\s+T|\Z)", re.MULTILINE | re.DOTALL
@@ -66,6 +80,42 @@ def parse_plan_threads(plan_text: str) -> list[dict[str, Any]]:
     return threads
 
 
+def _root_cause_brief_warnings(brief_text: str) -> list[str]:
+    return [
+        warning
+        for section_heading, warning in _ROOT_CAUSE_BRIEF_SECTIONS
+        if section_heading not in brief_text
+    ]
+
+
+def _thread_design_warnings(threads: list[dict[str, Any]]) -> list[str]:
+    warnings: list[str] = []
+    for thread in threads:
+        priority = thread["fields"].get("Priority", "").lower()
+        if priority != "high":
+            continue
+        for field_name in ROOT_CAUSE_DESIGN_FIELDS:
+            if field_name not in thread["fields"]:
+                warnings.append(
+                    f"{thread['heading']} is high priority but missing `{field_name}`"
+                )
+    return warnings
+
+
+def _root_cause_plan_warnings(case_path: Path) -> list[str]:
+    if not plan_path(case_path).exists():
+        return ["autonomous root-cause case should include `plan.md`"]
+
+    plan_text = read_text(plan_path(case_path))
+    if "No plan yet" in plan_text:
+        return ["autonomous root-cause case has no research threads yet"]
+
+    threads = parse_plan_threads(plan_text)
+    if not threads:
+        return ["plan.md does not contain any numbered research threads"]
+    return _thread_design_warnings(threads)
+
+
 def collect_validation_warnings(case_path: Path) -> list[str]:
     warnings: list[str] = []
     if not brief_path(case_path).exists():
@@ -76,44 +126,79 @@ def collect_validation_warnings(case_path: Path) -> list[str]:
         return warnings
 
     brief_text = read_text(brief_path(case_path))
-    if "## Hypotheses" not in brief_text:
-        warnings.append(
-            "autonomous root-cause brief should include a `## Hypotheses` section"
-        )
-    if "## Known Confounders" not in brief_text:
-        warnings.append(
-            "autonomous root-cause brief should capture `## Known Confounders`"
-        )
-    if "## Required Cross-Checks" not in brief_text:
-        warnings.append(
-            "autonomous root-cause brief should capture `## Required Cross-Checks`"
-        )
-
-    if not plan_path(case_path).exists():
-        warnings.append("autonomous root-cause case should include `plan.md`")
-        return warnings
-
-    plan_text = read_text(plan_path(case_path))
-    if "No plan yet" in plan_text:
-        warnings.append("autonomous root-cause case has no research threads yet")
-        return warnings
-
-    threads = parse_plan_threads(plan_text)
-    if not threads:
-        warnings.append("plan.md does not contain any numbered research threads")
-        return warnings
-
-    for thread in threads:
-        priority = thread["fields"].get("Priority", "").lower()
-        if priority != "high":
-            continue
-        for field_name in ROOT_CAUSE_DESIGN_FIELDS:
-            if field_name not in thread["fields"]:
-                warnings.append(
-                    f"{thread['heading']} is high priority but missing `{field_name}`"
-                )
-
+    warnings.extend(_root_cause_brief_warnings(brief_text))
+    warnings.extend(_root_cause_plan_warnings(case_path))
     return warnings
+
+
+def _load_progress_for_validation(
+    case_path: Path,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    try:
+        progress = load_json(progress_path(case_path))
+    except json.JSONDecodeError as exc:
+        return None, [f"progress.json is invalid JSON: {exc.msg}"]
+    except OSError as exc:
+        return None, [f"Could not read progress.json: {exc}"]
+
+    errors = validate_progress(progress)
+    if errors:
+        return None, errors
+    return progress, []
+
+
+def _challenge_completion_errors(
+    case_path: Path, progress: dict[str, Any]
+) -> list[str]:
+    profile = CaseProfile.load(case_path)
+    if not profile.requires_challenge:
+        return []
+    if progress.get("pending_challenge_cycle"):
+        return ["strict completion requires the challenge cycle to be run"]
+    if progress.get("last_challenge_outcome") is None:
+        return [
+            "strict completion requires the challenge cycle to be run "
+            "(this case has not run one yet — run more cycles or use "
+            "`validate --design` for a structural check)"
+        ]
+    if progress.get("last_challenge_outcome") != "passed":
+        return [
+            "strict completion requires the challenge cycle to have passed "
+            f"(last outcome: {progress.get('last_challenge_outcome')!r})"
+        ]
+    return []
+
+
+def _report_completion_errors(case_path: Path) -> list[str]:
+    rp = report_path(case_path)
+    if not rp.exists():
+        return ["Missing required file: report.md"]
+
+    report_text = read_text(rp)
+    if report_has_substance(report_text):
+        return []
+    if extract_section(report_text, "Executive Summary") is None:
+        return ["strict completion requires a non-empty Executive Summary"]
+    return ["strict completion requires substantive report content"]
+
+
+def _strict_completion_errors(case_path: Path, progress: dict[str, Any]) -> list[str]:
+    return _challenge_completion_errors(
+        case_path, progress
+    ) + _report_completion_errors(case_path)
+
+
+def _findings_errors(case_path: Path) -> list[str]:
+    fp = findings_path(case_path)
+    if not fp.exists():
+        return []
+    try:
+        findings = load_json(fp)
+    except json.JSONDecodeError as exc:
+        return [f"findings.json is invalid JSON: {exc.msg}"]
+    except OSError as exc:
+        return [f"Could not read findings.json: {exc}"]
+    return validate_findings(findings)
 
 
 def validate_case(
@@ -139,18 +224,11 @@ def validate_case(
         errors.append("Missing required file: progress.json")
 
     if progress_path(case_path).exists():
-        try:
-            progress = load_json(progress_path(case_path))
-        except json.JSONDecodeError as exc:
-            errors.append(f"progress.json is invalid JSON: {exc.msg}")
-            return errors
-        except OSError as exc:
-            errors.append(f"Could not read progress.json: {exc}")
-            return errors
-
-        progress_errors = validate_progress(progress)
-        errors.extend(progress_errors)
+        progress, progress_errors = _load_progress_for_validation(case_path)
         if progress_errors:
+            errors.extend(progress_errors)
+            return errors
+        if progress is None:
             return errors
 
         status_complete = progress.get("status") == "complete"
@@ -158,52 +236,10 @@ def validate_case(
             strict_completion or strict_design or status_complete
         )
         if should_enforce_design_contract:
-            for warning in collect_validation_warnings(case_path):
-                errors.append(warning)
+            errors.extend(collect_validation_warnings(case_path))
 
         if strict_completion or status_complete:
-            profile = CaseProfile.load(case_path)
-            if profile.requires_challenge:
-                if progress.get("pending_challenge_cycle"):
-                    errors.append(
-                        "strict completion requires the challenge cycle to be run"
-                    )
-                elif progress.get("last_challenge_outcome") is None:
-                    errors.append(
-                        "strict completion requires the challenge cycle to be run "
-                        "(this case has not run one yet — run more cycles or use "
-                        "`validate --design` for a structural check)"
-                    )
-                elif progress.get("last_challenge_outcome") != "passed":
-                    errors.append(
-                        "strict completion requires the challenge cycle to have passed "
-                        f"(last outcome: {progress.get('last_challenge_outcome')!r})"
-                    )
+            errors.extend(_strict_completion_errors(case_path, progress))
 
-            rp = report_path(case_path)
-            if not rp.exists():
-                errors.append("Missing required file: report.md")
-            else:
-                report_text = read_text(rp)
-                if not report_has_substance(report_text):
-                    if extract_section(report_text, "Executive Summary") is None:
-                        errors.append(
-                            "strict completion requires a non-empty Executive Summary"
-                        )
-                    else:
-                        errors.append(
-                            "strict completion requires substantive report content"
-                        )
-
-    fp = findings_path(case_path)
-    if fp.exists():
-        try:
-            findings = load_json(fp)
-        except json.JSONDecodeError as exc:
-            errors.append(f"findings.json is invalid JSON: {exc.msg}")
-        except OSError as exc:
-            errors.append(f"Could not read findings.json: {exc}")
-        else:
-            errors.extend(validate_findings(findings))
-
+    errors.extend(_findings_errors(case_path))
     return errors

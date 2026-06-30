@@ -177,6 +177,35 @@ def create_manual(
     return ResearchInitResult(case_id=case_id, path=path, decision=decision)
 
 
+def _resolve_existing_case_path(
+    candidate: Path, expected_parent: Path, *, require_dir: bool
+) -> Path | None:
+    if not candidate.exists():
+        return None
+    resolved = candidate.resolve()
+    if (require_dir and not resolved.is_dir()) or resolved.parent != expected_parent:
+        raise FileNotFoundError(
+            f"Case path {resolved} is outside the research directory {expected_parent}"
+        )
+    return resolved
+
+
+def _suffix_case_match(expected_parent: Path, value: str) -> Path | None:
+    if not expected_parent.exists():
+        return None
+    matches = [
+        path
+        for path in expected_parent.iterdir()
+        if path.is_dir() and path.name.endswith(f"-{value}")
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        names = ", ".join(path.name for path in sorted(matches))
+        raise FileNotFoundError(f"Ambiguous case slug '{value}' — matches: {names}")
+    return None
+
+
 def resolve_case_path(repo_root: Path, value: str) -> Path:
     """Resolve a case identifier to its directory path within research_dir.
 
@@ -186,32 +215,20 @@ def resolve_case_path(repo_root: Path, value: str) -> Path:
     if not value:
         raise FileNotFoundError("Case identifier must not be empty")
     expected_parent = research_dir(repo_root).resolve()
-    candidate = Path(value)
-    if candidate.exists():
-        resolved = candidate.resolve()
-        if resolved.parent != expected_parent:
-            raise FileNotFoundError(
-                f"Case path {resolved} is outside the research directory {expected_parent}"
-            )
+    resolved = _resolve_existing_case_path(
+        Path(value), expected_parent, require_dir=False
+    )
+    if resolved is not None:
         return resolved
-    resolved = case_dir(repo_root, value)
-    if resolved.exists():
-        real_resolved = resolved.resolve()
-        if not real_resolved.is_dir() or real_resolved.parent != expected_parent:
-            raise FileNotFoundError(
-                f"Case path {real_resolved} is outside the research directory {expected_parent}"
-            )
-        return real_resolved
+
+    resolved = _resolve_existing_case_path(
+        case_dir(repo_root, value), expected_parent, require_dir=True
+    )
+    if resolved is not None:
+        return resolved
+
     # Suffix fallback: match directories ending with -{value}
-    if expected_parent.exists():
-        matches = [
-            d
-            for d in expected_parent.iterdir()
-            if d.is_dir() and d.name.endswith(f"-{value}")
-        ]
-        if len(matches) == 1:
-            return matches[0]
-        if len(matches) > 1:
-            names = ", ".join(d.name for d in sorted(matches))
-            raise FileNotFoundError(f"Ambiguous case slug '{value}' — matches: {names}")
+    resolved = _suffix_case_match(expected_parent, value)
+    if resolved is not None:
+        return resolved
     raise FileNotFoundError(f"Could not find case: {value}")

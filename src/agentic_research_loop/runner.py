@@ -32,11 +32,16 @@ def builtin_runner_path(repo_root: Path, runner_name: str) -> Path:
     return repo_root / filename
 
 
-def load_runner_config(path: Path) -> dict[str, Any]:
+def _load_runner_payload(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"Runner config must be a JSON object: {path}")
+    return payload
 
+
+def _command_config(
+    path: Path, payload: dict[str, Any]
+) -> tuple[list[str] | None, str | None]:
     command = payload.get("command")
     command_template = payload.get("command_template")
     if bool(command) == bool(command_template):
@@ -50,48 +55,57 @@ def load_runner_config(path: Path) -> dict[str, Any]:
             raise ValueError(f"'command' must be a JSON list of strings: {path}")
     if command_template is not None and not isinstance(command_template, str):
         raise ValueError(f"'command_template' must be a string: {path}")
+    return command, command_template
 
-    allow_shell = payload.get("allow_shell", False)
-    if not isinstance(allow_shell, bool):
-        raise ValueError(f"'allow_shell' must be a boolean: {path}")
-    if command_template is not None and not allow_shell:
-        raise ValueError(f"'command_template' requires 'allow_shell': true in {path}")
 
+def _bool_config(path: Path, payload: dict[str, Any], key: str, default: bool) -> bool:
+    value = payload.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"'{key}' must be a boolean: {path}")
+    return value
+
+
+def _env_config(path: Path, payload: dict[str, Any]) -> dict[str, str]:
     env = payload.get("env", {})
     if not isinstance(env, dict) or not all(
         isinstance(key, str) and isinstance(value, str) for key, value in env.items()
     ):
         raise ValueError(f"'env' must be a string-to-string object: {path}")
+    return env
 
-    timeout_seconds = payload.get("timeout_seconds", 1800)
-    if not isinstance(timeout_seconds, int) or timeout_seconds <= 0:
-        raise ValueError(f"'timeout_seconds' must be a positive integer: {path}")
 
-    prompt_via_stdin = payload.get("prompt_via_stdin", False)
-    if not isinstance(prompt_via_stdin, bool):
-        raise ValueError(f"'prompt_via_stdin' must be a boolean: {path}")
+def _positive_int_config(
+    path: Path, payload: dict[str, Any], key: str, default: int
+) -> int:
+    value = payload.get(key, default)
+    if not isinstance(value, int) or value <= 0:
+        raise ValueError(f"'{key}' must be a positive integer: {path}")
+    return value
 
-    max_output_bytes = payload.get("max_output_bytes", DEFAULT_MAX_OUTPUT_BYTES)
-    if not isinstance(max_output_bytes, int) or max_output_bytes <= 0:
-        raise ValueError(f"'max_output_bytes' must be a positive integer: {path}")
 
-    agent_message_tail_bytes = payload.get(
-        "agent_message_tail_bytes", DEFAULT_AGENT_MESSAGE_TAIL_BYTES
-    )
-    if not isinstance(agent_message_tail_bytes, int) or agent_message_tail_bytes <= 0:
-        raise ValueError(
-            f"'agent_message_tail_bytes' must be a positive integer: {path}"
-        )
+def load_runner_config(path: Path) -> dict[str, Any]:
+    payload = _load_runner_payload(path)
+    command, command_template = _command_config(path, payload)
+    allow_shell = _bool_config(path, payload, "allow_shell", False)
+    if command_template is not None and not allow_shell:
+        raise ValueError(f"'command_template' requires 'allow_shell': true in {path}")
 
     return {
         "command": command,
         "command_template": command_template,
         "allow_shell": allow_shell,
-        "env": env,
-        "timeout_seconds": timeout_seconds,
-        "prompt_via_stdin": prompt_via_stdin,
-        "max_output_bytes": max_output_bytes,
-        "agent_message_tail_bytes": agent_message_tail_bytes,
+        "env": _env_config(path, payload),
+        "timeout_seconds": _positive_int_config(path, payload, "timeout_seconds", 1800),
+        "prompt_via_stdin": _bool_config(path, payload, "prompt_via_stdin", False),
+        "max_output_bytes": _positive_int_config(
+            path, payload, "max_output_bytes", DEFAULT_MAX_OUTPUT_BYTES
+        ),
+        "agent_message_tail_bytes": _positive_int_config(
+            path,
+            payload,
+            "agent_message_tail_bytes",
+            DEFAULT_AGENT_MESSAGE_TAIL_BYTES,
+        ),
     }
 
 
@@ -161,16 +175,9 @@ def _write_stdin(stream: Any, text: str) -> None:
             pass
 
 
-def invoke_runner(
-    runner_config: dict[str, Any],
-    *,
-    repo_root: Path,
-    context: dict[str, str],
-    prompt_text: str,
-    stdout_path: Path,
-    stderr_path: Path,
-    agent_message_path: Path,
-) -> dict[str, Any]:
+def _runner_env(
+    runner_config: dict[str, Any], context: dict[str, str]
+) -> dict[str, str]:
     env = os.environ.copy()
     env.update(
         {
@@ -178,72 +185,77 @@ def invoke_runner(
             for key, value in runner_config["env"].items()
         }
     )
+    return env
+
+
+def _runner_command(
+    runner_config: dict[str, Any], context: dict[str, str]
+) -> tuple[list[str] | str, bool]:
     if runner_config["command"] is not None:
-        command = [
+        return [
             render_placeholders(token, context) for token in runner_config["command"]
-        ]
-        shell = False
-    else:
-        command = render_shell_placeholders(runner_config["command_template"], context)
-        shell = True
+        ], False
+    return render_shell_placeholders(runner_config["command_template"], context), True
 
-    kwargs: dict[str, Any] = {
-        "cwd": repo_root,
-        "env": env,
-        "stdin": subprocess.PIPE if runner_config["prompt_via_stdin"] else None,
-        "stdout": subprocess.PIPE,
-        "stderr": subprocess.PIPE,
-        "shell": shell,
-    }
 
-    stdout_capture = _StreamCapture(
-        stdout_path,
-        max_bytes=runner_config["max_output_bytes"],
-        tail_bytes=runner_config["agent_message_tail_bytes"],
-    )
-    stderr_capture = _StreamCapture(
-        stderr_path,
+def _capture_for(path: Path, runner_config: dict[str, Any]) -> _StreamCapture:
+    return _StreamCapture(
+        path,
         max_bytes=runner_config["max_output_bytes"],
         tail_bytes=runner_config["agent_message_tail_bytes"],
     )
 
-    process = subprocess.Popen(command, **kwargs)
-    stdout_thread = threading.Thread(
-        target=stdout_capture.capture, args=(process.stdout,), daemon=True
-    )
-    stderr_thread = threading.Thread(
-        target=stderr_capture.capture, args=(process.stderr,), daemon=True
-    )
-    stdout_thread.start()
-    stderr_thread.start()
 
-    stdin_thread: threading.Thread | None = None
-    if runner_config["prompt_via_stdin"] and process.stdin is not None:
-        stdin_thread = threading.Thread(
-            target=_write_stdin, args=(process.stdin, prompt_text), daemon=True
-        )
-        stdin_thread.start()
+def _start_capture_thread(capture: _StreamCapture, stream: Any) -> threading.Thread:
+    thread = threading.Thread(target=capture.capture, args=(stream,), daemon=True)
+    thread.start()
+    return thread
 
-    timed_out = False
-    returncode: int | None
+
+def _start_stdin_thread(
+    process: subprocess.Popen, *, enabled: bool, prompt_text: str
+) -> threading.Thread | None:
+    if not enabled or process.stdin is None:
+        return None
+    thread = threading.Thread(
+        target=_write_stdin, args=(process.stdin, prompt_text), daemon=True
+    )
+    thread.start()
+    return thread
+
+
+def _wait_for_process(
+    process: subprocess.Popen, *, timeout_seconds: int
+) -> tuple[bool, int | None]:
     try:
-        returncode = process.wait(timeout=runner_config["timeout_seconds"])
+        return False, process.wait(timeout=timeout_seconds)
     except subprocess.TimeoutExpired:
-        timed_out = True
         process.kill()
         process.wait()
-        returncode = None
+        return True, None
 
-    if stdin_thread is not None:
-        stdin_thread.join()
-    stdout_thread.join()
-    stderr_thread.join()
 
-    if not agent_message_path.exists():
-        stdout_tail = stdout_capture.tail_text()
-        if stdout_tail.strip():
-            agent_message_path.write_text(stdout_tail, encoding="utf-8")
+def _write_agent_message_tail(
+    agent_message_path: Path, stdout_capture: _StreamCapture
+) -> None:
+    if agent_message_path.exists():
+        return
+    stdout_tail = stdout_capture.tail_text()
+    if stdout_tail.strip():
+        agent_message_path.write_text(stdout_tail, encoding="utf-8")
 
+
+def _runner_result(
+    *,
+    timed_out: bool,
+    returncode: int | None,
+    command: list[str] | str,
+    stdout_path: Path,
+    stderr_path: Path,
+    agent_message_path: Path,
+    stdout_capture: _StreamCapture,
+    stderr_capture: _StreamCapture,
+) -> dict[str, Any]:
     return {
         "timed_out": timed_out,
         "returncode": returncode,
@@ -258,3 +270,55 @@ def invoke_runner(
         "stdout_truncated": stdout_capture.truncated,
         "stderr_truncated": stderr_capture.truncated,
     }
+
+
+def invoke_runner(
+    runner_config: dict[str, Any],
+    *,
+    repo_root: Path,
+    context: dict[str, str],
+    prompt_text: str,
+    stdout_path: Path,
+    stderr_path: Path,
+    agent_message_path: Path,
+) -> dict[str, Any]:
+    command, shell = _runner_command(runner_config, context)
+    stdout_capture = _capture_for(stdout_path, runner_config)
+    stderr_capture = _capture_for(stderr_path, runner_config)
+
+    process = subprocess.Popen(
+        command,
+        cwd=repo_root,
+        env=_runner_env(runner_config, context),
+        stdin=subprocess.PIPE if runner_config["prompt_via_stdin"] else None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=shell,
+    )
+    stdout_thread = _start_capture_thread(stdout_capture, process.stdout)
+    stderr_thread = _start_capture_thread(stderr_capture, process.stderr)
+    stdin_thread = _start_stdin_thread(
+        process,
+        enabled=runner_config["prompt_via_stdin"],
+        prompt_text=prompt_text,
+    )
+    timed_out, returncode = _wait_for_process(
+        process, timeout_seconds=runner_config["timeout_seconds"]
+    )
+
+    if stdin_thread is not None:
+        stdin_thread.join()
+    stdout_thread.join()
+    stderr_thread.join()
+
+    _write_agent_message_tail(agent_message_path, stdout_capture)
+    return _runner_result(
+        timed_out=timed_out,
+        returncode=returncode,
+        command=command,
+        stdout_path=stdout_path,
+        stderr_path=stderr_path,
+        agent_message_path=agent_message_path,
+        stdout_capture=stdout_capture,
+        stderr_capture=stderr_capture,
+    )

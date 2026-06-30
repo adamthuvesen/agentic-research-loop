@@ -295,25 +295,26 @@ def _local_context_notes(path: Path) -> str:
     return notes
 
 
-def source_plan_lines(config: dict) -> list[str]:
-    lines = [
-        config.get("read_only_policy", _READ_ONLY_POLICY),
-        "",
-    ]
-
+def _enabled_source_sections(config: dict) -> list[tuple[SourceSpec, dict]]:
+    sections: list[tuple[SourceSpec, dict]] = []
     for spec in SOURCE_CONFIGS.values():
         section = config.get(spec["key"], {})
         if section.get("enabled", True):
-            lines.append(spec["plan_line"])
+            sections.append((spec, section))
+    return sections
 
-    for spec in SOURCE_CONFIGS.values():
-        section = config.get(spec["key"], {})
-        if not section.get("enabled", True):
-            continue
+
+def _source_hint_lines(enabled_sections: list[tuple[SourceSpec, dict]]) -> list[str]:
+    lines: list[str] = []
+    for spec, section in enabled_sections:
         value = str(section.get(spec["hint_field"], "")).strip()
         if value:
             lines.append(f"{spec['label']}: {value}")
+    return lines
 
+
+def _local_context_lines(config: dict) -> list[str]:
+    lines: list[str] = []
     for entry in config.get("local_context_folders", []):
         path = str(entry.get("path", "")).strip()
         if path:
@@ -321,5 +322,16 @@ def source_plan_lines(config: dict) -> list[str]:
         notes = str(entry.get("notes", "")).strip()
         if notes and notes != "Search and read local context files. Read-only.":
             lines.append(f"Local context note: {notes}")
+    return lines
 
+
+def source_plan_lines(config: dict) -> list[str]:
+    enabled_sections = _enabled_source_sections(config)
+    lines = [
+        config.get("read_only_policy", _READ_ONLY_POLICY),
+        "",
+        *[spec["plan_line"] for spec, _ in enabled_sections],
+        *_source_hint_lines(enabled_sections),
+        *_local_context_lines(config),
+    ]
     return lines
