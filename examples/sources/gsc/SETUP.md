@@ -1,6 +1,6 @@
-# GSC — Google Search Console (read-only)
+# GSC - Google Search Console (read-only)
 
-**Transport:** `cli` — the `research gsc` subcommand, not an MCP server. This is an
+**Transport:** `cli` - the `research gsc` subcommand, not an MCP server. This is an
 **MCP-less bundle**: it ships only `source.json` and this `SETUP.md`, so enabling it
 registers the source for planning and prompting but wires no server into the MCP
 configs.
@@ -13,7 +13,7 @@ Analytics and nothing that can modify a property. Read-only is enforced by the
 ## Default path: the warehouse, not this CLI
 
 Prefer a **warehouse-synced copy** of GSC (Snowflake or BigQuery, via Fivetran or
-the GSC bulk export) for organic-search metrics — query the semantic views / marts
+the GSC bulk export) for organic-search metrics - query the semantic views / marts
 or synced staging tables. The `research gsc` CLI is the **API fallback**: reach for
 it only when the sync is lagging, you need fresher data, or you want an API-only
 slice.
@@ -21,7 +21,7 @@ slice.
 ## Enable
 
 1. Run `uv run research source enable gsc` (or merge [`source.json`](source.json)
-   into `config/sources.json` by hand). No MCP config changes — there is no server.
+   into `config/sources.json` by hand). No MCP config changes - there is no server.
 2. Authenticate with Application Default Credentials, requesting the read-only
    scope (`agentic_research_loop.google_api` picks ADC up automatically):
 
@@ -32,9 +32,9 @@ slice.
    ```
 
 3. Set the environment the CLI reads:
-   - `GSC_SITE` — the verified Search Console property URL (e.g.
+   - `GSC_SITE` - the verified Search Console property URL (e.g.
      `https://www.example.com/` or `sc-domain:example.com`).
-   - `GCP_QUOTA_PROJECT` — optional; a GCP project to bill the API quota to.
+   - `GCP_QUOTA_PROJECT` - optional; a GCP project to bill the API quota to.
 
 ## Use
 

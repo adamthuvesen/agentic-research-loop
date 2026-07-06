@@ -9,7 +9,7 @@
 ## Evidence Log
 
 - Success rate: 98.0% -> 84.0% (-14.0 pp).
-- Scheduled jobs: +2.0% (flat) — not a volume problem.
+- Scheduled jobs: +2.0% (flat), which points away from volume as the cause.
 - Failed jobs: +716.0% vs pre-change baseline.
 - Avg queue minutes: 8.0 -> 42.0 (+425.0%).
 - The inflection week matches the documented scheduler change; no counting change in the window.
@@ -21,7 +21,7 @@
 
 ## Challenge Review
 
-- Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.
+- Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected because scheduled jobs stayed flat, and the context notes record no counting change.
 - Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.
-- Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.
+- Most fragile dependency: partial-week data at the window edges. Re-checked; the step change holds across the full post-change weeks.
 - Outcome: Resolved. The conclusion survives challenge.

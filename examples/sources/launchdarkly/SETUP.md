@@ -1,21 +1,21 @@
 # LaunchDarkly (read-only)
 
 **Server:** official LaunchDarkly MCP server
-([`@launchdarkly/mcp-server`](https://github.com/launchdarkly/mcp-server)) — local
+([`@launchdarkly/mcp-server`](https://github.com/launchdarkly/mcp-server)) - local
 stdio via npx. (A hosted OAuth endpoint exists, but the local server lets you pin
 `--scope read` in config, so it's the read-only-safe choice.)
 
-**Read-only enforcement (`scope:reader` — credential-enforced at the API):** read-only
-is provable here, like PostHog. Two layers — use both:
+**Read-only enforcement (`scope:reader` - credential-enforced at the API):** read-only
+is provable here, like PostHog. Two layers - use both:
 
-- **Reader-role API token** — create a LaunchDarkly **API access token with the Reader
+- **Reader-role API token** - create a LaunchDarkly **API access token with the Reader
   base role**. LaunchDarkly's API rejects every write from a Reader token (403-class),
   regardless of what tools the server exposes.
-- **`--scope read`** — already pinned in the bundle's `args` as a second guard.
+- **`--scope read`** - already pinned in the bundle's `args` as a second guard.
 
-**Warning — the server ships flag-mutation tools** (`toggle-flag`, `create-flag`,
+**Warning - the server ships flag-mutation tools** (`toggle-flag`, `create-flag`,
 `delete-flag`, `update-targeting-rules`, `start/stop-experiment-iteration`) that change
-**production** behavior. The Reader token is what neutralizes them — **never use a
+**production** behavior. The Reader token is what neutralizes them - **never use a
 Writer/Developer token.**
 
 ## Enable

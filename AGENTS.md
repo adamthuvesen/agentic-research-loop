@@ -37,11 +37,11 @@ After `git clone`, the same tree is wired into Claude Code via a **committed sym
 
 - **Claude Code:** `.claude/skills` → `../.agents/skills`
 
-Other tools (Codex, Cursor) can point at `.agents/skills/` with a local, uncommitted symlink. Do not duplicate skill content under per-tool directories — extend `.agents/skills/` only.
+Other tools (Codex, Cursor) can point at `.agents/skills/` with a local, uncommitted symlink. Do not duplicate skill content under per-tool directories. Extend `.agents/skills/` only.
 
 ## Warehouses
 
-When a warehouse bundle is enabled, query it through its MCP server, not improvised connections — and never write. Snowflake's read-only is enforced by the committed SQL allowlist in `config/snowflake-mcp-tools.yaml` (SELECT/DESCRIBE/SHOW/USE only, pinned via `--service-config-file`); BigQuery, Postgres, Redshift, Databricks, and DuckDB each enforce read-only through their own bundle's mechanism (see `examples/sources/<name>/SETUP.md`). Each is self-contained — no dependency on any sibling repo.
+When a warehouse bundle is enabled, query it through its MCP server, not improvised connections, and never write. Snowflake's read-only rule is the committed SQL allowlist in `config/snowflake-mcp-tools.yaml` (SELECT/DESCRIBE/SHOW/USE only, pinned via `--service-config-file`). BigQuery, Postgres, Redshift, Databricks, and DuckDB each enforce read-only through their own bundle's mechanism (see `examples/sources/<name>/SETUP.md`). Each bundle is self-contained and has no dependency on any sibling repo.
 
 ## Research operating rules
 
@@ -61,17 +61,17 @@ Autonomous root-cause cases enforce a stronger design contract at planning time 
 
 ## Challenge cycle
 
-A mandatory challenge cycle stress-tests conclusions before any autonomous case can close — do not skip or shortcut it. Details: [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md) and [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Challenge cycle).
+A mandatory challenge cycle stress-tests conclusions before any autonomous case can close. Do not skip or shortcut it. Details: [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md) and [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Challenge cycle).
 
 ## Steering
 
-The `research feedback` command and `state/feedback.json` are removed. Steer by editing `notes.md` or `plan.md` between cycles. Keep `brief.md` stable once an autonomous case has started unless the user explicitly reframes the case.
+Steer by editing `notes.md` or `plan.md` between cycles. Keep `brief.md` stable once an autonomous case has started unless the user explicitly reframes the case.
 
 ## Artifact and publishing guardrails
 
 - `state/findings.json` is optional. Do not assume it exists on a newly scaffolded research.
 - When reading research state, prefer the repo's optional IO helpers for files that may not exist yet.
-- If `state/findings.json` is used, each finding should include a valid `source_type` when possible — match it to a registered source key (see `research source list`). Publish derives each finding's freshness caveat from that source's caveat group, so any enabled source is recognized.
+- If `state/findings.json` is used, each finding should include a valid `source_type` when possible. Match it to a registered source key (see `research source list`). Publish derives each finding's freshness caveat from that source's caveat group, so any enabled source is recognized.
 - Do not casually rename report section headers that publishing relies on. These headings have special meaning:
   - `Executive Summary`
   - `Conclusions` or `Conclusion`

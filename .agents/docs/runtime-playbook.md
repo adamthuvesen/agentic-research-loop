@@ -32,8 +32,8 @@ would change your confidence, then go get that evidence.
 
 ## Steering between cycles
 
-Humans steer by editing `notes.md` or `plan.md` before the next cycle. The runtime
-does not read a separate feedback file. Keep `brief.md` stable unless reframing the case.
+Humans steer by editing `notes.md` or `plan.md` before the next cycle. Keep
+`brief.md` stable unless reframing the case.
 
 ## Challenge cycles
 
@@ -44,8 +44,8 @@ runtime will run a challenge cycle before actually closing. During the challenge
 - Flag the weakest-supported claim and most fragile dependency.
 - Declare whether objections are resolved or still open.
 
-If material risks remain unresolved, the case reopens. This is expected — treat
-the challenge as a quality gate, not an obstacle.
+If material risks remain unresolved, the case reopens. Treat the challenge as a
+quality gate, not an obstacle.
 
 ## Good loop behavior
 
@@ -55,4 +55,4 @@ the challenge as a quality gate, not an obstacle.
 - Weaken or reject hypotheses when evidence does not support them.
 - Keep `state/sources.json` current when the source strategy changes.
 - Leave a smarter starting point for the next cycle.
-- Write visible reasoning each cycle — only `notes.md` and `report.md` changes count as progress.
+- Write visible reasoning each cycle. Only `notes.md` and `report.md` changes count as progress.

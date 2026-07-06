@@ -8,7 +8,7 @@ Phase 2 to turn the causal-system map into concrete source choices.
 `--context-path` folders) are actually reachable this case. The families below are
 the menu; the enabled set is what is on the table. If the causal chain needs a
 family that is not enabled, say so at the orientation checkpoint and suggest
-`research source enable <name>` — do not silently skip a causally critical source.
+`research source enable <name>`. Do not silently skip a causally critical source.
 
 ## Contents
 
@@ -24,14 +24,14 @@ family that is not enabled, say so at the orientation checkpoint and suggest
 | **Warehouse / metrics** | `snowflake`, `bigquery`, `postgres`, `redshift`, `databricks`, `duckdb` | The hard numbers: counts, rates, funnels, revenue, reliability. Usually the anchor (T1). Discover objects live, query SELECT-only. |
 | **Product analytics** | `posthog`, `amplitude`, `mixpanel`, `ga4` | Funnels, retention, activation, feature adoption, on-site/in-app behavior, session paths. |
 | **Search / web traffic** | `gsc`, `ga4` | Organic search (queries, clicks, impressions, CTR, rank) and site analytics (sessions, sources, conversions). Explains acquisition/traffic moves. |
-| **Experiments / flags** | `confidence`, `launchdarkly`, `statsig` | The most common hidden cause of metric shifts: rollouts, A/B tests, flag/gate changes, targeting changes. Always check the timeframe — even null experiments rule a surface out. |
+| **Experiments / flags** | `confidence`, `launchdarkly`, `statsig` | The most common hidden cause of metric shifts: rollouts, A/B tests, flag/gate changes, targeting changes. Always check the timeframe; even null experiments rule a surface out. |
 | **Docs / knowledge** | `notion`, `confluence`, `google-drive`, `microsoft-365` | The "why": strategy, retros, forecasts, runbooks, RFCs, decision records. |
 | **Comms / decisions** | `slack` | Recent decisions, incident threads, informal context not yet in docs. |
 | **Issue tracking / eng** | `linear`, `jira`, `github`, `azure-devops` | What shipped and when, ownership, code/PR/commit history. Strong for engineering root-cause. |
 | **Observability / incidents** | `sentry`, `datadog`, `azure` | Errors, stack traces, releases, metrics, monitors, logs, traces, incidents. |
 | **Revenue / CRM** | `stripe`, `hubspot`, `salesforce` | "Why did revenue, churn, or pipeline move": subscriptions, invoices, disputes, deals, accounts. |
 | **External** | web search (built in) | Public incidents, competitor moves, platform/algorithm changes, seasonality context. |
-| **Local context** | `--context-path` | Curated CSVs, exports, timelines, notes the user attached for this question. Read early — usually high-signal. |
+| **Local context** | `--context-path` | Curated CSVs, exports, timelines, notes the user attached for this question. Read early; it is usually high-signal. |
 
 ## Pick by question type
 
@@ -69,7 +69,7 @@ the slice you need, or missing an API-only dimension.
 
 For every high-confidence claim the case will rest on, plan to confirm it in a
 **second source family**. A number from the warehouse plus context from comms or
-docs (or a second independent metric) is far stronger than either alone — and it
+docs (or a second independent metric) is far stronger than either alone. It
 is what `## Required Cross-Checks` and each thread's `**Cross-Check:**` field
 commit you to. Pick the smallest source set that still lets every key claim be
 cross-checked.

@@ -1,10 +1,10 @@
 # GitHub (read-only)
 
-**Server:** official GitHub MCP server — remote, hosted at
+**Server:** official GitHub MCP server - remote, hosted at
 `https://api.githubcopilot.com/mcp/`.
 
 **Read-only enforcement (`url-suffix:/readonly`):** the bundle wires the
-`/readonly` endpoint. GitHub's read-only filter is strict — it disables every
+`/readonly` endpoint. GitHub's read-only filter is strict - it disables every
 write tool (open/edit/comment/merge) regardless of other config or token scope,
 so it overrides whatever the credential could otherwise do.
 

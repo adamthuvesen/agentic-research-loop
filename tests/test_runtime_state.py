@@ -28,19 +28,16 @@ def test_progress_state_round_trips_known_and_extra_fields() -> None:
     assert state.to_payload() == payload
 
 
-def test_progress_state_defaults_historical_optional_fields() -> None:
-    state = ProgressState.from_payload(
-        {
-            "status": "active",
-            "cycle_count": 1,
-            "consecutive_no_progress_cycles": 0,
-            "stop_reason": None,
-        }
-    )
-
-    assert state.consecutive_failures == 0
-    assert state.pending_challenge_cycle is False
-    assert state.last_challenge_outcome is None
+def test_progress_state_rejects_missing_required_fields() -> None:
+    with pytest.raises(ValueError, match="consecutive_failures"):
+        ProgressState.from_payload(
+            {
+                "status": "active",
+                "cycle_count": 1,
+                "consecutive_no_progress_cycles": 0,
+                "stop_reason": None,
+            }
+        )
 
 
 def test_progress_state_rejects_non_object_payload() -> None:

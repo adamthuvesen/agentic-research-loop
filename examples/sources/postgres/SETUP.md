@@ -1,6 +1,6 @@
 # Postgres (read-only)
 
-**Server:** Postgres MCP Pro (Crystal DBA) — stdio, run via `uvx postgres-mcp`
+**Server:** Postgres MCP Pro (Crystal DBA) - stdio, run via `uvx postgres-mcp`
 (also `pipx install postgres-mcp` or the `crystaldba/postgres-mcp` Docker image).
 
 **Read-only enforcement (`server-flag:--access-mode=restricted`):** restricted
@@ -13,7 +13,7 @@ genuine server-side read-only mode, stronger than first-keyword checks.
 1. Merge [`source.json`](source.json) into `config/sources.json`.
 2. Paste the [`mcp.snippet.json`](mcp.snippet.json) blocks into `.mcp.json`,
    `.cursor/mcp.json`, and `.codex/config.toml`.
-3. **Provide the connection string via your environment — never commit it.**
+3. **Provide the connection string via your environment - never commit it.**
    `.mcp.json` is tracked by git, so do **not** paste a password into it. Export
    `DATABASE_URI` in your shell (or a secret manager) before launching the agent:
    ```bash

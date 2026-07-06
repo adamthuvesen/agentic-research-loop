@@ -10,11 +10,11 @@ from .research import (
     create_manual,
     resolve_case_path,
 )
-from .terminal import print_run_footer
 from .io import load_json_optional
 from .layout import find_repo_root
 from .loop import run_loop, run_plan_step
 from .publish import publish
+from .run_ui import print_run_footer
 from .sources import VALID_SOURCES
 from .status import render_status_markdown
 from .validation import collect_validation_warnings, validate_case
@@ -275,13 +275,17 @@ def _show_status(repo_root: Path, args: argparse.Namespace) -> int:
 
 def _validate_case_command(repo_root: Path, args: argparse.Namespace) -> int:
     case_path = resolve_case_path(repo_root, args.case)
-    warnings = collect_validation_warnings(case_path)
     errors = validate_case(
         case_path,
         strict_completion=args.strict,
         strict_design=args.design,
     )
-    if warnings and not (args.strict or args.design):
+    warnings = (
+        []
+        if errors or args.strict or args.design
+        else collect_validation_warnings(case_path)
+    )
+    if warnings:
         print("Validation warnings:")
         for warning in warnings:
             print(f"- {warning}")

@@ -1,15 +1,15 @@
 # Azure DevOps (read-only)
 
 **Server:** official [`@azure-devops/mcp`](https://github.com/microsoft/azure-devops-mcp)
-— local stdio, run via `npx -y @azure-devops/mcp <your-org>`. Covers work items
+Runs over local stdio via `npx -y @azure-devops/mcp <your-org>`. Covers work items
 and boards, repos and pull requests, wikis, pipelines/builds, and test plans.
 
 **Read-only enforcement (`credential-only`):** the local server ships **write
-tools and has no read-only flag** — so nothing in committed config can guarantee
+tools and has no read-only flag** - so nothing in committed config can guarantee
 read-only. The connecting identity is the only guardrail, and the autonomous
 runner skips permission prompts. Provision read-only access:
 
-- **Preferred — a read-only-scoped PAT:** create a Personal Access Token with only
+- **Preferred - a read-only-scoped PAT:** create a Personal Access Token with only
   *Read* scopes (Work Items: Read, Code: Read, Build: Read, Wiki: Read, etc.) and
   no write scopes. Azure DevOps then rejects writes the token isn't scoped for.
   Provide it as the **`PERSONAL_ACCESS_TOKEN`** environment variable (base64-encode
@@ -23,11 +23,11 @@ runner skips permission prompts. Provision read-only access:
 1. `uv run research source enable azure-devops` (or merge the three files by hand).
 2. Replace `YOUR_ADO_ORG` in the wired config with your Azure DevOps organization
    name (the `dev.azure.com/<org>` slug).
-3. Authenticate on first tool call (browser/Entra) — or set a read-only PAT in the
+3. Authenticate on first tool call (browser/Entra) - or set a read-only PAT in the
    environment as above.
 4. Optional: pass `-d <domains>` (e.g. `-d core work-items repositories wiki
    pipelines`) to limit which tool groups load. This narrows the surface but does
-   **not** enforce read-only on its own — the credential still must.
+   **not** enforce read-only on its own - the credential still must.
 
 ## Notes
 

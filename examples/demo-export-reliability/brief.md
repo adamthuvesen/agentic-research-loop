@@ -44,7 +44,7 @@ Decide whether to revert the business-hours schedule for large warehouse exports
 
 ## Source Registry
 
-- All sources are strictly read-only. Search, query, and retrieve only — never send messages, create or update issues, modify data, post comments, or alter any external system.
+- All sources are strictly read-only. Search, query, and retrieve only. Never send messages, create or update issues, modify data, post comments, or alter any external system.
 - Local context folder: examples/local-sources
 
 ## Known Confounders

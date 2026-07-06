@@ -67,7 +67,7 @@ def test_init_from_spec_all_three_files(
     assert "## Source Registry" in brief_out
 
 
-def test_init_from_spec_partial_fallback(
+def test_init_from_spec_uses_default_templates_for_missing_files(
     repo_root: Path, tmp_path: Path, monkeypatch
 ) -> None:
     monkeypatch.chdir(repo_root)

@@ -112,19 +112,19 @@ def artifact_snapshot(case_path: Path) -> dict[str, Any]:
 def should_stop(
     progress: dict[str, Any], *, challenge_required: bool = False
 ) -> tuple[bool, str]:
-    if progress.get("status") == "complete" and (
-        not challenge_required or progress.get("last_challenge_outcome") == "passed"
+    if progress["status"] == "complete" and (
+        not challenge_required or progress["last_challenge_outcome"] == "passed"
     ):
         return True, "case_complete"
-    if progress.get("consecutive_no_progress_cycles", 0) >= DEFAULT_STALL_LIMIT:
+    if progress["consecutive_no_progress_cycles"] >= DEFAULT_STALL_LIMIT:
         return True, "evidence_stall"
-    if progress.get("consecutive_failures", 0) >= DEFAULT_FAILURE_LIMIT:
+    if progress["consecutive_failures"] >= DEFAULT_FAILURE_LIMIT:
         return True, "consecutive_failures"
     return False, ""
 
 
 def challenge_cycle_pending(progress: dict[str, Any]) -> bool:
-    return bool(progress.get("pending_challenge_cycle", False))
+    return progress["pending_challenge_cycle"]
 
 
 def case_requires_challenge(case_path: Path) -> bool:
@@ -261,12 +261,12 @@ def _apply_progress_streaks(progress: dict[str, Any], result: str) -> None:
         progress["consecutive_failures"] = 0
     elif result == "no_progress":
         progress["consecutive_no_progress_cycles"] = (
-            progress.get("consecutive_no_progress_cycles", 0) + 1
+            progress["consecutive_no_progress_cycles"] + 1
         )
         progress["consecutive_failures"] = 0
     elif result == "failed":
         progress["consecutive_no_progress_cycles"] = 0
-        progress["consecutive_failures"] = progress.get("consecutive_failures", 0) + 1
+        progress["consecutive_failures"] += 1
 
 
 def _apply_challenge_progress(progress: dict[str, Any], summary: CycleSummary) -> None:
@@ -287,7 +287,7 @@ def _apply_completion_progress(progress: dict[str, Any], result: str) -> None:
     if result == "complete":
         progress["status"] = "complete"
         progress["stop_reason"] = "case_complete"
-    elif progress.get("status") == "complete":
+    elif progress["status"] == "complete":
         progress["status"] = "active"
         progress["stop_reason"] = None
 
@@ -298,7 +298,7 @@ def apply_cycle_result(
     progress_state = _progress_state(case_path)
     progress = progress_state.to_payload()
     status_payload = _status_payload(case_path)
-    progress["cycle_count"] = progress.get("cycle_count", 0) + 1
+    progress["cycle_count"] += 1
     _idle_status_after_cycle(status_payload, summary, runner_name)
     _apply_progress_streaks(progress, summary.result)
     _apply_challenge_progress(progress, summary)
@@ -322,7 +322,7 @@ def _run_initial_plan_if_needed(
     repo_root: Path, case_path: Path, runner_name: str
 ) -> bool:
     progress = _progress_payload(case_path)
-    if progress.get("cycle_count", 0) != 0 or not is_plan_blank(case_path):
+    if progress["cycle_count"] != 0 or not is_plan_blank(case_path):
         return True
     return run_plan_step(repo_root, case_path, runner_name=runner_name)
 
@@ -348,7 +348,7 @@ def run_loop(
         )
         return results
     progress = _progress_payload(case_path)
-    next_cycle_number = progress.get("cycle_count", 0) + 1
+    next_cycle_number = progress["cycle_count"] + 1
     while True:
         progress = _progress_payload(case_path)
         if max_cycles is not None and len(results) >= max_cycles:

@@ -57,7 +57,7 @@ footer code { color:var(--accent); }
 </ol>
 <p>queue minutes, and flat scheduled volume all point here.</p>
 <ol>
-<li>Residual retry-policy noise (minor) — a smaller Feb tweak did not move the</li>
+<li>Residual retry-policy noise (minor): a smaller Feb tweak did not move the</li>
 </ol>
 <p>inflection.</p>
 <h2>Evidence Highlights</h2>
@@ -75,9 +75,9 @@ footer code { color:var(--accent); }
 <h2>Confidence</h2>
 <p>High. The mechanism is well supported by timing, queue pressure, and flat volume.</p></div></section><section class="card challenge"><h2 class="section-title">Challenge Review</h2><div class="body"><h2>Challenge Review</h2>
 <ul>
-<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.</li>
+<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected because scheduled jobs stayed flat, and the context notes record no counting change.</li>
 <li>Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.</li>
-<li>Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.</li>
+<li>Most fragile dependency: partial-week data at the window edges. Re-checked; the step change holds across the full post-change weeks.</li>
 <li>Outcome: Resolved. The conclusion survives challenge.</li>
 </ul></div></section><section class="card"><h2 class="section-title">Working notes</h2><div class="body"><h1>Research Notes</h1>
 <h2>Working Theory</h2>
@@ -89,7 +89,7 @@ footer code { color:var(--accent); }
 <h2>Evidence Log</h2>
 <ul>
 <li>Success rate: 98.0% -&gt; 84.0% (-14.0 pp).</li>
-<li>Scheduled jobs: +2.0% (flat) — not a volume problem.</li>
+<li>Scheduled jobs: +2.0% (flat), which points away from volume as the cause.</li>
 <li>Failed jobs: +716.0% vs pre-change baseline.</li>
 <li>Avg queue minutes: 8.0 -&gt; 42.0 (+425.0%).</li>
 <li>The inflection week matches the documented scheduler change; no counting change in the window.</li>
@@ -101,9 +101,9 @@ footer code { color:var(--accent); }
 </ul>
 <h2>Challenge Review</h2>
 <ul>
-<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.</li>
+<li>Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected because scheduled jobs stayed flat, and the context notes record no counting change.</li>
 <li>Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.</li>
-<li>Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.</li>
+<li>Most fragile dependency: partial-week data at the window edges. Re-checked; the step change holds across the full post-change weeks.</li>
 <li>Outcome: Resolved. The conclusion survives challenge.</li>
 </ul></div></section><section class="card"><h2 class="section-title">Research plan</h2><div class="body"><h1>Research Plan</h1>
 <h3>T1: Confirm and localize the export reliability break</h3>

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .io import load_json_object_or_empty, read_text
-from .layout import brief_path, status_json_path
+from .io import load_json
+from .layout import status_json_path
 
 VALID_MODES = frozenset({"quick", "guided", "autonomous"})
 VALID_TEMPLATES = frozenset({"exploration", "root-cause", "comparison"})
@@ -20,16 +19,12 @@ ROOT_CAUSE_DESIGN_FIELDS: tuple[str, ...] = (
 CHALLENGE_REVIEW_HEADING = "Challenge Review"
 
 
-def brief_mode_and_template(brief_text: str) -> tuple[str | None, str | None]:
-    """Parse mode/template from brief markdown metadata (legacy fallback)."""
-    mode_match = re.search(r"Selected mode:\s*`([^`]+)`", brief_text)
-    template_match = re.search(
-        r"(?:Research|Investigation) shape:\s*`([^`]+)`", brief_text
-    )
-    return (
-        mode_match.group(1) if mode_match else None,
-        template_match.group(1) if template_match else None,
-    )
+def _required_case_field(status: dict, key: str, valid_values: frozenset[str]) -> str:
+    value = status.get(key)
+    if not isinstance(value, str) or value not in valid_values:
+        choices = ", ".join(sorted(valid_values))
+        raise ValueError(f"status.json {key} must be one of: {choices}")
+    return value
 
 
 @dataclass(frozen=True)
@@ -51,21 +46,12 @@ class CaseProfile:
 
     @classmethod
     def load(cls, case_path: Path) -> CaseProfile:
-        status = load_json_object_or_empty(status_json_path(case_path))
-        mode = status.get("mode")
-        template = status.get("template")
-        status_mode = mode if isinstance(mode, str) and mode else None
-        status_template = template if isinstance(template, str) and template else None
-        if status_mode and status_template:
-            return cls(mode=status_mode, template=status_template)
-
-        brief_text = (
-            read_text(brief_path(case_path)) if brief_path(case_path).exists() else ""
-        )
-        brief_mode, brief_template = brief_mode_and_template(brief_text)
+        status = load_json(status_json_path(case_path))
+        if not isinstance(status, dict):
+            raise ValueError("status.json must be a JSON object")
         return cls(
-            mode=status_mode or brief_mode,
-            template=status_template or brief_template,
+            mode=_required_case_field(status, "mode", VALID_MODES),
+            template=_required_case_field(status, "template", VALID_TEMPLATES),
         )
 
     @classmethod

@@ -48,6 +48,9 @@ def make_case(tmp_path: Path) -> Path:
                 "status": "active",
                 "cycle_count": 1,
                 "consecutive_no_progress_cycles": 0,
+                "consecutive_failures": 0,
+                "pending_challenge_cycle": False,
+                "last_challenge_outcome": None,
                 "stop_reason": None,
             }
         )

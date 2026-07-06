@@ -200,24 +200,16 @@ def test_init_rejects_missing_context_path(repo_root: Path, monkeypatch) -> None
         )
 
 
-def test_feedback_subcommand_is_removed(repo_root: Path, monkeypatch) -> None:
-    monkeypatch.chdir(repo_root)
-    main(["init", "reg-drop-fb", "--template", "root-cause", "--mode", "autonomous"])
-    case_path = sorted((repo_root / "research").iterdir())[0]
-
-    with pytest.raises(SystemExit) as excinfo:
-        main(["feedback", case_path.name, "--note", "x"])
-    assert excinfo.value.code == 2
-
-
-def test_init_does_not_create_feedback_json(repo_root: Path, monkeypatch) -> None:
+def test_init_creates_current_state_files(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
     exit_code = main(
-        ["init", "no-feedback-json", "--template", "exploration", "--mode", "guided"]
+        ["init", "state-files", "--template", "exploration", "--mode", "guided"]
     )
     assert exit_code == 0
     case_path = sorted((repo_root / "research").iterdir())[0]
-    assert not (case_path / "state" / "feedback.json").exists()
+    assert (case_path / "state" / "progress.json").exists()
+    assert (case_path / "state" / "sources.json").exists()
+    assert (case_path / "state" / "status.json").exists()
 
 
 def test_run_resolves_short_slug(repo_root: Path, monkeypatch) -> None:
@@ -263,7 +255,7 @@ def test_resolve_case_path_ambiguous(repo_root: Path, monkeypatch) -> None:
         resolve_case_path(repo_root, "foo")
 
 
-def test_resolve_case_path_rejects_traversal_fallback(repo_root: Path) -> None:
+def test_resolve_case_path_rejects_outside_short_slug_match(repo_root: Path) -> None:
     (repo_root / "research").mkdir()
     (repo_root / "src").mkdir()
 
@@ -283,6 +275,30 @@ def test_status_command_handles_malformed_status_json(
 
     assert exit_code == 1
     assert "status.json not found or invalid" in capsys.readouterr().out
+
+
+def test_validate_command_reports_missing_status_json(
+    repo_root: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.chdir(repo_root)
+    main(
+        [
+            "init",
+            "validate-missing-status",
+            "--template",
+            "exploration",
+            "--mode",
+            "guided",
+        ]
+    )
+    case_path = sorted((repo_root / "research").iterdir())[0]
+    (case_path / "state" / "status.json").unlink()
+
+    exit_code = main(["validate", case_path.name])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "Missing required file: status.json" in output
 
 
 def test_status_command_tolerates_malformed_secondary_state(

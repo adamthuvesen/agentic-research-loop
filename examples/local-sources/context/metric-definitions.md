@@ -13,5 +13,5 @@ The columns in `exports_weekly.csv`:
 
 **Success rate** = `jobs_succeeded / jobs_scheduled` (expressed as a percentage).
 
-**Queue pressure** rises when heavy jobs share the queue with interactive load —
-long waits often precede timeouts and failures.
+**Queue pressure** rises when heavy jobs share the queue with interactive load.
+Long waits often precede timeouts and failures.
