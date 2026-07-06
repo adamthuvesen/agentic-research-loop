@@ -4,7 +4,7 @@
 ([`googleanalytics/google-analytics-mcp`](https://github.com/googleanalytics/google-analytics-mcp))
 — stdio, run via `pipx run analytics-mcp`. It wraps the live GA4 Data API
 (`run_report`, `run_realtime_report`, `run_funnel_report`) plus read-only Admin
-API calls. This replaces the old `research ga4` CLI.
+API calls.
 
 **Read-only enforcement (`scope:analytics.readonly`):** the server is read-only
 by nature — Google states it serves *read* requests only and the sole OAuth scope

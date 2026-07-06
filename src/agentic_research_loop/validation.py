@@ -5,10 +5,22 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .case_contracts import ROOT_CAUSE_DESIGN_FIELDS, CaseProfile
+from .case_contracts import (
+    ROOT_CAUSE_DESIGN_FIELDS,
+    VALID_MODES,
+    VALID_TEMPLATES,
+    CaseProfile,
+)
 from .io import extract_section, load_json, read_text
-from .layout import brief_path, findings_path, plan_path, progress_path, report_path
-from .runtime_state import ProgressState
+from .layout import (
+    brief_path,
+    findings_path,
+    plan_path,
+    progress_path,
+    report_path,
+    status_json_path,
+)
+from .runtime_state import ProgressState, StatusState
 
 MIN_SUBSTANTIVE_CONTENT_LENGTH = 60
 _ROOT_CAUSE_BRIEF_SECTIONS = (
@@ -48,6 +60,24 @@ def validate_progress(payload: Any) -> list[str]:
     except ValueError as exc:
         return [str(exc)]
     return []
+
+
+def validate_status(payload: Any) -> list[str]:
+    try:
+        status = StatusState.from_payload(payload)
+    except ValueError as exc:
+        return [str(exc)]
+
+    errors: list[str] = []
+    if status.mode not in VALID_MODES:
+        errors.append(
+            f"status.json mode must be one of: {', '.join(sorted(VALID_MODES))}"
+        )
+    if status.template not in VALID_TEMPLATES:
+        errors.append(
+            f"status.json template must be one of: {', '.join(sorted(VALID_TEMPLATES))}"
+        )
+    return errors
 
 
 def validate_findings(payload: Any) -> list[str]:
@@ -147,24 +177,34 @@ def _load_progress_for_validation(
     return progress, []
 
 
+def _status_errors(case_path: Path) -> list[str]:
+    try:
+        status = load_json(status_json_path(case_path))
+    except json.JSONDecodeError as exc:
+        return [f"status.json is invalid JSON: {exc.msg}"]
+    except OSError as exc:
+        return [f"Could not read status.json: {exc}"]
+    return validate_status(status)
+
+
 def _challenge_completion_errors(
     case_path: Path, progress: dict[str, Any]
 ) -> list[str]:
     profile = CaseProfile.load(case_path)
     if not profile.requires_challenge:
         return []
-    if progress.get("pending_challenge_cycle"):
+    if progress["pending_challenge_cycle"]:
         return ["strict completion requires the challenge cycle to be run"]
-    if progress.get("last_challenge_outcome") is None:
+    if progress["last_challenge_outcome"] is None:
         return [
             "strict completion requires the challenge cycle to be run "
             "(this case has not run one yet — run more cycles or use "
             "`validate --design` for a structural check)"
         ]
-    if progress.get("last_challenge_outcome") != "passed":
+    if progress["last_challenge_outcome"] != "passed":
         return [
             "strict completion requires the challenge cycle to have passed "
-            f"(last outcome: {progress.get('last_challenge_outcome')!r})"
+            f"(last outcome: {progress['last_challenge_outcome']!r})"
         ]
     return []
 
@@ -180,12 +220,6 @@ def _report_completion_errors(case_path: Path) -> list[str]:
     if extract_section(report_text, "Executive Summary") is None:
         return ["strict completion requires a non-empty Executive Summary"]
     return ["strict completion requires substantive report content"]
-
-
-def _strict_completion_errors(case_path: Path, progress: dict[str, Any]) -> list[str]:
-    return _challenge_completion_errors(
-        case_path, progress
-    ) + _report_completion_errors(case_path)
 
 
 def _findings_errors(case_path: Path) -> list[str]:
@@ -207,7 +241,7 @@ def validate_case(
     strict_completion: bool = False,
     strict_design: bool = False,
 ) -> list[str]:
-    """Minimal case validation: brief exists, progress is valid, report on completion.
+    """Validate case artifacts, machine state, and completion gates.
 
     `strict_design` promotes design-contract warnings on high-priority threads
     (`Discriminating Test`, `Completion Threshold`, `Strongest Rival`, `Cross-Check`)
@@ -218,10 +252,16 @@ def validate_case(
     `strict_design` plus challenge-cycle outcome and a substantive report.md.
     """
     errors: list[str] = []
+    status_errors: list[str] = []
     if not brief_path(case_path).exists():
         errors.append("Missing required file: brief.md")
     if not progress_path(case_path).exists():
         errors.append("Missing required file: progress.json")
+    if not status_json_path(case_path).exists():
+        status_errors = ["Missing required file: status.json"]
+    else:
+        status_errors = _status_errors(case_path)
+    errors.extend(status_errors)
 
     if progress_path(case_path).exists():
         progress, progress_errors = _load_progress_for_validation(case_path)
@@ -231,15 +271,17 @@ def validate_case(
         if progress is None:
             return errors
 
-        status_complete = progress.get("status") == "complete"
+        status_complete = progress["status"] == "complete"
         should_enforce_design_contract = (
             strict_completion or strict_design or status_complete
         )
-        if should_enforce_design_contract:
+        if should_enforce_design_contract and not status_errors:
             errors.extend(collect_validation_warnings(case_path))
 
         if strict_completion or status_complete:
-            errors.extend(_strict_completion_errors(case_path, progress))
+            if not status_errors:
+                errors.extend(_challenge_completion_errors(case_path, progress))
+            errors.extend(_report_completion_errors(case_path))
 
     errors.extend(_findings_errors(case_path))
     return errors

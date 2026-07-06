@@ -67,10 +67,8 @@ installed and signed in), re-run the quick start with
 `--runner claude-local --max-cycles 8`. It pins Claude Code to local file tools
 (`--strict-mcp-config` with an empty MCP config), so the agent investigates the
 bundled data, writes `notes.md`/`report.md`, and runs the challenge cycle
-entirely on your machine — see
-[`examples/claude-local-export-reliability/`](examples/claude-local-export-reliability/)
-for the worked example. `claude` and `codex` run against your live sources once
-configured (see below).
+entirely on your machine. `claude` and `codex` run against your live sources
+once configured (see below).
 
 ## Sources
 
@@ -128,6 +126,7 @@ Machine state under `state/`:
 
 - `progress.json` — lifecycle state, cycle/failure counts, challenge state
 - `sources.json` — enabled sources, hints, local context paths
+- `status.json` — canonical mode/template and current runner status
 - `cycles/*` — per-cycle prompts, outputs, and summaries
 
 ## Modes

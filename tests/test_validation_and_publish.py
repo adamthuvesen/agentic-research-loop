@@ -306,6 +306,35 @@ def test_validate_reports_invalid_progress_json(repo_root: Path, monkeypatch) ->
     ]
 
 
+def test_validate_reports_missing_status_json(repo_root: Path, monkeypatch) -> None:
+    monkeypatch.chdir(repo_root)
+    main(
+        ["init", "missing-status-json", "--template", "exploration", "--mode", "guided"]
+    )
+    case_path = _first_case(repo_root)
+    (case_path / "state" / "status.json").unlink()
+
+    errors = validate_case(case_path)
+
+    assert "Missing required file: status.json" in errors
+
+
+def test_validate_reports_invalid_status_kind(repo_root: Path, monkeypatch) -> None:
+    monkeypatch.chdir(repo_root)
+    main(
+        ["init", "bad-status-kind", "--template", "root-cause", "--mode", "autonomous"]
+    )
+    case_path = _first_case(repo_root)
+    status_path = case_path / "state" / "status.json"
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    status["mode"] = "invalid"
+    status_path.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
+
+    errors = validate_case(case_path, strict_design=True)
+
+    assert any("status.json mode must be one of" in error for error in errors)
+
+
 def test_validate_rejects_malformed_findings_json(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
     main(["init", "bad-findings-json", "--template", "exploration", "--mode", "guided"])
@@ -393,8 +422,6 @@ def test_status_command(repo_root: Path, monkeypatch) -> None:
     assert exit_code == 0
 
 
-# --- Helpers for new validation tests ---
-
 _FULL_PLAN = (
     "# Research Plan\n\n"
     "### T1: Check metrics\n"
@@ -433,9 +460,6 @@ def _setup_complete_autonomous(
         json.dumps(progress, indent=2) + "\n", encoding="utf-8"
     )
     return path
-
-
-# --- H1: Challenge-cycle gate tests ---
 
 
 def test_strict_fails_when_challenge_cycle_pending(
@@ -506,9 +530,6 @@ def test_non_autonomous_skips_challenge_check(repo_root: Path, monkeypatch) -> N
     assert not any("challenge cycle" in e for e in errors)
 
 
-# --- H2: Strongest Rival promotion + N/A escape ---
-
-
 def test_strict_fails_when_strongest_rival_missing(
     repo_root: Path, monkeypatch
 ) -> None:
@@ -561,9 +582,6 @@ def test_strict_passes_with_na_strongest_rival(repo_root: Path, monkeypatch) -> 
     assert not any("missing `Strongest Rival`" in e for e in errors)
 
 
-# --- M1: Source plan derivation ---
-
-
 def test_manual_init_no_web_search_excludes_web_from_brief(
     repo_root: Path, monkeypatch
 ) -> None:
@@ -583,9 +601,6 @@ def test_manual_init_no_web_search_excludes_web_from_brief(
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
     assert "Web tools" not in brief_text
-
-
-# --- Design-only strict checks (safe at scaffold time) ---
 
 
 _PLAN_MISSING_DISCRIMINATING_TEST = (
@@ -765,8 +780,6 @@ def test_manual_init_default_sources_include_builtins(
     path = _first_case(repo_root)
     brief_text = (path / "brief.md").read_text(encoding="utf-8")
 
-    # After the bundle migration web search is the only default built-in; every
-    # other source (including GSC) is an opt-in bundle (`research source enable`).
     assert "Web tools" in brief_text
 
 

@@ -71,11 +71,13 @@ def test_executive_summary_excerpt_accepts_single_newline_after_heading() -> Non
     assert executive_summary_excerpt(report) == "Line one. Line two."
 
 
-def test_build_cycle_prompt_has_no_human_feedback_section(tmp_path: Path) -> None:
+def test_build_cycle_prompt_includes_working_artifact_contract(tmp_path: Path) -> None:
     inv = make_case(tmp_path)
     snapshot = artifact_snapshot(inv)
     text = build_cycle_prompt(inv, snapshot=snapshot)
-    assert "Human Feedback" not in text
+    assert "## Working Artifacts" in text
+    assert "`notes.md`" in text
+    assert "`report.md`" in text
 
 
 def test_research_move_block_is_hypothesis_led() -> None:

@@ -10,24 +10,22 @@ def _mapping(payload: Any, *, name: str) -> dict[str, Any]:
     return dict(payload)
 
 
-def _int_field(payload: dict[str, Any], key: str, *, default: int | None = None) -> int:
-    value = payload.get(key, default)
+def _int_field(payload: dict[str, Any], key: str) -> int:
+    value = payload.get(key)
     if not isinstance(value, int) or isinstance(value, bool):
         raise ValueError(f"{key} must be an integer")
     return value
 
 
-def _bool_field(
-    payload: dict[str, Any], key: str, *, default: bool | None = None
-) -> bool:
-    value = payload.get(key, default)
+def _bool_field(payload: dict[str, Any], key: str) -> bool:
+    value = payload.get(key)
     if not isinstance(value, bool):
         raise ValueError(f"{key} must be a boolean")
     return value
 
 
-def _str_field(payload: dict[str, Any], key: str, *, default: str | None = None) -> str:
-    value = payload.get(key, default)
+def _str_field(payload: dict[str, Any], key: str) -> str:
+    value = payload.get(key)
     if not isinstance(value, str) or value == "":
         raise ValueError(f"{key} must be a non-empty string")
     return value
@@ -67,14 +65,12 @@ class ProgressState:
         }
         return cls(
             status=_str_field(values, "status"),
-            cycle_count=_int_field(values, "cycle_count", default=0),
+            cycle_count=_int_field(values, "cycle_count"),
             consecutive_no_progress_cycles=_int_field(
-                values, "consecutive_no_progress_cycles", default=0
+                values, "consecutive_no_progress_cycles"
             ),
-            consecutive_failures=_int_field(values, "consecutive_failures", default=0),
-            pending_challenge_cycle=_bool_field(
-                values, "pending_challenge_cycle", default=False
-            ),
+            consecutive_failures=_int_field(values, "consecutive_failures"),
+            pending_challenge_cycle=_bool_field(values, "pending_challenge_cycle"),
             last_challenge_outcome=_optional_str_field(
                 values, "last_challenge_outcome"
             ),

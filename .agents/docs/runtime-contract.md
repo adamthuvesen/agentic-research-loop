@@ -30,9 +30,9 @@ They may also update `state/findings.json` when the case is maintaining
 structured findings. That file is optional, but when present it must validate
 against the optional findings schema below.
 
-Legacy one-off state files from older layouts (`source_activity.json`, `observations.json`, etc.) are not used; durable machine state is `state/progress.json`, `state/sources.json`, and `state/status.json`.
-
-`state/status.json` stores the canonical case kind: `mode` and `template` (written at init). The runtime falls back to parsing `brief.md` metadata only when `template` is missing on older cases.
+Durable machine state is `state/progress.json`, `state/sources.json`, and
+`state/status.json`. `state/status.json` stores the canonical case kind: `mode`
+and `template`.
 
 ## Cycle execution
 

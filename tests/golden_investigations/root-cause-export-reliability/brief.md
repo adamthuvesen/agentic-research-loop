@@ -1,4 +1,4 @@
-# Investigation Brief
+# Research Brief
 
 ## Question
 
@@ -7,7 +7,7 @@ Why did export job success rate drop after the March scheduler change?
 ## Mode
 
 - Selected mode: `autonomous`
-- Investigation shape: `root-cause`
+- Research shape: `root-cause`
 - Created: `2026-04-05`
 
 ## Decision Or Deliverable

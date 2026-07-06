@@ -105,8 +105,6 @@ flowchart TB
   - planning and cycle prompt assembly
 - [run_ui.py](../../src/agentic_research_loop/run_ui.py)
   - terminal presentation helpers and live timing
-- [terminal.py](../../src/agentic_research_loop/terminal.py)
-  - backward-compatible re-exports from `run_ui`
 - [runner.py](../../src/agentic_research_loop/runner.py)
   - launches the external agent runner (`claude` by default; optional `codex` via `--runner`)
   - `config/runners/claude.json` uses `claude --print` with `--dangerously-skip-permissions`; `config/runners/codex.json` uses `codex exec` with `--dangerously-bypass-approvals-and-sandbox`. Both are required so `research run` / `research plan` complete without interactive approval prompts.

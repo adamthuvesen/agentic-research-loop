@@ -227,7 +227,6 @@ def resolve_case_path(repo_root: Path, value: str) -> Path:
     if resolved is not None:
         return resolved
 
-    # Suffix fallback: match directories ending with -{value}
     resolved = _suffix_case_match(expected_parent, value)
     if resolved is not None:
         return resolved

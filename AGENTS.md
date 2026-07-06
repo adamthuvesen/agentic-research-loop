@@ -65,7 +65,7 @@ A mandatory challenge cycle stress-tests conclusions before any autonomous case 
 
 ## Steering
 
-The `research feedback` command and `state/feedback.json` are removed. Steer by editing `notes.md` or `plan.md` between cycles. Keep `brief.md` stable once an autonomous case has started unless the user explicitly reframes the case.
+Steer by editing `notes.md` or `plan.md` between cycles. Keep `brief.md` stable once an autonomous case has started unless the user explicitly reframes the case.
 
 ## Artifact and publishing guardrails
 

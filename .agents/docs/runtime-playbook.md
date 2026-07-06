@@ -32,8 +32,8 @@ would change your confidence, then go get that evidence.
 
 ## Steering between cycles
 
-Humans steer by editing `notes.md` or `plan.md` before the next cycle. The runtime
-does not read a separate feedback file. Keep `brief.md` stable unless reframing the case.
+Humans steer by editing `notes.md` or `plan.md` before the next cycle. Keep
+`brief.md` stable unless reframing the case.
 
 ## Challenge cycles
 
