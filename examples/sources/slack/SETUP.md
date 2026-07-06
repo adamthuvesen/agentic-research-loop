@@ -1,10 +1,10 @@
 # Slack (read-only)
 
-**Server:** official Slack MCP server — hosted, OAuth. Endpoint
+**Server:** official Slack MCP server - hosted, OAuth. Endpoint
 `https://mcp.slack.com/mcp`.
 
 **Read-only enforcement (`credential-only`):** read-only is enforced by the connected
-Slack app/user's scopes — grant **read (search/history) scopes only**; never send or
+Slack app/user's scopes - grant **read (search/history) scopes only**; never send or
 schedule messages. Slack is ephemeral, so cite findings with a freshness caveat.
 
 ## Enable
@@ -18,4 +18,4 @@ schedule messages. Slack is ephemeral, so cite findings with a freshness caveat.
 
 ## Notes
 
-- Covers recent discussions, decisions, and informal context — search/history only.
+- Covers recent discussions, decisions, and informal context - search/history only.

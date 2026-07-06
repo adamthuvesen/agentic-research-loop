@@ -7,7 +7,7 @@ source selection, and synthesis directly using MCP tools.
 
 The agent accesses all sources via MCP tools and APIs. Web search is built in and
 local context attaches at invocation (`--context-path`); every other source is an
-**opt-in bundle** — wire one with `research source enable <name>`. The bundle
+**opt-in bundle**. Wire one with `research source enable <name>`. The bundle
 catalog lives in `examples/sources/`, and `program.md` maps which source family
 fits which question (warehouses, product analytics, experiments/flags, docs,
 comms, issue tracking, observability, revenue/CRM, search/web traffic). Discover
@@ -36,12 +36,12 @@ and `template`.
 
 ## Cycle execution
 
-Each cycle runs with up to 2 attempts (one base attempt + one retry with a
+Each cycle runs with up to 2 attempts (one base attempt plus one retry with a
 nudge explaining the failure reason). The agent must emit exactly one completion
 marker at the end of each cycle:
 
-- `<promise>CYCLE_DONE</promise>` — research should continue
-- `<promise>CASE_COMPLETE</promise>` — research is genuinely complete
+- `<promise>CYCLE_DONE</promise>` when research should continue
+- `<promise>CASE_COMPLETE</promise>` when research is genuinely complete
 
 Normal research cycles are hypothesis-led. The agent chooses one or two active
 hypotheses, leads, or plan threads; names the rival explanation and
@@ -51,7 +51,7 @@ movement, evidence, caveats, dead ends, and next checks in `notes.md`.
 ## Progress detection
 
 Progress is measured by hashing `notes.md` and `report.md` before and after
-each cycle. Only visible artifact changes count — updating `state/*.json`
+each cycle. Only visible artifact changes count. Updating `state/*.json`
 alone does not register as progress. Changes to `plan.md` alone also do not
 register as progress (intentional: plan updates are bookkeeping, not cycle
 evidence movement).
@@ -94,8 +94,8 @@ otherwise valid case. Invalid required state is still surfaced by validation.
 `state/findings.json` is a flat JSON list. Each entry is a JSON object with at
 minimum:
 
-- `id` — unique non-empty string (e.g. `"F1"`, `"F2"`)
-- `summary` — non-empty string describing the finding
+- `id` - unique non-empty string (e.g. `"F1"`, `"F2"`)
+- `summary` - non-empty string describing the finding
 
 Additional fields (e.g. `confidence`, `source`) are allowed but not required.
 

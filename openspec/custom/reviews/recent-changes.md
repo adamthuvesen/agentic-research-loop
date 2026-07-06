@@ -1,6 +1,6 @@
 ## Findings
 
-No remaining actionable issues found.
+No remaining issues found.
 
 ## Previously Reported Items Rechecked
 

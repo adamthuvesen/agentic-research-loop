@@ -1,7 +1,7 @@
 # Azure (read-only)
 
 **Server:** official [Azure MCP Server](https://github.com/microsoft/mcp)
-(`@azure/mcp`) — stdio, run via `npx -y @azure/mcp@latest server start`. One
+(`@azure/mcp`) - stdio, run via `npx -y @azure/mcp@latest server start`. One
 server across Azure services: Monitor/Log Analytics, Azure SQL, Data Explorer
 (Kusto), Cosmos DB, Storage, and more.
 
@@ -26,6 +26,6 @@ writes across every namespace. Narrow further with `--namespace <service>` (e.g.
 
 - KQL over Log Analytics is the observability path (the Azure equivalent of the
   Datadog bundle); Azure SQL / Kusto cover the warehouse path.
-- `--read-only` is a good default for auditing and discovery — keep it on.
+- `--read-only` is a good default for auditing and discovery - keep it on.
 - For Azure DevOps work items / repos / pipelines, use the separate `azure-devops`
   bundle (different server, different auth).

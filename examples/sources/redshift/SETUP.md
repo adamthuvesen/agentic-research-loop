@@ -2,12 +2,12 @@
 
 **Server:** official AWS Labs Redshift MCP server
 ([`awslabs.redshift-mcp-server`](https://github.com/awslabs/mcp/tree/main/src/redshift-mcp-server))
-— local stdio via `uvx awslabs.redshift-mcp-server@latest`. Auto-discovers both
+Runs over local stdio via `uvx awslabs.redshift-mcp-server@latest`. Auto-discovers both
 provisioned clusters and serverless workgroups.
 
-**Read-only enforcement (`native` — engine-enforced):** read-only is provable here.
+**Read-only enforcement (`native` - engine-enforced):** read-only is provable here.
 The server (a) exposes **no write tools** (only list/describe + `execute_query`), and
-(b) wraps every query in a database-level **`BEGIN READ ONLY` transaction** — Redshift
+(b) wraps every query in a database-level **`BEGIN READ ONLY` transaction** - Redshift
 itself rejects any INSERT/UPDATE/COPY/DDL inside it. There is no read-only flag because
 read-only is the only mode.
 
@@ -32,5 +32,5 @@ read-only is the only mode.
 
 - Covers cluster/serverless discovery, schema browsing (databases/schemas/tables/
   columns), and read-only SQL via the Redshift Data API.
-- Prefer this over pointing a generic Postgres MCP at Redshift — Redshift's old catalog
+- Prefer this over pointing a generic Postgres MCP at Redshift - Redshift's old catalog
   breaks generic introspection.

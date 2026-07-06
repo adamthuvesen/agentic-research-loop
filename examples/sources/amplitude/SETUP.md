@@ -1,11 +1,11 @@
-# Amplitude (read-only — credential-enforced, read-AND-write server)
+# Amplitude (read-only - credential-enforced, read-AND-write server)
 
-**Server:** official Amplitude MCP server — hosted, OAuth. US endpoint
+**Server:** official Amplitude MCP server - hosted, OAuth. US endpoint
 `https://mcp.amplitude.com/mcp` (EU: `https://mcp.eu.amplitude.com/mcp`).
 
-**Warning — this server is read+write.** It exposes `create_chart`,
+**Warning - this server is read+write.** It exposes `create_chart`,
 `create_dashboard`, `create_cohort`, `create_metric`, **`create_experiment`, and
-`create_feature_flag`** — the last two can change live product behavior. There is
+`create_feature_flag`** - the last two can change live product behavior. There is
 **no read-only flag**, and the autonomous runner uses `--dangerously-skip-permissions`,
 so tool-level blocking is bypassed. **The connected account's role is the only
 guardrail.**

@@ -1,13 +1,13 @@
 # Snowflake (read-only)
 
 **Server:** Snowflake MCP server
-([`snowflake-labs-mcp`](https://github.com/Snowflake-Labs/mcp)) — local stdio via
+([`snowflake-labs-mcp`](https://github.com/Snowflake-Labs/mcp)) - local stdio via
 `uvx`. Uses your **`default`** Snowflake connection.
 
 **Read-only enforcement (`statement-allowlist`):** read-only is pinned in
 [`config/snowflake-mcp-tools.yaml`](../../../config/snowflake-mcp-tools.yaml) (passed
 via `--service-config-file`), which permits **`SELECT` / `DESCRIBE` / `SHOW` / `USE`
-only** — never `ALTER`/`DELETE`/`DROP`. A test
+only** - never `ALTER`/`DELETE`/`DROP`. A test
 (`tests/test_mcp_configs_consistent.py`) asserts the allowlist stays read-only.
 
 ## Enable

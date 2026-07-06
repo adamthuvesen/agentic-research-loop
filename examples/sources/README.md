@@ -1,9 +1,8 @@
 # Source bundles (opt-in)
 
 Each subdirectory here is a **copy-to-enable** source. The committed `.mcp.json`
-stays neutral (`.codex/config.toml` / `.cursor/mcp.json` are local-only) — you only
-wire a source you actually use. Onboarding is "add what you have," not "delete
-what you don't."
+stays neutral (`.codex/config.toml` / `.cursor/mcp.json` are local-only), so you
+wire only the sources you use. Onboarding is "add what you have."
 
 A bundle has up to three files:
 
@@ -13,14 +12,14 @@ A bundle has up to three files:
 | `mcp.snippet.json` | the MCP server block in all three tool shapes | paste into `.mcp.json` / `.codex/config.toml` / `.cursor/mcp.json` |
 | `SETUP.md` | credentials + how read-only is enforced for this source | follow it once |
 
-A source that reaches its system without an MCP server — a `cli` or `native`
-transport such as **GSC** (`research gsc`) — is **MCP-less**: it ships only
-`source.json` and `SETUP.md`, no `mcp.snippet.json`. Enabling it just registers the
+A source that reaches its system without an MCP server, such as a `cli` or
+`native` transport like **GSC** (`research gsc`), is **MCP-less**: it ships only
+`source.json` and `SETUP.md`, no `mcp.snippet.json`. Enabling it registers the
 spec; no MCP config is touched.
 
 ## Enabling a source
 
-The easy way — `research source enable <name>` does the wiring for you:
+The easy way: `research source enable <name>` does the wiring for you:
 
 ```bash
 uv run research source enable github     # merge source.json + wire all 3 MCP configs
@@ -29,7 +28,7 @@ uv run research source disable github    # undo
 ```
 
 Then follow the bundle's `SETUP.md` for credentials and read-only setup. The command
-edits your local (git-tracked) MCP configs — that's your opt-in; don't commit them
+edits your local (git-tracked) MCP configs. That's your opt-in; don't commit them
 back to the shared repo, which keeps its committed configs neutral.
 
 By hand, if you prefer:
@@ -51,4 +50,4 @@ bundle's MCP snippet carries it and `tests/test_readonly_contract.py` asserts it
 Where read-only can only be enforced at the credential layer (`credential-only`,
 e.g. a view-only account), `SETUP.md` documents it and the test checks that the
 note is present. Adding a bundle that violates its declared mechanism fails the
-test — by design.
+test.

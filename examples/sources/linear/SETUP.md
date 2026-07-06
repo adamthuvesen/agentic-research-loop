@@ -1,10 +1,10 @@
 # Linear (read-only)
 
-**Server:** official Linear MCP server — hosted, OAuth. Endpoint
+**Server:** official Linear MCP server - hosted, OAuth. Endpoint
 `https://mcp.linear.app/mcp`.
 
 **Read-only enforcement (`credential-only`):** the Linear server can create/update
-issues if the connected account can. There is **no read-only flag** — connect a
+issues if the connected account can. There is **no read-only flag** - connect a
 **read-only Linear account** and never create or update issues.
 
 ## Enable

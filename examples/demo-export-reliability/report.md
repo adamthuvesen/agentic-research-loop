@@ -18,7 +18,7 @@ consistent with heavy jobs competing with interactive load on the shared export 
 
 1. **Business-hours scheduling overloaded the export queue** (leading). Timing,
    queue minutes, and flat scheduled volume all point here.
-2. Residual retry-policy noise (minor) — a smaller Feb tweak did not move the
+2. Residual retry-policy noise (minor): a smaller Feb tweak did not move the
    inflection.
 
 ## Evidence Highlights
@@ -39,7 +39,7 @@ High. The mechanism is well supported by timing, queue pressure, and flat volume
 
 ## Challenge Review
 
-- Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected — scheduled jobs stayed flat, and the context notes record no counting change.
+- Strongest competing explanation tested: a volume spike or unrelated platform change in the same window. Rejected because scheduled jobs stayed flat, and the context notes record no counting change.
 - Weakest-supported claim tested: that the Feb retry-policy tweak contributed materially. It predates the inflection by two weeks and success rate held at 98% until the schedule change.
-- Most fragile dependency: partial-week data at the window edges. Re-checked — the step change holds across the full post-change weeks.
+- Most fragile dependency: partial-week data at the window edges. Re-checked; the step change holds across the full post-change weeks.
 - Outcome: Resolved. The conclusion survives challenge.

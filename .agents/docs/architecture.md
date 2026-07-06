@@ -4,28 +4,23 @@
 research cases.
 
 It gives the agent enough context, tools, and structure to run cases
-reproducibly without rigid step-by-step choreography.
+reproducibly while leaving research strategy to the agent.
 
 ## System Shape
 
 The system has three layers:
 
 1. `CLI and repo runtime`
-
-- creates cases
-- runs the autonomous loop
-- validates and publishes outputs
-
+   - creates cases
+   - runs the autonomous loop
+   - validates and publishes outputs
 2. `Agent runtime`
-
-- investigates using the available tools and source registry
-- chooses strategy within the repo constraints
-- updates the case artifacts
-
+   - investigates using the available tools and source registry
+   - chooses strategy within the repo constraints
+   - updates the case artifacts
 3. `Artifacts and contracts`
-
-- hold the shared state between human, runtime, and agent
-- make the work reproducible and reviewable
+   - hold the shared state between human, runtime, and agent
+   - make the work reproducible and reviewable
 
 ```mermaid
 flowchart TB
@@ -74,7 +69,7 @@ flowchart TB
 
 - [cli.py](../../src/agentic_research_loop/cli.py)
   - user-facing command surface
-- [**main**.py](../../src/agentic_research_loop/__main__.py)
+- [__main__.py](../../src/agentic_research_loop/__main__.py)
   - module entrypoint
 
 ### Research creation and layout
@@ -107,7 +102,7 @@ flowchart TB
   - terminal presentation helpers and live timing
 - [runner.py](../../src/agentic_research_loop/runner.py)
   - launches the external agent runner (`claude` by default; optional `codex` via `--runner`)
-  - `config/runners/claude.json` uses `claude --print` with `--dangerously-skip-permissions`; `config/runners/codex.json` uses `codex exec` with `--dangerously-bypass-approvals-and-sandbox`. Both are required so `research run` / `research plan` complete without interactive approval prompts.
+  - `config/runners/claude.json` uses `claude --print` with `--dangerously-skip-permissions`; `config/runners/codex.json` uses `codex exec` with `--dangerously-bypass-approvals-and-sandbox`. Both let `research run` / `research plan` complete without interactive approval prompts.
 
 ### Source systems
 
@@ -188,7 +183,7 @@ The autonomous loop:
 - retries when necessary
 - updates cycle summaries and status
 
-The key principle is:
+The key contract:
 
 - the system defines contracts and read-only rules
 - the agent chooses research strategy
@@ -220,19 +215,19 @@ The system uses a dual artifact model.
 flowchart LR
   subgraph human ["Human-facing (markdown)"]
     direction TB
-    brief["brief.md — framing contract (protected)"]
-    notes["notes.md — theory, evidence, dead ends"]
-    report["report.md — best current answer"]
-    statusmd["status.md — answer-first summary"]
+    brief["brief.md: framing contract (protected)"]
+    notes["notes.md: theory, evidence, dead ends"]
+    report["report.md: best current answer"]
+    statusmd["status.md: answer-first summary"]
   end
 
   subgraph machine ["Machine-facing (json)"]
     direction TB
-    progress["progress.json — lifecycle/loop state"]
-    sourcesj["sources.json — sources, hints, local paths"]
-    statusj["status.json — mode/template + run status"]
-    summaries["cycles/*/cycle_summary.json — per-cycle outcomes"]
-    findings["findings.json — structured findings (optional)"]
+    progress["progress.json: lifecycle/loop state"]
+    sourcesj["sources.json: sources, hints, local paths"]
+    statusj["status.json: mode/template + run status"]
+    summaries["cycles/*/cycle_summary.json: per-cycle outcomes"]
+    findings["findings.json: structured findings (optional)"]
   end
 
   runtime["runtime"] -->|writes| machine
@@ -268,19 +263,19 @@ flowchart LR
 ## Source System
 
 The source registry in [sources.py](../../src/agentic_research_loop/sources.py)
-defines what the runtime knows about. Only one source is **built in** — always
+defines what the runtime knows about. Only one source is **built in** and always
 registered without any wiring:
 
-- **Web search** (`web-search`) — native agent web search for external context
+- **Web search** (`web-search`): native agent web search for external context
 
 Every other external system ships as an **opt-in bundle** under
 [`examples/sources/`](../../examples/sources/). Enable one with
 `research source enable <name>`; that registers the source in `config/sources.json`
 and, for a bundle with an MCP server, wires that server into the MCP configs
-locally. A bundle whose source reaches its system another way — a `cli` or
-`native` transport such as **GSC** (`research gsc`) — ships no `mcp.snippet.json`,
+locally. A bundle whose source reaches its system another way, such as a `cli` or
+`native` transport like **GSC** (`research gsc`), ships no `mcp.snippet.json`,
 so enabling it only registers the spec. Bundles include Notion, Slack, Linear,
-Snowflake, Confidence, GSC, GA4, GitHub, Datadog, and others — see
+Snowflake, Confidence, GSC, GA4, GitHub, Datadog, and others. See
 [`examples/sources/README.md`](../../examples/sources/README.md).
 
 **Local context** is separate from the registry: attach folders or files at init
@@ -314,7 +309,7 @@ For more detail, see [runtime-contract.md](./runtime-contract.md).
 
 ## Guardrails
 
-The system is intentionally opinionated about a few things:
+The system has a few hard guardrails:
 
 - `brief.md` is protected during autonomous loops
 - external-system work is read-only
@@ -326,9 +321,7 @@ The system is intentionally opinionated about a few things:
 
 ## Adaptive Behavior
 
-The system is not meant to be rigid.
-
-It supports adaptation through:
+The system supports adaptation through:
 
 - agent-updatable `sources.json`
 - source hints

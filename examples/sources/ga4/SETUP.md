@@ -2,12 +2,12 @@
 
 **Server:** official Google Analytics MCP server
 ([`googleanalytics/google-analytics-mcp`](https://github.com/googleanalytics/google-analytics-mcp))
-— stdio, run via `pipx run analytics-mcp`. It wraps the live GA4 Data API
+Runs over stdio via `pipx run analytics-mcp`. It wraps the live GA4 Data API
 (`run_report`, `run_realtime_report`, `run_funnel_report`) plus read-only Admin
 API calls.
 
 **Read-only enforcement (`scope:analytics.readonly`):** the server is read-only
-by nature — Google states it serves *read* requests only and the sole OAuth scope
+by nature - Google states it serves *read* requests only and the sole OAuth scope
 is `analytics.readonly`, so it cannot edit GA4 configuration. The scope is the
 guarantee; there is no separate flag.
 
@@ -29,5 +29,5 @@ guarantee; there is no separate flag.
 
 - Pass the GA4 property id in your query (the server resolves account/property
   summaries); no fixed property env var is required.
-- For large properties the Data API samples/thresholds — if you need unsampled
+- For large properties the Data API samples/thresholds - if you need unsampled
   data, query the GA4 → BigQuery export via the `bigquery` source instead.
