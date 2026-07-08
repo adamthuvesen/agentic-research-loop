@@ -1,5 +1,7 @@
 # Agentic Research Loop
 
+![License](https://img.shields.io/github/license/adamthuvesen/agentic-research-loop) ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+
 An autonomous research runner for bounded investigations. Give it a question and a set of read-only sources, and it creates a workspace, investigates the problem, and keeps its notes and report up to date as it goes.
 
 The repository includes an offline demo over synthetic data, so you can try the full workflow without API keys or external services.
