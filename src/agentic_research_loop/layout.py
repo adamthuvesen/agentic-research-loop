@@ -160,18 +160,6 @@ def case_dir(repo_root: Path, case_id: str) -> Path:
     return research_dir(repo_root) / case_id
 
 
-def state_dir(case_path: Path) -> Path:
-    return case_path / "state"
-
-
-def cycles_dir(case_path: Path) -> Path:
-    return state_dir(case_path) / "cycles"
-
-
-def cycle_dir(case_path: Path, cycle_id: str) -> Path:
-    return cycles_dir(case_path) / cycle_id
-
-
 def brief_path(case_path: Path) -> Path:
     return case_path / "brief.md"
 
@@ -184,24 +172,12 @@ def report_path(case_path: Path) -> Path:
     return case_path / "report.md"
 
 
-def status_markdown_path(case_path: Path) -> Path:
-    return case_path / "status.md"
+def queries_path(case_path: Path) -> Path:
+    return case_path / "queries.sql"
 
 
-def progress_path(case_path: Path) -> Path:
-    return state_dir(case_path) / "progress.json"
-
-
-def sources_path(case_path: Path) -> Path:
-    return state_dir(case_path) / "sources.json"
-
-
-def findings_path(case_path: Path) -> Path:
-    return state_dir(case_path) / "findings.json"
-
-
-def status_json_path(case_path: Path) -> Path:
-    return state_dir(case_path) / "status.json"
+def source_objects_path(case_path: Path) -> Path:
+    return case_path / "source-objects.md"
 
 
 def plan_path(case_path: Path) -> Path:

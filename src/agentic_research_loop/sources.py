@@ -205,16 +205,6 @@ _load_user_sources()
 VALID_SOURCES: frozenset[str] = frozenset(SOURCE_CONFIGS)
 
 
-def enabled_source_labels(sources_config: dict) -> list[str]:
-    """Return display labels for all enabled sources in sources_config."""
-    labels = []
-    for spec in SOURCE_CONFIGS.values():
-        section = sources_config.get(spec["key"], {})
-        if section.get("enabled", True):
-            labels.append(spec["display_label"])
-    return labels
-
-
 def build_sources_config(
     *,
     enabled: dict[str, bool] | None = None,
@@ -325,13 +315,16 @@ def _local_context_lines(config: dict) -> list[str]:
     return lines
 
 
-def source_plan_lines(config: dict) -> list[str]:
+def source_constraint_lines(config: dict) -> list[str]:
+    """Render the sources a case may use, one per line.
+
+    The read-only policy is deliberately not repeated here — the brief and the
+    goal contract each state it in their own prose, and a third copy inside the
+    source list just pads the contract.
+    """
     enabled_sections = _enabled_source_sections(config)
-    lines = [
-        config.get("read_only_policy", _READ_ONLY_POLICY),
-        "",
+    return [
         *[spec["plan_line"] for spec, _ in enabled_sections],
         *_source_hint_lines(enabled_sections),
         *_local_context_lines(config),
     ]
-    return lines

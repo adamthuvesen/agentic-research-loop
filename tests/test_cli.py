@@ -7,34 +7,54 @@ import pytest
 from agentic_research_loop.cli import main
 from agentic_research_loop.research import resolve_case_path
 
+CASE_FILES = (
+    "brief.md",
+    "notes.md",
+    "report.md",
+    "queries.sql",
+    "source-objects.md",
+    "plan.md",
+)
 
-def test_init_creates_guided_workspace(repo_root: Path, monkeypatch) -> None:
+
+def _init(repo_root: Path, slug: str, *extra: str) -> Path:
+    assert main(["init", slug, *extra]) == 0
+    return sorted((repo_root / "research").iterdir())[-1]
+
+
+def test_init_creates_the_case_artifacts(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
 
-    exit_code = main(
-        ["init", "regional-comparison", "--template", "comparison", "--mode", "guided"]
-    )
+    case_path = _init(repo_root, "regional-comparison", "--template", "comparison")
 
-    assert exit_code == 0
-    case_dirs = sorted((repo_root / "research").iterdir())
-    assert len(case_dirs) == 1
-    case_path = case_dirs[0]
     assert case_path.name.endswith("regional-comparison")
-    assert (case_path / "notes.md").exists()
-    assert (case_path / "status.md").exists()
+    for name in CASE_FILES:
+        assert (case_path / name).exists(), name
 
 
-def test_init_notes_include_hypothesis_research_sections(
-    repo_root: Path, monkeypatch
-) -> None:
+def test_init_creates_no_machine_state(repo_root: Path, monkeypatch) -> None:
+    """Case artifacts are the only durable record; the goal owns execution state."""
     monkeypatch.chdir(repo_root)
 
-    exit_code = main(
-        ["init", "hypothesis-ledger", "--template", "exploration", "--mode", "guided"]
-    )
+    case_path = _init(repo_root, "no-state", "--template", "exploration")
 
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
+    assert not (case_path / "state").exists()
+    assert not (case_path / "status.md").exists()
+
+
+def test_init_points_at_the_goal_command(repo_root: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(repo_root)
+
+    _init(repo_root, "next-step", "--template", "exploration")
+
+    assert "Next: uv run research goal" in capsys.readouterr().out
+
+
+def test_init_notes_carry_the_research_sections(repo_root: Path, monkeypatch) -> None:
+    monkeypatch.chdir(repo_root)
+
+    case_path = _init(repo_root, "hypothesis-ledger", "--template", "exploration")
+
     notes = (case_path / "notes.md").read_text(encoding="utf-8")
     for heading in (
         "## Working Theory",
@@ -42,78 +62,25 @@ def test_init_notes_include_hypothesis_research_sections(
         "## Evidence Log",
         "## Dead Ends",
         "## Open Questions",
-        "## Leads",
+        "## Final Challenge",
     ):
         assert heading in notes
-    assert "**Strongest rival:**" in notes
-    assert "**Discriminating test:**" in notes
 
 
-def test_init_sets_consecutive_failures_to_zero(repo_root: Path, monkeypatch) -> None:
+def test_init_records_source_hint_in_the_brief(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
 
-    exit_code = main(
-        ["init", "failure-counter", "--template", "exploration", "--mode", "guided"]
+    case_path = _init(
+        repo_root,
+        "onboarding-change",
+        "--template",
+        "exploration",
+        "--web-search-hint",
+        "competitor launch",
     )
 
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    progress = __import__("json").loads(
-        (case_path / "state" / "progress.json").read_text(encoding="utf-8")
-    )
-    assert progress["consecutive_failures"] == 0
-
-
-def test_init_registers_source_hint(repo_root: Path, monkeypatch) -> None:
-    monkeypatch.chdir(repo_root)
-
-    exit_code = main(
-        [
-            "init",
-            "signup-rollout",
-            "--template",
-            "root-cause",
-            "--mode",
-            "autonomous",
-            "--web-search-hint",
-            "signup funnel",
-        ]
-    )
-
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    sources = __import__("json").loads(
-        (case_path / "state" / "sources.json").read_text(encoding="utf-8")
-    )
-    assert sources["web_search"]["enabled"] is True
-    assert sources["web_search"]["focus"] == "signup funnel"
-
-
-def test_init_registers_source_hints(repo_root: Path, monkeypatch) -> None:
-    monkeypatch.chdir(repo_root)
-
-    exit_code = main(
-        [
-            "init",
-            "onboarding-change",
-            "--template",
-            "exploration",
-            "--mode",
-            "guided",
-            "--web-search-hint",
-            "competitor launch",
-        ]
-    )
-
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    sources = __import__("json").loads(
-        (case_path / "state" / "sources.json").read_text(encoding="utf-8")
-    )
-    assert sources["web_search"]["focus"] == "competitor launch"
-    # the hint also surfaces in the rendered brief, not just state
-    brief_text = (case_path / "brief.md").read_text(encoding="utf-8")
-    assert "competitor launch" in brief_text
+    brief = (case_path / "brief.md").read_text(encoding="utf-8")
+    assert "competitor launch" in brief
 
 
 def test_init_omits_disabled_source_hints_from_brief(
@@ -121,38 +88,19 @@ def test_init_omits_disabled_source_hints_from_brief(
 ) -> None:
     monkeypatch.chdir(repo_root)
 
-    exit_code = main(
-        [
-            "init",
-            "disabled-source-hint",
-            "--template",
-            "exploration",
-            "--mode",
-            "guided",
-            "--no-web-search",
-            "--web-search-hint",
-            "Do not search this database",
-        ]
+    case_path = _init(
+        repo_root,
+        "disabled-source-hint",
+        "--template",
+        "exploration",
+        "--no-web-search",
+        "--web-search-hint",
+        "Do not search this database",
     )
 
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    brief_text = (case_path / "brief.md").read_text(encoding="utf-8")
-    assert "Web tools" not in brief_text
-    assert "Do not search this database" not in brief_text
-
-
-def test_init_no_findings_file_on_init(repo_root: Path, monkeypatch) -> None:
-    """findings.json is no longer created on init."""
-    monkeypatch.chdir(repo_root)
-
-    exit_code = main(
-        ["init", "reg-drop", "--template", "root-cause", "--mode", "autonomous"]
-    )
-
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    assert not (case_path / "state" / "findings.json").exists()
+    brief = (case_path / "brief.md").read_text(encoding="utf-8")
+    assert "Web tools" not in brief
+    assert "Do not search this database" not in brief
 
 
 def test_init_attaches_context_path(repo_root: Path, monkeypatch) -> None:
@@ -161,25 +109,17 @@ def test_init_attaches_context_path(repo_root: Path, monkeypatch) -> None:
     context_dir.mkdir()
     (context_dir / "notes.md").write_text("# Notes\n", encoding="utf-8")
 
-    exit_code = main(
-        [
-            "init",
-            "onboarding-ctx",
-            "--template",
-            "exploration",
-            "--mode",
-            "guided",
-            "--context-path",
-            str(context_dir),
-        ]
+    case_path = _init(
+        repo_root,
+        "onboarding-ctx",
+        "--template",
+        "exploration",
+        "--context-path",
+        str(context_dir),
     )
 
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    sources = __import__("json").loads(
-        (case_path / "state" / "sources.json").read_text(encoding="utf-8")
-    )
-    assert len(sources["local_context_folders"]) == 1
+    brief = (case_path / "brief.md").read_text(encoding="utf-8")
+    assert str(context_dir.resolve()) in brief
 
 
 def test_init_rejects_missing_context_path(repo_root: Path, monkeypatch) -> None:
@@ -192,59 +132,95 @@ def test_init_rejects_missing_context_path(repo_root: Path, monkeypatch) -> None
                 "missing-context",
                 "--template",
                 "exploration",
-                "--mode",
-                "guided",
                 "--context-path",
                 str(repo_root / "does-not-exist"),
             ]
         )
 
 
-def test_init_creates_current_state_files(repo_root: Path, monkeypatch) -> None:
+def test_init_uses_the_supplied_question(repo_root: Path, monkeypatch) -> None:
     monkeypatch.chdir(repo_root)
-    exit_code = main(
-        ["init", "state-files", "--template", "exploration", "--mode", "guided"]
-    )
-    assert exit_code == 0
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    assert (case_path / "state" / "progress.json").exists()
-    assert (case_path / "state" / "sources.json").exists()
-    assert (case_path / "state" / "status.json").exists()
 
-
-def test_run_resolves_short_slug(repo_root: Path, monkeypatch) -> None:
-    """Short slug (without date prefix) should resolve to the date-prefixed case dir."""
-    monkeypatch.chdir(repo_root)
-    main(
-        [
-            "init",
-            "active-users-drop",
-            "--template",
-            "root-cause",
-            "--mode",
-            "autonomous",
-        ]
+    case_path = _init(
+        repo_root,
+        "specific-question",
+        "--question",
+        "Why did weekly exports fail more often in June?",
     )
 
-    # Run with just the short slug — must not raise FileNotFoundError
-    exit_code = main(["run", "active-users-drop", "--max-cycles", "1"])
-    assert exit_code == 0
+    brief = (case_path / "brief.md").read_text(encoding="utf-8")
+    assert "Why did weekly exports fail more often in June?" in brief
 
 
-def test_run_rejects_zero_max_cycles(repo_root: Path, monkeypatch) -> None:
+def test_goal_uses_absolute_paths_and_the_validation_gate(
+    repo_root: Path, monkeypatch, capsys
+) -> None:
+    """A goal handed relative paths can write a correct answer into the wrong
+    directory and still look finished. Every path in the contract is absolute."""
     monkeypatch.chdir(repo_root)
-    main(
-        ["init", "bad-cycle-limit", "--template", "root-cause", "--mode", "autonomous"]
+    case_path = _init(repo_root, "absolute-paths", "--template", "exploration")
+    capsys.readouterr()
+
+    assert main(["goal", case_path.name]) == 0
+
+    output = capsys.readouterr().out
+    assert output.startswith("/goal ")
+    assert str(case_path.resolve()) in output
+    assert f'uv run research validate "{case_path.resolve()}" --strict' in output
+    assert "independent subagent" in output
+
+
+def test_goal_names_the_cases_own_sources(repo_root: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(repo_root)
+    context_dir = repo_root / "local-pack"
+    context_dir.mkdir()
+    case_path = _init(
+        repo_root,
+        "scoped-sources",
+        "--local-only",
+        "--context-path",
+        str(context_dir),
     )
+    capsys.readouterr()
 
-    with pytest.raises(SystemExit) as excinfo:
-        main(["run", "bad-cycle-limit", "--max-cycles", "0"])
+    main(["goal", case_path.name])
 
-    assert excinfo.value.code == 2
+    output = capsys.readouterr().out
+    assert str(context_dir.resolve()) in output
+    assert "Web tools" not in output
+
+
+def test_goal_resolves_a_short_slug(repo_root: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(repo_root)
+    _init(repo_root, "active-users-drop", "--template", "root-cause")
+    capsys.readouterr()
+
+    assert main(["goal", "active-users-drop"]) == 0
+    assert capsys.readouterr().out.startswith("/goal ")
+
+
+def test_validate_passes_on_a_fresh_case(repo_root: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(repo_root)
+    case_path = _init(repo_root, "fresh-case", "--template", "exploration")
+    capsys.readouterr()
+
+    assert main(["validate", case_path.name]) == 0
+    assert "Validation passed" in capsys.readouterr().out
+
+
+def test_validate_reports_a_missing_artifact(
+    repo_root: Path, monkeypatch, capsys
+) -> None:
+    monkeypatch.chdir(repo_root)
+    case_path = _init(repo_root, "missing-artifact", "--template", "exploration")
+    (case_path / "source-objects.md").unlink()
+    capsys.readouterr()
+
+    assert main(["validate", case_path.name]) == 1
+    assert "Missing required file: source-objects.md" in capsys.readouterr().out
 
 
 def test_resolve_case_path_ambiguous(repo_root: Path, monkeypatch) -> None:
-    """Ambiguous short slug (multiple date-prefixed matches) raises a clear error."""
     monkeypatch.chdir(repo_root)
     research = repo_root / "research"
     research.mkdir(exist_ok=True)
@@ -261,64 +237,3 @@ def test_resolve_case_path_rejects_outside_short_slug_match(repo_root: Path) -> 
 
     with pytest.raises(FileNotFoundError, match="outside"):
         resolve_case_path(repo_root, "../src")
-
-
-def test_status_command_handles_malformed_status_json(
-    repo_root: Path, monkeypatch, capsys
-) -> None:
-    monkeypatch.chdir(repo_root)
-    main(["init", "bad-status-json", "--template", "exploration", "--mode", "guided"])
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    (case_path / "state" / "status.json").write_text("{ bad", encoding="utf-8")
-
-    exit_code = main(["status", case_path.name])
-
-    assert exit_code == 1
-    assert "status.json not found or invalid" in capsys.readouterr().out
-
-
-def test_validate_command_reports_missing_status_json(
-    repo_root: Path, monkeypatch, capsys
-) -> None:
-    monkeypatch.chdir(repo_root)
-    main(
-        [
-            "init",
-            "validate-missing-status",
-            "--template",
-            "exploration",
-            "--mode",
-            "guided",
-        ]
-    )
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    (case_path / "state" / "status.json").unlink()
-
-    exit_code = main(["validate", case_path.name])
-    output = capsys.readouterr().out
-
-    assert exit_code == 1
-    assert "Missing required file: status.json" in output
-
-
-def test_status_command_tolerates_malformed_secondary_state(
-    repo_root: Path, monkeypatch, capsys
-) -> None:
-    monkeypatch.chdir(repo_root)
-    main(
-        ["init", "bad-secondary-state", "--template", "exploration", "--mode", "guided"]
-    )
-    case_path = sorted((repo_root / "research").iterdir())[0]
-    (case_path / "state" / "progress.json").write_text("{ bad", encoding="utf-8")
-    (case_path / "state" / "sources.json").write_text("[]\n", encoding="utf-8")
-    cycle_path = case_path / "state" / "cycles" / "0001"
-    cycle_path.mkdir(parents=True)
-    (cycle_path / "cycle_summary.json").write_text("{ bad", encoding="utf-8")
-
-    exit_code = main(["status", case_path.name])
-    output = capsys.readouterr().out
-
-    assert exit_code == 0
-    assert "Cycle count: `0`" in output
-    assert "Sources in play: `none`" in output
-    assert "No completed cycles yet" in output

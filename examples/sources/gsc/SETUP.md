@@ -27,9 +27,14 @@ slice.
 
    ```bash
    gcloud auth application-default login \
-     --client-id-file="$HOME/.config/gcloud/oauth-client.json" \
      --scopes="https://www.googleapis.com/auth/webmasters.readonly,https://www.googleapis.com/auth/cloud-platform"
    ```
+
+   Search Console is not covered by `gcloud`'s built-in client, so if that login
+   is rejected you need your own OAuth client: in a GCP project, enable the
+   **Google Search Console API**, create an **OAuth 2.0 Client ID** of type
+   *Desktop app*, download the JSON, and pass it with
+   `--client-id-file=/path/to/your-oauth-client.json`.
 
 3. Set the environment the CLI reads:
    - `GSC_SITE` - the verified Search Console property URL (e.g.

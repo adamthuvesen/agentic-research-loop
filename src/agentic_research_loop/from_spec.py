@@ -67,71 +67,32 @@ def load_from_spec_dir(path: Path) -> dict[str, str | None]:
     return loaded
 
 
-_SOURCE_REGISTRY_HEADER = "## Source Registry"
-_MODE_HEADER = "## Mode"
+SOURCE_CONSTRAINTS_HEADER = "## Source Constraints"
 
 
-def ensure_mode_metadata(brief_md: str, *, mode: str, template: str) -> str:
-    """Ensure supplied briefs carry machine-readable mode/template metadata."""
-    lines = brief_md.splitlines(keepends=True)
-    header_indices = [
-        i for i, line in enumerate(lines) if line.rstrip("\n").strip() == _MODE_HEADER
-    ]
-    mode_block = (
-        f"{_MODE_HEADER}\n\n- Selected mode: `{mode}`\n- Research shape: `{template}`\n"
-    )
-    if not header_indices:
-        insert_at = len(lines)
-        for i, line in enumerate(lines):
-            if line.rstrip("\n").strip() == _SOURCE_REGISTRY_HEADER:
-                insert_at = i
-                break
-        result = "".join(lines[:insert_at]).rstrip("\n")
-        suffix = "".join(lines[insert_at:]).lstrip("\n")
-        return (
-            f"{result}\n\n{mode_block}\n{suffix}"
-            if suffix
-            else f"{result}\n\n{mode_block}"
-        )
+def replace_markdown_section(text: str, heading: str, body: str) -> str:
+    """Replace the body of a `## <heading>` section, appending it if absent.
 
-    start = header_indices[0]
-    end = len(lines)
-    for i in range(start + 1, len(lines)):
-        stripped = lines[i].rstrip("\n")
-        if stripped.startswith("## "):
-            end = i
-            break
-    return "".join(lines[:start] + [mode_block + "\n"] + lines[end:])
-
-
-def splice_source_registry(brief_md: str, source_registry_block: str) -> str:
-    """Replace the body of the `## Source Registry` section in `brief_md`.
-
-    If the section is present, its body (from the header up to the next `##`
-    top-level section or end-of-file) is replaced with `source_registry_block`.
-
-    If the section is absent, the new section is appended to the brief.
-
-    If multiple `## Source Registry` headers are present, the first is
-    replaced and a warning is emitted for the rest.
+    The section runs from its header to the next `## ` header or end of file.
+    When the heading appears more than once the first is replaced and the rest
+    are left alone with a warning, since silently rewriting several sections
+    would be harder to notice than a duplicate heading.
     """
-    body = source_registry_block.rstrip()
-    new_section = f"{_SOURCE_REGISTRY_HEADER}\n\n{body}\n"
+    header = f"## {heading}"
+    new_section = f"{header}\n\n{body.rstrip()}\n"
 
-    lines = brief_md.splitlines(keepends=True)
+    lines = text.splitlines(keepends=True)
     header_indices = [
-        i
-        for i, line in enumerate(lines)
-        if line.rstrip("\n").strip() == _SOURCE_REGISTRY_HEADER
+        i for i, line in enumerate(lines) if line.rstrip("\n").strip() == header
     ]
 
     if not header_indices:
-        return brief_md.rstrip("\n") + "\n\n" + new_section
+        return text.rstrip("\n") + "\n\n" + new_section
 
     if len(header_indices) > 1:
         print(
             f"warning: supplied brief.md has {len(header_indices)} "
-            f"`## Source Registry` headers; replacing the first and leaving "
+            f"`{header}` headers; replacing the first and leaving "
             f"the rest unchanged.",
             file=sys.stderr,
         )
@@ -139,11 +100,8 @@ def splice_source_registry(brief_md: str, source_registry_block: str) -> str:
     start = header_indices[0]
     end = len(lines)
     for i in range(start + 1, len(lines)):
-        stripped = lines[i].rstrip("\n")
-        if stripped.startswith("## "):
+        if lines[i].rstrip("\n").startswith("## "):
             end = i
             break
 
-    replaced = lines[:start] + [new_section] + lines[end:]
-    result = "".join(replaced)
-    return result
+    return "".join(lines[:start] + [new_section] + lines[end:])

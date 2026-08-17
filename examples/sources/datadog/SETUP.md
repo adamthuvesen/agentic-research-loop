@@ -17,8 +17,8 @@ monitors, schedule/cancel downtime, dashboards). Read-only is enforced by the
   `MCP Write`), under a **read-only user** for defense in depth. Datadog then rejects
   any write the key isn't scoped for.
 - This is why the source is `credential-only` - the key scope, not config, is the
-  guardrail. The autonomous runner skips permission prompts, so the key scope is the
-  only thing between the agent and a muted monitor.
+  guardrail. A goal left running unattended will not stop to ask, so the key scope
+  is the only thing between the agent and a muted monitor.
 
 ## Enable
 

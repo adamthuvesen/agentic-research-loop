@@ -2,15 +2,9 @@
 
 ## Question
 
-Why did weekly export job success rate drop after the March scheduler change?
+Why did the weekly batch-export success rate drop in March 2026?
 
-## Mode
-
-- Selected mode: `autonomous`
-- Research shape: `root-cause`
-- Created: `2026-06-07`
-
-## Decision Or Deliverable
+## Deliverable
 
 Decide whether to revert the business-hours schedule for large warehouse exports or add queue isolation before the next reliability review.
 
@@ -18,6 +12,8 @@ Decide whether to revert the business-hours schedule for large warehouse exports
 
 - In scope: Export success rate, queue wait times, and the 2026-03-09 scheduler change.
 - Out of scope: Interactive query performance tuning, unrelated batch pipelines, and customer-facing SLA reporting.
+- Research shape: `root-cause`
+- Created: `2026-06-07`
 
 ## Hypotheses
 
@@ -37,15 +33,16 @@ Decide whether to revert the business-hours schedule for large warehouse exports
   - Evidence needed: Timing misalignment between policy tweak and inflection.
   - Completion threshold: Done when retry policy is ruled out as the primary driver.
 
-## Source Plan
+## Definitions And Reconciliation
 
-- Local CSV and context notes for the offline demo bundle
-- Snowflake or observability exports for live cross-checks when available
+- Success rate is `jobs_succeeded / jobs_scheduled` per week, pooled over each comparison window rather than averaged across weeks.
+- Successes plus failures must reconcile to scheduled jobs in every week used as evidence.
 
-## Source Registry
+## Source Constraints
 
-- All sources are strictly read-only. Search, query, and retrieve only. Never send messages, create or update issues, modify data, post comments, or alter any external system.
 - Local context folder: examples/local-sources
+
+All external systems are read-only. Do not send messages, change experiments, update documents, or write to data stores.
 
 ## Known Confounders
 
@@ -66,4 +63,4 @@ Decide whether to revert the business-hours schedule for large warehouse exports
 
 - The break is quantified and localized to queue pressure vs volume.
 - The leading explanation is ranked against the strongest rival.
-- Challenge review passes before the case closes.
+- The independent challenge is complete before the case closes.

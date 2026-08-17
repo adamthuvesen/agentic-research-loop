@@ -7,8 +7,8 @@ official local/self-hosted server.
 
 **Warning - this server is read+write** and ships write tools (`manage_crm_objects`,
 batch create/update objects, create/update engagements & properties) with **no
-read-only flag**. The autonomous runner skips permission prompts, so the OAuth grant
-+ user role is the only guardrail.
+read-only flag**. A goal left running unattended will not stop to ask, so the OAuth
+grant + user role is the only guardrail.
 
 **Read-only enforcement (`credential-only`):**
 

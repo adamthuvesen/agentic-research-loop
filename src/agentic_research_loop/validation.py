@@ -1,40 +1,62 @@
+"""Validate durable case artifacts without inspecting agent runtime state.
+
+The native goal owns execution; the only thing worth checking afterwards is the
+record it left behind. `validate_case(..., strict_completion=True)` is the goal's
+terminal condition, so every check here has to be something an agent can fix by
+doing better research rather than by editing bookkeeping.
+"""
+
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any
 
-from .case_contracts import (
-    ROOT_CAUSE_DESIGN_FIELDS,
-    VALID_MODES,
-    VALID_TEMPLATES,
-    CaseProfile,
-)
-from .io import extract_section, load_json, read_text
+from .io import extract_section, read_text
 from .layout import (
     brief_path,
-    findings_path,
+    notes_path,
     plan_path,
-    progress_path,
+    queries_path,
     report_path,
-    status_json_path,
+    source_objects_path,
 )
-from .runtime_state import ProgressState, StatusState
+from .sql_safety import (
+    ALLOWED_SQL_STARTS,
+    first_forbidden_sql_word,
+    sql_code_only,
+    sql_statements,
+    statement_start,
+)
 
 MIN_SUBSTANTIVE_CONTENT_LENGTH = 60
+MIN_SOURCE_OBJECTS_LENGTH = 50
+
+VALID_TEMPLATES = frozenset({"exploration", "root-cause", "comparison"})
+
+REQUIRED_FILES = {
+    "brief.md": brief_path,
+    "notes.md": notes_path,
+    "report.md": report_path,
+    "queries.sql": queries_path,
+    "source-objects.md": source_objects_path,
+}
+
+# Field names a high-priority root-cause thread must carry. The research-spec
+# skill writes these exact strings; changing one here breaks that contract.
+ROOT_CAUSE_DESIGN_FIELDS = (
+    "Discriminating Test",
+    "Strongest Rival",
+    "Completion Threshold",
+    "Cross-Check",
+)
+
 _ROOT_CAUSE_BRIEF_SECTIONS = (
-    (
-        "## Hypotheses",
-        "autonomous root-cause brief should include a `## Hypotheses` section",
-    ),
-    (
-        "## Known Confounders",
-        "autonomous root-cause brief should capture `## Known Confounders`",
-    ),
+    ("## Hypotheses", "root-cause brief should include a `## Hypotheses` section"),
+    ("## Known Confounders", "root-cause brief should capture `## Known Confounders`"),
     (
         "## Required Cross-Checks",
-        "autonomous root-cause brief should capture `## Required Cross-Checks`",
+        "root-cause brief should capture `## Required Cross-Checks`",
     ),
 )
 
@@ -43,59 +65,93 @@ THREAD_PATTERN = re.compile(
 )
 FIELD_PATTERN = re.compile(r"^\*\*(?P<name>[^*]+):\*\*\s*(?P<value>.+)$", re.MULTILINE)
 
+# Reviewer values that name no one in particular, or name the researcher. An
+# independent challenge that the researcher performed on itself is not one.
+_INVALID_REVIEWER_VALUES = frozenset(
+    {
+        "subagent name or task identifier",
+        "independent subagent",
+        "main agent",
+        "primary agent",
+        "primary researcher",
+        "research agent",
+        "not assigned",
+    }
+)
+_INVALID_REVIEWER_WORDS = frozenset({"me", "self", "tbd", "todo", "unknown"})
+
 
 def report_has_substance(report_text: str) -> bool:
-    executive_summary = extract_section(report_text, "Executive Summary")
-    if executive_summary is None:
+    summary = extract_section(report_text, "Executive Summary")
+    if summary is None:
         return False
-    placeholder = "fill in the executive summary before publishing"
-    if placeholder in executive_summary.lower():
+    if "complete this section" in summary.lower():
         return False
-    return len(" ".join(executive_summary.split())) >= MIN_SUBSTANTIVE_CONTENT_LENGTH
+    return len(" ".join(summary.split())) >= MIN_SUBSTANTIVE_CONTENT_LENGTH
 
 
-def validate_progress(payload: Any) -> list[str]:
-    try:
-        ProgressState.from_payload(payload)
-    except ValueError as exc:
-        return [str(exc)]
-    return []
+def _section_is_placeholder(text: str, heading: str, phrases: tuple[str, ...]) -> bool:
+    section = extract_section(text, heading)
+    if section is None:
+        return True
+    normalized = " ".join(section.lower().split())
+    return any(phrase in normalized for phrase in phrases)
 
 
-def validate_status(payload: Any) -> list[str]:
-    try:
-        status = StatusState.from_payload(payload)
-    except ValueError as exc:
-        return [str(exc)]
+def _field_value(text: str, label: str) -> str | None:
+    """Read a `- Label: value` bullet, or None when the value is blank.
 
-    errors: list[str] = []
-    if status.mode not in VALID_MODES:
-        errors.append(
-            f"status.json mode must be one of: {', '.join(sorted(VALID_MODES))}"
-        )
-    if status.template not in VALID_TEMPLATES:
-        errors.append(
-            f"status.json template must be one of: {', '.join(sorted(VALID_TEMPLATES))}"
-        )
-    return errors
+    The value must sit on the label's own line. A `\\s*` gap here would match
+    the newline and let an empty field absorb the next bullet as its value,
+    which passes every completeness check on a wholly unfilled template.
+    """
+    match = re.search(rf"(?im)^[ \t]*-[ \t]*{re.escape(label)}:[ \t]*(\S[^\n]*)$", text)
+    return match.group(1).strip() if match is not None else None
 
 
-def validate_findings(payload: Any) -> list[str]:
-    if not isinstance(payload, list):
-        return ["findings.json must be a JSON list"]
+def _has_complete_evidence_record(evidence_log: str) -> bool:
+    records = re.split(r"(?im)(?=^\s*-\s*Claim:\s*)", evidence_log)
+    return any(
+        all(_field_value(record, label) for label in ("Claim", "Source", "Supports"))
+        for record in records
+    )
 
-    errors: list[str] = []
-    for index, item in enumerate(payload):
-        if not isinstance(item, dict):
-            errors.append(f"findings[{index}] must be a JSON object")
-            continue
-        finding_id = item.get("id")
-        if not isinstance(finding_id, str) or not finding_id.strip():
-            errors.append(f"findings[{index}].id must be a non-empty string")
-        summary = item.get("summary")
-        if not isinstance(summary, str) or not summary.strip():
-            errors.append(f"findings[{index}].summary must be a non-empty string")
-    return errors
+
+def _reviewer_is_independent(reviewer: str) -> bool:
+    normalized = re.sub(r"[^a-z0-9]+", " ", reviewer.lower()).strip()
+    if len(normalized) < 3:
+        return False
+    # Exact-set membership, not substring: a real name like
+    # `independent-subagent-challenger` contains a placeholder phrase without
+    # being one.
+    if normalized in _INVALID_REVIEWER_VALUES:
+        return False
+    return not set(normalized.split()) & _INVALID_REVIEWER_WORDS
+
+
+def _challenge_is_complete(challenge: str) -> bool:
+    reviewer = _field_value(challenge, "Independent reviewer")
+    if reviewer is None or not _reviewer_is_independent(reviewer):
+        return False
+
+    findings = (
+        "Strongest competing explanation",
+        "Weakest-supported material claim",
+        "Most fragile source or calculation",
+    )
+    if not all(_field_value(challenge, label) for label in findings):
+        return False
+
+    resolution = _field_value(challenge, "Resolution")
+    if resolution is None:
+        return False
+    normalized = " ".join(resolution.lower().split())
+    if normalized in {"open", "pending", "tbd", "unresolved", "open | resolved"}:
+        return False
+    # Disclosing an unresolved objection is allowed; leaving it bare is not.
+    return normalized.startswith(
+        ("resolved", "unresolved because", "unresolved:", "not resolved because")
+    )
 
 
 def parse_plan_threads(plan_text: str) -> list[dict[str, Any]]:
@@ -110,178 +166,191 @@ def parse_plan_threads(plan_text: str) -> list[dict[str, Any]]:
     return threads
 
 
-def _root_cause_brief_warnings(brief_text: str) -> list[str]:
+def _thread_design_errors(threads: list[dict[str, Any]]) -> list[str]:
     return [
-        warning
-        for section_heading, warning in _ROOT_CAUSE_BRIEF_SECTIONS
-        if section_heading not in brief_text
+        f"{thread['heading']} is high priority but missing `{field_name}`"
+        for thread in threads
+        if thread["fields"].get("Priority", "").lower() == "high"
+        for field_name in ROOT_CAUSE_DESIGN_FIELDS
+        if field_name not in thread["fields"]
     ]
 
 
-def _thread_design_warnings(threads: list[dict[str, Any]]) -> list[str]:
-    warnings: list[str] = []
-    for thread in threads:
-        priority = thread["fields"].get("Priority", "").lower()
-        if priority != "high":
-            continue
-        for field_name in ROOT_CAUSE_DESIGN_FIELDS:
-            if field_name not in thread["fields"]:
-                warnings.append(
-                    f"{thread['heading']} is high priority but missing `{field_name}`"
-                )
-    return warnings
+def _case_template(brief_text: str) -> tuple[str | None, list[str]]:
+    """Read the case's research shape from the brief.
+
+    Returns the template and any errors. An unreadable shape is an error rather
+    than a silent `None`: falling through would skip the whole root-cause design
+    contract while validation still reported success.
+    """
+    # Tolerate the bold variants a hand-written brief tends to use:
+    # `- Research shape:`, `- **Research shape:**`, `- **Research shape**:`.
+    match = re.search(
+        r"(?im)^[ \t]*-[ \t]*\*{0,2}Research shape\*{0,2}:\*{0,2}[ \t]*`?([A-Za-z-]+)`?",
+        brief_text,
+    )
+    if match is None:
+        return None, [
+            "brief.md needs a `- Research shape: <template>` line in `## Scope`"
+        ]
+    template = match.group(1).lower()
+    if template not in VALID_TEMPLATES:
+        return None, [
+            f"brief.md has an unknown research shape {template!r}. "
+            f"Use one of: {', '.join(sorted(VALID_TEMPLATES))}"
+        ]
+    return template, []
 
 
-def _root_cause_plan_warnings(case_path: Path) -> list[str]:
-    if not plan_path(case_path).exists():
-        return ["autonomous root-cause case should include `plan.md`"]
+def _root_cause_design_errors(case_path: Path, brief_text: str) -> list[str]:
+    """Check the design contract that makes a root-cause case falsifiable."""
+    errors = [
+        message
+        for heading, message in _ROOT_CAUSE_BRIEF_SECTIONS
+        if heading not in brief_text
+    ]
 
-    plan_text = read_text(plan_path(case_path))
+    plan_file = plan_path(case_path)
+    if not plan_file.exists():
+        return errors
+
+    plan_text = read_text(plan_file)
     if "No plan yet" in plan_text:
-        return ["autonomous root-cause case has no research threads yet"]
-
+        return errors
     threads = parse_plan_threads(plan_text)
     if not threads:
-        return ["plan.md does not contain any numbered research threads"]
-    return _thread_design_warnings(threads)
+        errors.append("plan.md has content but no numbered research threads")
+        return errors
+    errors.extend(_thread_design_errors(threads))
+    return errors
 
 
-def collect_validation_warnings(case_path: Path) -> list[str]:
-    warnings: list[str] = []
-    if not brief_path(case_path).exists():
-        return warnings
-
-    profile = CaseProfile.load(case_path)
-    if not profile.is_autonomous_root_cause:
-        return warnings
-
-    brief_text = read_text(brief_path(case_path))
-    warnings.extend(_root_cause_brief_warnings(brief_text))
-    warnings.extend(_root_cause_plan_warnings(case_path))
-    return warnings
-
-
-def _load_progress_for_validation(
-    case_path: Path,
-) -> tuple[dict[str, Any] | None, list[str]]:
+def _sql_errors(sql: str) -> tuple[list[str], str]:
+    """Return SQL safety errors plus the comment-stripped SQL for later checks."""
     try:
-        progress = load_json(progress_path(case_path))
-    except json.JSONDecodeError as exc:
-        return None, [f"progress.json is invalid JSON: {exc.msg}"]
-    except OSError as exc:
-        return None, [f"Could not read progress.json: {exc}"]
+        executable = sql_code_only(sql)
+    except ValueError as exc:
+        return [f"queries.sql is invalid: {exc}"], ""
 
-    errors = validate_progress(progress)
-    if errors:
-        return None, errors
-    return progress, []
+    forbidden = first_forbidden_sql_word(executable)
+    if forbidden:
+        return (
+            [f"queries.sql contains forbidden write statement: {forbidden}"],
+            executable,
+        )
+
+    unsupported = next(
+        (
+            start
+            for statement in sql_statements(executable)
+            if (start := statement_start(statement)) not in ALLOWED_SQL_STARTS
+        ),
+        None,
+    )
+    if unsupported is not None:
+        return (
+            [
+                f"queries.sql contains unsupported statement starting with: {unsupported}"
+            ],
+            executable,
+        )
+    return [], executable
 
 
-def _status_errors(case_path: Path) -> list[str]:
-    try:
-        status = load_json(status_json_path(case_path))
-    except json.JSONDecodeError as exc:
-        return [f"status.json is invalid JSON: {exc.msg}"]
-    except OSError as exc:
-        return [f"Could not read status.json: {exc}"]
-    return validate_status(status)
-
-
-def _challenge_completion_errors(
-    case_path: Path, progress: dict[str, Any]
-) -> list[str]:
-    profile = CaseProfile.load(case_path)
-    if not profile.requires_challenge:
+def _sql_provenance_errors(sql: str, executable: str) -> list[str]:
+    has_read_sql = any(
+        statement_start(statement) in ALLOWED_SQL_STARTS
+        for statement in sql_statements(executable)
+    )
+    if has_read_sql:
         return []
-    if progress["pending_challenge_cycle"]:
-        return ["strict completion requires the challenge cycle to be run"]
-    if progress["last_challenge_outcome"] is None:
-        return [
-            "strict completion requires the challenge cycle to be run "
-            "(this case has not run one yet — run more cycles or use "
-            "`validate --design` for a structural check)"
-        ]
-    if progress["last_challenge_outcome"] != "passed":
-        return [
-            "strict completion requires the challenge cycle to have passed "
-            f"(last outcome: {progress['last_challenge_outcome']!r})"
-        ]
-    return []
-
-
-def _report_completion_errors(case_path: Path) -> list[str]:
-    rp = report_path(case_path)
-    if not rp.exists():
-        return ["Missing required file: report.md"]
-
-    report_text = read_text(rp)
-    if report_has_substance(report_text):
+    if re.search(r"(?im)^\s*--\s*no sql used:\s*\S+", sql):
         return []
-    if extract_section(report_text, "Executive Summary") is None:
-        return ["strict completion requires a non-empty Executive Summary"]
-    return ["strict completion requires substantive report content"]
+    return [
+        "queries.sql needs a read-only query or an explicit `-- No SQL used: <reason>`"
+    ]
 
 
-def _findings_errors(case_path: Path) -> list[str]:
-    fp = findings_path(case_path)
-    if not fp.exists():
-        return []
-    try:
-        findings = load_json(fp)
-    except json.JSONDecodeError as exc:
-        return [f"findings.json is invalid JSON: {exc.msg}"]
-    except OSError as exc:
-        return [f"Could not read findings.json: {exc}"]
-    return validate_findings(findings)
+def _report_errors(report: str) -> list[str]:
+    errors: list[str] = []
+    if not report_has_substance(report):
+        errors.append("report.md needs a meaningful Executive Summary")
+    placeholder_sections = (
+        ("Evidence", ("replace this", "complete this")),
+        ("Reconciliation", ("show how calculated contributions", "explain why")),
+        ("Rejected Leads", ("replace this", "complete this")),
+        ("Risks And Caveats", ("replace this", "complete this")),
+    )
+    errors.extend(
+        f"report.md needs a completed {heading} section"
+        for heading, phrases in placeholder_sections
+        if _section_is_placeholder(report, heading, phrases)
+    )
+    return errors
 
 
-def validate_case(
-    case_path: Path,
-    *,
-    strict_completion: bool = False,
-    strict_design: bool = False,
-) -> list[str]:
-    """Validate case artifacts, machine state, and completion gates.
+def validate_case(case_path: Path, *, strict_completion: bool = False) -> list[str]:
+    """Validate durable case artifacts.
 
-    `strict_design` promotes design-contract warnings on high-priority threads
-    (`Discriminating Test`, `Completion Threshold`, `Strongest Rival`, `Cross-Check`)
-    to errors. Safe to run at scaffold/planning time — it does NOT gate on challenge
-    cycle or report.md.
-
-    `strict_completion` is the end-of-case publish gate: everything in
-    `strict_design` plus challenge-cycle outcome and a substantive report.md.
+    The default pass checks structure and read-only SQL safety — safe to run at
+    scaffold time. `strict_completion` adds the end-of-case gate: a real answer,
+    traceable evidence, preserved provenance, and a completed independent
+    challenge.
     """
     errors: list[str] = []
-    status_errors: list[str] = []
-    if not brief_path(case_path).exists():
-        errors.append("Missing required file: brief.md")
-    if not progress_path(case_path).exists():
-        errors.append("Missing required file: progress.json")
-    if not status_json_path(case_path).exists():
-        status_errors = ["Missing required file: status.json"]
-    else:
-        status_errors = _status_errors(case_path)
-    errors.extend(status_errors)
+    texts: dict[str, str] = {}
+    for name, path_for in REQUIRED_FILES.items():
+        path = path_for(case_path)
+        if not path.exists():
+            errors.append(f"Missing required file: {name}")
+            continue
+        try:
+            texts[name] = read_text(path)
+        except OSError as exc:
+            errors.append(f"Could not read {name}: {exc}")
 
-    if progress_path(case_path).exists():
-        progress, progress_errors = _load_progress_for_validation(case_path)
-        if progress_errors:
-            errors.extend(progress_errors)
-            return errors
-        if progress is None:
-            return errors
+    sql = texts.get("queries.sql", "")
+    executable_sql = ""
+    if sql:
+        sql_errors, executable_sql = _sql_errors(sql)
+        errors.extend(sql_errors)
 
-        status_complete = progress["status"] == "complete"
-        should_enforce_design_contract = (
-            strict_completion or strict_design or status_complete
+    if errors:
+        return errors
+
+    brief = texts["brief.md"]
+    template, template_errors = _case_template(brief)
+    errors.extend(template_errors)
+    if template == "root-cause":
+        errors.extend(_root_cause_design_errors(case_path, brief))
+
+    if not strict_completion:
+        return errors
+
+    question = extract_section(brief, "Question")
+    if question is None or question.lower().startswith("research:"):
+        errors.append("brief.md needs a specific research question")
+
+    errors.extend(_report_errors(texts["report.md"]))
+
+    notes = texts["notes.md"]
+    evidence_log = extract_section(notes, "Evidence Log")
+    if evidence_log is None or not _has_complete_evidence_record(evidence_log):
+        errors.append("notes.md needs a completed Evidence Log section")
+
+    challenge = extract_section(notes, "Final Challenge")
+    if challenge is None or not _challenge_is_complete(challenge):
+        errors.append(
+            "notes.md needs a completed Final Challenge section naming an "
+            "independent reviewer"
         )
-        if should_enforce_design_contract and not status_errors:
-            errors.extend(collect_validation_warnings(case_path))
 
-        if strict_completion or status_complete:
-            if not status_errors:
-                errors.extend(_challenge_completion_errors(case_path, progress))
-            errors.extend(_report_completion_errors(case_path))
+    source_objects = " ".join(texts["source-objects.md"].lower().split())
+    if (
+        "replace this line" in source_objects
+        or len(source_objects) < MIN_SOURCE_OBJECTS_LENGTH
+    ):
+        errors.append("source-objects.md needs at least one concrete source object")
 
-    errors.extend(_findings_errors(case_path))
+    errors.extend(_sql_provenance_errors(sql, executable_sql))
     return errors

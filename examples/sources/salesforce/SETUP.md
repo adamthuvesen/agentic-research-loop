@@ -19,8 +19,9 @@ logged in as:
 
 **Warning:** with a broad `--toolsets` (or the default) this server can deploy metadata
 and run Apex; with a write-capable org user even the `data` toolset can mutate records.
-The autonomous runner skips permission prompts, so the org user's permissions are the
-only guardrail - keep them read-only. **Beta** - re-check the toolset list against the docs.
+A goal left running unattended will not stop to ask, so the org user's permissions
+are the only guardrail - keep them read-only. **Beta** - re-check the toolset list
+against the docs.
 
 ## Enable
 

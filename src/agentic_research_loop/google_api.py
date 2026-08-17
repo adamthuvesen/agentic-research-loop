@@ -38,9 +38,10 @@ _SCOPES = [
     "https://www.googleapis.com/auth/webmasters.readonly",
 ]
 
+# Add `--client-id-file=<your-oauth-client.json>` when the built-in gcloud client
+# is rejected for Search Console; see examples/sources/gsc/SETUP.md.
 _RE_AUTH_COMMAND = (
     "gcloud auth application-default login "
-    "--client-id-file=$HOME/.config/gcloud/oauth-client.json "
     '--scopes="https://www.googleapis.com/auth/webmasters.readonly,'
     'https://www.googleapis.com/auth/cloud-platform"'
 )

@@ -6,9 +6,8 @@
 **Warning - this server is read+write.** It exposes `create_chart`,
 `create_dashboard`, `create_cohort`, `create_metric`, **`create_experiment`, and
 `create_feature_flag`** - the last two can change live product behavior. There is
-**no read-only flag**, and the autonomous runner uses `--dangerously-skip-permissions`,
-so tool-level blocking is bypassed. **The connected account's role is the only
-guardrail.**
+**no read-only flag**. A goal left running unattended will not stop to ask before
+calling one of these, so **the connected account's role is the only guardrail.**
 
 **Read-only enforcement (`credential-only`):**
 

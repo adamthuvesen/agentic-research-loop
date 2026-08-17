@@ -1,0 +1,2 @@
+-- No SQL used: every figure is computed directly from the committed CSV at
+-- examples/local-sources/exports_weekly.csv. No warehouse was involved.
