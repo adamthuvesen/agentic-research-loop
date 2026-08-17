@@ -34,5 +34,5 @@ config/sources.json
 !.agents/docs/examples/**
 !.agents/docs/architecture.md
 !.agents/docs/setup.md
-!.agents/docs/runtime-contract.md
-!.agents/docs/runtime-playbook.md
+!.agents/docs/decisions/
+!.agents/docs/decisions/**

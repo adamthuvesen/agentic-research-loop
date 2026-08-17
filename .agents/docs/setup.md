@@ -11,8 +11,8 @@ This repo **ships neutral MCP configs**: no servers wired by default. Sources ar
 ## Prerequisites
 
 - `uv` ([install](https://docs.astral.sh/uv/getting-started/installation/))
-- **Claude Code** (primary agent setup for this repo) and/or **Codex CLI** (optional; uses `.codex/config.toml`)
-- Org access to the MCP-backed systems you need (Slack, Notion, Linear, Confidence, Snowflake, etc.)
+- **Claude Code** and/or **Codex CLI** (optional; uses `.codex/config.toml`), recent enough to support native goals
+- Org access to the MCP-backed systems you need (Slack, Notion, Linear, Snowflake, etc.)
 
 ## Fast path
 
@@ -28,9 +28,20 @@ The script does not modify MCP configs. Use `research source enable` for that. T
 
 `research source enable <name>` creates a local `.cursor/mcp.json` (not committed) and wires the server into it. Cursor then shows the wired servers; complete OAuth in its Settings → MCP panel (fixed redirect URI) on first use. Do not commit secrets or personal OAuth state.
 
-## Autonomous `research run` / `plan` and agent CLIs
+## Native goals
 
-The default external agent is **Claude** (`config/runners/claude.json` uses `--dangerously-skip-permissions` with `claude --print`). Optional `--runner codex` uses `config/runners/codex.json` (`codex exec` with `--dangerously-bypass-approvals-and-sandbox`). Those flags are **intentional**: the case loop is **non-interactive** and must not block on per-step approval dialogs.
+Research runs inside your client's native `/goal`, so that feature has to be
+available before anything else matters.
+
+- **Claude Code**: run `/goal` once to confirm your version supports it
+  ([docs](https://code.claude.com/docs/en/goal)).
+- **Codex**: goals sit behind a feature flag. `research source enable <name>`
+  writes `[features] goals = true` into your local `.codex/config.toml`; if you
+  never enable a bundle, add it yourself. Confirm with `codex features list`
+  ([docs](https://developers.openai.com/codex/goals)).
+
+There are no permission-bypass flags anywhere in this repo. The goal runs in your
+interactive session, so tool permissions prompt normally — which is the point.
 
 ## MCP: Claude Code
 
@@ -52,20 +63,10 @@ Codex only loads **project-scoped** `.codex/config.toml` when this repository is
 
 ## Snowflake
 
-Create a personal `default` connection in `~/.snowflake/config.toml`. Example shape with placeholders only (copy from [`examples/snowflake-config.toml.example`](examples/snowflake-config.toml.example)):
-
-```toml
-[connections.default]
-account = "YOUR_ACCOUNT"
-user = "you@company.com"
-authenticator = "externalbrowser"
-warehouse = "AD_HOC_WH"
-database = "YOUR_DB"
-schema = "PUBLIC"
-role = "YOUR_ROLE"
-```
-
-Adjust to match your access. The MCP server is started with `--connection-name default`.
+Create a personal `default` connection in `~/.snowflake/config.toml`. Copy
+[`examples/snowflake-config.toml.example`](examples/snowflake-config.toml.example)
+and replace every placeholder with your own account, warehouse, database, and
+role. The MCP server is started with `--connection-name default`.
 
 ## Optional: Google Search Console (GSC) and GA4
 
@@ -98,9 +99,9 @@ can guarantee read-only*; the account or IAM role you connect is the only read-o
   `*_read` app-key scopes). Preview API may change.
 - **Amplitude / Mixpanel**: **read+write MCP servers with destructive tools** (create
   experiments/feature-flags; Mixpanel can delete dashboards and bulk-edit the
-  taxonomy) and **no read-only flag**. The autonomous runner skips permission prompts,
-  so the **account role is the only read-only rule**: use a dedicated **Amplitude Viewer** /
-  **Mixpanel Consumer** account and verify a write returns 403 before autonomous use.
+  taxonomy) and **no read-only flag**. The **account role is the only read-only rule**:
+  use a dedicated **Amplitude Viewer** / **Mixpanel Consumer** account and verify a
+  write returns 403 before you leave a goal running unattended.
   Prefer **PostHog** for a provably read-only product-analytics source.
 - **HubSpot**: **read+write MCP server, no read-only flag.** Create the MCP Auth App
   and **grant only `*.read` scopes** (HubSpot then 403s writes), and connect a read-only
@@ -147,10 +148,14 @@ See each bundle's `SETUP.md` for exact steps.
 ## Verify
 
 ```bash
-uv run python scripts/check_claude_setup.py
+uv run python scripts/check_agent_setup.py
 ```
 
-This checks `uv`, optional `codex` presence, Snowflake profile, and (when `claude` is installed) `claude mcp get` for any servers you've enabled. With neutral configs and nothing enabled yet it has little to check; failures on an enabled HTTP server are normal until you complete OAuth in your IDE.
+This checks `uv`, the Claude Code and Codex goal prerequisites, and — when
+`claude` is installed — `claude mcp get` for exactly the servers you enabled.
+Having no servers wired is a pass, not a failure: web-search and `--context-path`
+cases need none. Failures on an enabled HTTP server are normal until you complete
+OAuth in your client.
 
 ## Adding a new source
 
