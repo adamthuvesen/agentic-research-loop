@@ -176,3 +176,71 @@ def test_mcpless_bundle_listed_with_enabled_state(repo):
     sb.enable_bundle(repo, "bare")
     rows = {r["name"]: r for r in sb.list_bundles(repo)}
     assert rows["bare"]["enabled"] is True
+
+
+def test_codex_goals_flag_survives_every_config_shape() -> None:
+    """Codex hides `/goal` behind this flag, and this file is never committed.
+
+    A bare prepended `[features]` table would declare the table twice when one
+    exists (unparseable) and would swallow any root-level keys that follow it.
+    """
+    import tomllib
+
+    from agentic_research_loop.source_bundles import ensure_codex_goals
+
+    shapes = {
+        "empty": "",
+        "features_table_present": "[features]\nweb_search_request = true\n",
+        "root_level_keys": 'model = "some-model"\napproval_policy = "on-request"\n',
+        "root_keys_then_table": 'model = "m"\n\n[mcp_servers.github]\nurl = "https://x.test"\n',
+        "no_trailing_newline": 'model = "m"',
+    }
+    for name, source in shapes.items():
+        parsed = tomllib.loads(ensure_codex_goals(source))
+        assert parsed["features"]["goals"] is True, name
+        for key, value in tomllib.loads(source).items():
+            if key == "features":
+                assert value.items() <= parsed["features"].items(), name
+            else:
+                assert parsed[key] == value, name
+
+
+def test_codex_goals_flag_is_not_duplicated() -> None:
+    from agentic_research_loop.source_bundles import ensure_codex_goals
+
+    already = '[features]\ngoals = true\n\nmodel = "some-model"\n'
+
+    assert ensure_codex_goals(already) == already
+
+
+def test_codex_goals_flag_is_written_even_for_an_mcpless_bundle(tmp_path) -> None:
+    """`research source enable gsc` wires no server; the user still needs /goal."""
+    import tomllib
+
+    from agentic_research_loop.source_bundles import _wire_codex
+
+    config = tmp_path / ".codex" / "config.toml"
+    actions = _wire_codex(config, "", server=None, codex_toml=None)
+
+    assert any("enabled native goals" in action for action in actions)
+    assert (
+        tomllib.loads(config.read_text(encoding="utf-8"))["features"]["goals"] is True
+    )
+
+
+def test_codex_goals_flag_is_written_when_the_server_is_already_wired(tmp_path) -> None:
+    import tomllib
+
+    from agentic_research_loop.source_bundles import _wire_codex
+
+    config = tmp_path / ".codex" / "config.toml"
+    existing = '[mcp_servers.github]\nurl = "https://x.test"\n'
+
+    actions = _wire_codex(
+        config, existing, server="github", codex_toml="[mcp_servers.github]"
+    )
+
+    assert any("already in .codex/config.toml" in action for action in actions)
+    parsed = tomllib.loads(config.read_text(encoding="utf-8"))
+    assert parsed["features"]["goals"] is True
+    assert parsed["mcp_servers"]["github"]["url"] == "https://x.test"

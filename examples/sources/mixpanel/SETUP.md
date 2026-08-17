@@ -7,9 +7,9 @@
 
 **Warning - this server is read+write.** It exposes `Delete-Dashboard`,
 `Bulk-Edit-Properties` / `Bulk-Edit-Events` (can corrupt the data dictionary), and
-taxonomy/metric/experiment/feature-flag edits. There is **no read-only flag**, and
-the autonomous runner uses `--dangerously-skip-permissions`, so tool-level blocking
-is bypassed. **The connected account's project role is the only guardrail.**
+taxonomy/metric/experiment/feature-flag edits. There is **no read-only flag**. A
+goal left running unattended will not stop to ask before calling one of these, so
+**the connected account's project role is the only guardrail.**
 
 **Read-only enforcement (`credential-only`):**
 

@@ -223,17 +223,61 @@ def _wire_mcp_json_targets(
     return actions
 
 
-def _wire_codex_server(
-    cx_path: Path, cx_text: str, *, server: str, codex_toml: str
-) -> str:
-    if _codex_has_server(cx_text, server):
-        return f"server '{server}' already in .codex/config.toml (left as-is)"
-    block = codex_toml.rstrip("\n") + "\n"
-    if cx_text and not cx_text.endswith("\n"):
-        cx_text += "\n"
-    cx_path.parent.mkdir(parents=True, exist_ok=True)
-    cx_path.write_text(cx_text + "\n" + block, encoding="utf-8")
-    return f"wired server '{server}' in .codex/config.toml"
+def ensure_codex_goals(text: str) -> str:
+    """Add the goals feature flag when the local Codex config lacks it.
+
+    Codex hides `/goal` behind this flag, and this file is generated locally
+    rather than committed, so nothing else would ever add it.
+
+    Where the flag goes matters. Prepending a bare `[features]` table would
+    declare the table twice when one already exists, which makes the whole file
+    unparseable, and would swallow any root-level keys that follow it into the
+    new table. So: extend an existing `[features]` table in place, and otherwise
+    append a fresh one at the end, past every root-level key.
+    """
+    if any(line.strip() == "goals = true" for line in text.splitlines()):
+        return text
+
+    lines = text.splitlines(keepends=True)
+    header = next(
+        (i for i, line in enumerate(lines) if line.strip() == "[features]"), None
+    )
+    if header is not None:
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        return "".join(lines[: header + 1] + ["goals = true\n"] + lines[header + 1 :])
+
+    if not text.strip():
+        return "[features]\ngoals = true\n"
+    return text.rstrip("\n") + "\n\n[features]\ngoals = true\n"
+
+
+def _wire_codex(
+    cx_path: Path, cx_text: str, *, server: str | None, codex_toml: str | None
+) -> list[str]:
+    """Ensure the goals flag, and wire the server when the bundle has one.
+
+    Both edits go through one write. The goals flag is applied on every enable,
+    including for an MCP-less bundle and for a server that is already wired —
+    otherwise a user whose first bundle hits either path never gets `/goal`.
+    """
+    actions: list[str] = []
+    updated = ensure_codex_goals(cx_text)
+    if updated != cx_text:
+        actions.append("enabled native goals in .codex/config.toml")
+
+    if server is not None and _codex_has_server(updated, server):
+        actions.append(f"server '{server}' already in .codex/config.toml (left as-is)")
+    elif server is not None:
+        if updated and not updated.endswith("\n"):
+            updated += "\n"
+        updated += "\n" + codex_toml.rstrip("\n") + "\n"
+        actions.append(f"wired server '{server}' in .codex/config.toml")
+
+    if updated != cx_text:
+        cx_path.parent.mkdir(parents=True, exist_ok=True)
+        cx_path.write_text(updated, encoding="utf-8")
+    return actions
 
 
 def _remove_user_source(repo_root: Path, source_name: str) -> list[str]:
@@ -289,11 +333,10 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
     su_path, doc = _user_sources_doc(repo_root)
     server = snippet["server_name"] if snippet is not None else None
     cx_path = repo_root.joinpath(*_CODEX_CFG)
-    cx_text = ""
+    cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
     json_targets = []
     if snippet is not None:
         json_targets = _mcp_json_targets(repo_root, snippet)
-        cx_text = cx_path.read_text(encoding="utf-8") if cx_path.exists() else ""
 
     # All targets parsed cleanly; now write.
     actions: list[str] = []
@@ -301,14 +344,14 @@ def enable_bundle(repo_root: Path, name: str) -> list[str]:
 
     if snippet is not None:
         actions.extend(_wire_mcp_json_targets(json_targets, server))
-        actions.append(
-            _wire_codex_server(
-                cx_path,
-                cx_text,
-                server=server,
-                codex_toml=snippet["codex_toml"],
-            )
+    actions.extend(
+        _wire_codex(
+            cx_path,
+            cx_text,
+            server=server,
+            codex_toml=snippet["codex_toml"] if snippet is not None else None,
         )
+    )
 
     actions.append(
         f"next: follow examples/sources/{name}/SETUP.md for credentials and read-only setup"

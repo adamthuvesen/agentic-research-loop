@@ -4,8 +4,8 @@
 # This script does not modify MCP configs (`.mcp.json` is committed neutral;
 # `.codex/config.toml` / `.cursor/mcp.json` are local-only) — use `research source enable`.
 #
-# Exit behavior: if `check_claude_setup.py` fails (e.g. OAuth not done yet), this script
-# still exits 0 so you can run it repeatedly while finishing Slack/Snowflake setup.
+# Exit behavior: if `check_agent_setup.py` fails (e.g. OAuth not done yet), this script
+# still exits 0 so you can run it repeatedly while finishing per-bundle auth.
 # To fail the script when the checker fails, run the checker separately without `|| true`.
 
 set -euo pipefail
@@ -22,7 +22,7 @@ echo "Installing Python deps (dev)..."
 uv sync --dev
 
 echo "Running setup checker (see .agents/docs/setup.md if anything fails)..."
-uv run python scripts/check_claude_setup.py || true
+uv run python scripts/check_agent_setup.py || true
 
 echo ""
-echo "Done. Next: read .agents/docs/setup.md — Claude Code (`/mcp`), optional Codex (trust project + \`codex mcp\`), OAuth / Snowflake."
+echo "Done. Next: read .agents/docs/setup.md — Claude Code (`/mcp`), optional Codex (trust project + \`codex mcp\`), and per-bundle auth."

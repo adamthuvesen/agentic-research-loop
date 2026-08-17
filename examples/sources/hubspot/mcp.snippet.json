@@ -1,5 +1,5 @@
 {
-  "_comment": "Official HubSpot MCP server (hosted, OAuth). READ+WRITE server with NO read-only flag — read-only is enforced by granting only *.read OAuth scopes at consent and by the connecting user's role (see SETUP.md). The autonomous runner skips permission prompts, so the grant/role is the only guardrail. Verify the exact endpoint against developers.hubspot.com/mcp. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
+  "_comment": "Official HubSpot MCP server (hosted, OAuth). READ+WRITE server with NO read-only flag — read-only is enforced by granting only *.read OAuth scopes at consent and by the connecting user's role (see SETUP.md). A goal left running unattended will not stop to ask, so the grant/role is the only guardrail. Verify the exact endpoint against developers.hubspot.com/mcp. Merge: claude -> .mcp.json mcpServers, cursor -> .cursor/mcp.json mcpServers, codex_toml -> append to .codex/config.toml.",
   "server_name": "hubspot",
   "read_only_mechanism": "credential-only",
   "claude": {

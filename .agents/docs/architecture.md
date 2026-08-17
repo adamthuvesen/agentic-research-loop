@@ -1,343 +1,128 @@
 # Architecture
 
-`agentic-research-loop` is a CLI-first workspace for bounded autonomous
-research cases.
+`agentic-research-loop` is a research kit for bounded investigations, not an
+agent runtime. The client owns execution; the repo owns everything around it.
 
-It gives the agent enough context, tools, and structure to run cases
-reproducibly while leaving research strategy to the agent.
+## System shape
 
-## System Shape
-
-The system has three layers:
-
-1. `CLI and repo runtime`
-   - creates cases
-   - runs the autonomous loop
-   - validates and publishes outputs
-2. `Agent runtime`
-   - investigates using the available tools and source registry
-   - chooses strategy within the repo constraints
-   - updates the case artifacts
-3. `Artifacts and contracts`
-   - hold the shared state between human, runtime, and agent
-   - make the work reproducible and reviewable
-
-```mermaid
-flowchart TB
-  human["Human / research-spec skill"]
-
-  subgraph cli ["CLI and repo runtime"]
-    direction TB
-    entry["cli.py / __main__.py<br/>command surface"]
-    scaffold["research.py + from_spec.py + layout.py + templates.py<br/>scaffold case"]
-    loopMod["loop.py<br/>run_loop + planning step"]
-    cycleMod["cycle_execution.py<br/>attempts, retries, artifact restore"]
-    promptMod["prompts.py + runner_context.py<br/>prompt assembly"]
-    runnerMod["runner.py<br/>launch external CLI"]
-    contractMod["case_contracts.py + cycle_markers.py<br/>case kind + markers"]
-    sourcesMod["sources.py<br/>source registry"]
-    reviewMod["validation.py + status.py + publish.py<br/>validate, status, publish"]
-  end
-
-  subgraph agent ["Agent runtime (external, read-only)"]
-    direction TB
-    runnerProc["claude / codex / demo subprocess"]
-    toolset["MCP tools · web search · research gsc · local context"]
-  end
-
-  subgraph store ["Artifacts (research/&lt;date&gt;-&lt;slug&gt;/)"]
-    direction TB
-    md["brief · notes · report · status (md)"]
-    js["progress · sources · status · findings (json)<br/>cycles/*/cycle_summary.json"]
-  end
-
-  human --> entry
-  entry --> scaffold --> store
-  entry --> loopMod
-  entry --> reviewMod
-  loopMod --> cycleMod --> promptMod --> runnerMod --> runnerProc
-  runnerProc --> toolset --> store
-  cycleMod --> contractMod
-  sourcesMod --> promptMod
-  store --> promptMod
-  reviewMod --> store
+```text
+Claude Code or Codex session
+          |
+          v
+/goal names research-goal (or research-spec)
+          |
+          v
+skill calls research init and research goal internally
+          |
+          v
+case artifacts -> research validate --strict
 ```
 
-## Main Components
+### Native agent client
 
-### Entry points
+Claude Code or Codex owns the long-running goal, session persistence,
+continuation, pause, resume, and tool calls. The shared skill completes the case
+inside that session. The repo never launches either client.
 
-- [cli.py](../../src/agentic_research_loop/cli.py)
-  - user-facing command surface
-- [__main__.py](../../src/agentic_research_loop/__main__.py)
-  - module entrypoint
+### Repository tools
 
-### Research creation and layout
+- [cli.py](../../src/agentic_research_loop/cli.py) exposes `init`, `goal`,
+  `validate`, `gsc`, and `source`.
+- [research.py](../../src/agentic_research_loop/research.py) creates cases,
+  resolves case paths, and renders the goal contract.
+- [templates.py](../../src/agentic_research_loop/templates.py) owns the artifact
+  templates and `goal_prompt`, the generated `/goal` contract.
+- [validation.py](../../src/agentic_research_loop/validation.py) checks artifact
+  completeness, the root-cause design contract, and read-only SQL.
+- [sql_safety.py](../../src/agentic_research_loop/sql_safety.py) parses preserved
+  SQL for read-only safety.
+- [sources.py](../../src/agentic_research_loop/sources.py) holds the source
+  registry and renders per-case source constraints.
+- [source_bundles.py](../../src/agentic_research_loop/source_bundles.py) wires
+  opt-in bundles into the MCP configs.
+- [google_api.py](../../src/agentic_research_loop/google_api.py) provides the
+  read-only GSC fallback.
 
-- [research.py](../../src/agentic_research_loop/research.py)
-  - creates research folders and initial artifacts
-  - accepts pre-authored `brief.md` / `plan.md` / `notes.md` via `research init --from-spec <dir>`; falls back to default templates when files or the flag are absent
-- [layout.py](../../src/agentic_research_loop/layout.py)
-  - canonical path helpers for every artifact
-- [templates.py](../../src/agentic_research_loop/templates.py)
-  - markdown templates for briefs, reports, and findings
-- [from_spec.py](../../src/agentic_research_loop/from_spec.py)
-  - loads pre-authored artifacts for `--from-spec` and splices the generated `## Source Registry` section into a supplied brief
+`research goal` prints the contract; inside an active goal the skill adopts it
+and keeps working. The skill carries no second copy of the completion prompt.
 
-### Agentic runtime
+### The contract is absolute-path only
 
-- [loop.py](../../src/agentic_research_loop/loop.py)
-  - loop runtime (`run_loop`, planning step, progress updates)
-- [cycle_execution.py](../../src/agentic_research_loop/cycle_execution.py)
-  - per-cycle attempt pipeline (invoke runner, validate markers, artifact restore)
-- [cycle_markers.py](../../src/agentic_research_loop/cycle_markers.py)
-  - completion marker detection and outcome classification
-- [case_contracts.py](../../src/agentic_research_loop/case_contracts.py)
-  - canonical case kind (`mode`, `template`) and root-cause design field names
-- [runner_context.py](../../src/agentic_research_loop/runner_context.py)
-  - shared placeholder context for external agent CLIs
-- [prompts.py](../../src/agentic_research_loop/prompts.py)
-  - planning and cycle prompt assembly
-- [run_ui.py](../../src/agentic_research_loop/run_ui.py)
-  - terminal presentation helpers and live timing
-- [runner.py](../../src/agentic_research_loop/runner.py)
-  - launches the external agent runner (`claude` by default; optional `codex` via `--runner`)
-  - `config/runners/claude.json` uses `claude --print` with `--dangerously-skip-permissions`; `config/runners/codex.json` uses `codex exec` with `--dangerously-bypass-approvals-and-sandbox`. Both let `research run` / `research plan` complete without interactive approval prompts.
+Every path in the generated contract comes from `case_path.resolve()`. A goal
+handed relative paths can write a correct answer into the wrong directory and
+still look finished — the case directory stays untouched while the work looks
+done. `resolve_case_path` independently refuses any case that is not a direct
+child of `research/`.
 
-### Source systems
+## Case artifacts
 
-- [sources.py](../../src/agentic_research_loop/sources.py)
-  - builds `sources.json`
-  - holds source hints
+The case directory is the integration boundary between humans, agents, and
+validation:
 
-### Reviewability and publishing
+- `brief.md` — binding question, scope, source constraints, success criteria
+- `notes.md` — hypotheses, evidence log, dead ends, open questions, final challenge
+- `report.md` — the answer, evidence, reconciliation, rejected leads, caveats
+- `queries.sql` — every evidence query, or an explicit reason none was used
+- `source-objects.md` — fully qualified objects or stable URLs, with access dates
+- `plan.md` — optional, when sequencing genuinely helps
 
-- [validation.py](../../src/agentic_research_loop/validation.py)
-  - artifact and contract validation
-- [status.py](../../src/agentic_research_loop/status.py)
-  - answer-first status rendering
-- [publish.py](../../src/agentic_research_loop/publish.py)
-  - durable findings generation
+No JSON state is required. Legacy `state/` directories are ignored, so old cases
+stay inspectable without the new workflow depending on the removed runtime.
 
-## Research Lifecycle
+## Source boundary
 
-```mermaid
-flowchart TB
-  spec["/research-spec skill<br/>discover sources, design hypotheses"]
-  init["research init<br/>scaffold research/&lt;date&gt;-&lt;slug&gt;/"]
-  planQ{"plan.md blank?"}
-  planStep["planning step<br/>writes plan.md only"]
-  build["build cycle prompt<br/>brief + plan + notes + sources + state"]
-  invoke["invoke runner<br/>agent does read-only source work"]
-  validate["validate markers, artifacts,<br/>progress hash (notes/report changed?)"]
-  done{"CASE_COMPLETE emitted?"}
-  challenge["mandatory challenge cycle<br/>stress-test conclusions"]
-  stop{"stop condition?<br/>complete · 3 no-progress · 3 failures · max-cycles"}
-  publishStep["research publish<br/>published.md"]
+Only **web search** is built in. Every other external system ships as an opt-in
+bundle under [`examples/sources/`](../../examples/sources/); enable one with
+`research source enable <name>`, which registers it in `config/sources.json` and
+wires any MCP server into the MCP configs. **Local context** is separate from the
+registry: attach folders or files per case with `--context-path`.
 
-  spec --> init --> planQ
-  planQ -- yes --> planStep --> build
-  planQ -- no --> build
-  build --> invoke --> validate --> done
-  done -- no --> stop
-  done -- yes --> challenge --> stop
-  stop -- continue --> build
-  stop -- finished --> publishStep
-```
+Each bundle declares how read-only is enforced — a config flag, an OAuth scope, a
+SQL allowlist, or a read-only credential — and
+[`tests/test_readonly_contract.py`](../../tests/test_readonly_contract.py) checks
+the shipped config against that declaration. Safety lives in tool configuration,
+the client's permission prompts, repository instructions, and validation of
+preserved SQL.
 
-### 1. Spec and init
+Which sources a case may use is recorded in its brief's `## Source Constraints`
+section, generated by `research init`. That section is what `research goal` reads
+back into the contract, so a local-only case tells the goal it has no MCP and a
+warehouse case tells it to preserve queries.
 
-Users start with the `/research-spec` skill, which discovers sources, designs
-hypotheses and research threads, and presents the spec for confirmation. After
-confirmation, it scaffolds the workspace via `uv run research init <slug> ...`.
+## Validation
 
-This creates a new folder under `research/<date>-<slug>/`.
+`research validate` checks structure and read-only SQL — safe at scaffold time.
+`--strict` is the goal's terminal condition and adds the completion gate: a
+specific question, a substantive report with no placeholder sections, a complete
+evidence record, concrete source objects, preserved SQL or a stated reason, and a
+completed `## Final Challenge` naming an independent reviewer.
 
-### 2. Initial scaffold
+The reviewer check is the sharp one. It rejects self-attribution (`main agent`,
+`me`, `research agent`) and unfilled placeholders by exact-set membership rather
+than substring, so a real identifier like `independent-subagent-challenger`
+passes. `Resolution: unresolved because <reason>` passes; a bare `unresolved`
+does not. Disclosing an objection you could not settle is allowed; hiding one is
+not.
 
-The repo creates:
+For a `root-cause` case, validation also enforces the design contract that makes
+it falsifiable: `## Hypotheses`, `## Known Confounders`, and
+`## Required Cross-Checks` in the brief, and all four design fields on every
+high-priority thread in `plan.md`.
 
-- `brief.md`
-- `notes.md`
-- `plan.md`
-- `report.md`
-- `status.md`
-- `state/progress.json`
-- `state/sources.json`
-- `state/status.json` (includes canonical `mode` and `template` for the case)
+## Deliberate omissions
 
-The root `plan.md` is the durable research plan. Per-cycle working plans
-live under `state/cycles/<id>/plan.md`.
+The repo has no subprocess runners, cycle markers, retry loop, progress hash,
+stall detector, machine challenge state, permission bypass flags, status
+renderer, or publishing layer. Native goals already own execution state, and
+`report.md` is the durable published artifact.
 
-`state/findings.json` is optional and is created when structured findings are
-gathered or explicitly logged.
+See [the decision record](decisions/native-goals.md) for the reasoning and the
+costs, and [the canary](../../evals/native-goal/README.md) for how client goal
+behavior stays tested.
 
-### 3. Agentic research
-
-The autonomous loop:
-
-- reads the current case state
-- gives the agent the task, current artifacts, source registry, and runtime docs
-- asks for one focused hypothesis-led slice
-- validates the result
-- retries when necessary
-- updates cycle summaries and status
-
-The key contract:
-
-- the system defines contracts and read-only rules
-- the agent chooses research strategy
-
-Normal cycles should choose one or two active hypotheses, leads, or plan
-threads, name what evidence would change confidence, do the source work, and
-update the notes with hypothesis movement, evidence, caveats, dead ends, and
-the next sharp check.
-
-### 5. Publish
-
-Once the case is strong enough, `research publish` compiles a durable
-finding to `published.md` inside the case folder.
-
-The finding is meant to reflect not just the report, but the case
-process:
-
-- source families used
-- research shifts
-- ruled-out leads
-- freshness caveats
-- re-verification triggers
-
-## Artifact Model
-
-The system uses a dual artifact model.
-
-```mermaid
-flowchart LR
-  subgraph human ["Human-facing (markdown)"]
-    direction TB
-    brief["brief.md: framing contract (protected)"]
-    notes["notes.md: theory, evidence, dead ends"]
-    report["report.md: best current answer"]
-    statusmd["status.md: answer-first summary"]
-  end
-
-  subgraph machine ["Machine-facing (json)"]
-    direction TB
-    progress["progress.json: lifecycle/loop state"]
-    sourcesj["sources.json: sources, hints, local paths"]
-    statusj["status.json: mode/template + run status"]
-    summaries["cycles/*/cycle_summary.json: per-cycle outcomes"]
-    findings["findings.json: structured findings (optional)"]
-  end
-
-  runtime["runtime"] -->|writes| machine
-  agentNode["agent"] -->|writes| human
-  agentNode -.->|may update routing| sourcesj
-  progress -->|gates| statusmd
-```
-
-### Human-facing artifacts
-
-- `brief.md`
-  - framing contract
-- `notes.md`
-  - working theory, hypothesis ledger, evidence log, pivots, dead ends, leads
-- `report.md`
-  - best current answer
-- `status.md`
-  - quick answer-first summary
-
-### Machine-facing artifacts
-
-- `progress.json`
-  - lifecycle and loop state
-- `sources.json`
-  - source configuration and hints
-- `status.json`
-  - runtime execution status
-- `cycles/*/cycle_summary.json`
-  - per-cycle outcome summaries
-- `findings.json` (optional)
-  - structured findings logged during cases; validated when present
-
-## Source System
-
-The source registry in [sources.py](../../src/agentic_research_loop/sources.py)
-defines what the runtime knows about. Only one source is **built in** and always
-registered without any wiring:
-
-- **Web search** (`web-search`): native agent web search for external context
-
-Every other external system ships as an **opt-in bundle** under
-[`examples/sources/`](../../examples/sources/). Enable one with
-`research source enable <name>`; that registers the source in `config/sources.json`
-and, for a bundle with an MCP server, wires that server into the MCP configs
-locally. A bundle whose source reaches its system another way, such as a `cli` or
-`native` transport like **GSC** (`research gsc`), ships no `mcp.snippet.json`,
-so enabling it only registers the spec. Bundles include Notion, Slack, Linear,
-Snowflake, Confidence, GSC, GA4, GitHub, Datadog, and others. See
-[`examples/sources/README.md`](../../examples/sources/README.md).
-
-**Local context** is separate from the registry: attach folders or files at init
-(`--context-path`) or in `state/sources.json` under `local_context_folders`.
-No bundle is required; paths are read-only scoped evidence.
-
-`sources.json` stores:
-
-- enabled/disabled flags and hints per registered source
-- `local_context_folders` for attached local paths
-- the read-only policy string
-
-The agent is allowed to improve source routing during the case.
-
-## Runtime Boundary
-
-All source access is agent-executed. The agent handles research strategy,
-source selection, and synthesis directly using MCP tools.
-
-### Agent-executed research
-
-The runtime does not query external systems itself. The external agent runner
-accesses sources read-only via MCP tools, the built-in web search tool, CLI
-fallbacks (e.g. `research gsc`), and any attached local context paths. Enabled
-opt-in bundles must be wired (`research source enable <name>`) before the agent
-can use them.
-
-All work lands in the shared artifact model.
-
-For more detail, see [runtime-contract.md](./runtime-contract.md).
-
-## Guardrails
-
-The system has a few hard guardrails:
-
-- `brief.md` is protected during autonomous loops
-- external-system work is read-only
-- warehouse work uses the bundle's MCP server (e.g. the Snowflake bundle's allowlisted server), not improvised queries
-- structured findings go in `state/findings.json` when that file is in use
-- status, prompt rendering, and publish tolerate malformed optional cycle
-  summary history so humans can still inspect or publish otherwise valid cases
-- the system validates artifact integrity without turning bookkeeping into the main job
-
-## Adaptive Behavior
-
-The system supports adaptation through:
-
-- agent-updatable `sources.json`
-- source hints
-- adaptive recovery nudges when a cycle has no analytical movement
-
-The intended balance is:
-
-- strong contracts
-- minimal choreography
-- enough structure for reproducibility
-- enough freedom for the agent to do real research work
-
-## Related Docs
+## Related docs
 
 - [README.md](../../README.md)
 - [AGENTS.md](../../AGENTS.md)
 - [program.md](../../program.md)
-- [runtime-contract.md](./runtime-contract.md)
-- [runtime-playbook.md](./runtime-playbook.md)
+- [setup.md](./setup.md)

@@ -2,135 +2,47 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-from .case_contracts import VALID_MODES
-from .from_spec import ensure_mode_metadata, load_from_spec_dir, splice_source_registry
-from .io import now_iso, write_json, write_text
+from .from_spec import (
+    SOURCE_CONSTRAINTS_HEADER,
+    load_from_spec_dir,
+    replace_markdown_section,
+)
+from .io import extract_section, write_text
 from .layout import (
     brief_path,
     case_dir,
     case_slug,
     notes_path,
     plan_path,
-    progress_path,
+    queries_path,
     report_path,
     research_dir,
-    sources_path,
-    state_dir,
-    status_json_path,
-    status_markdown_path,
+    source_objects_path,
 )
-from .sources import build_sources_config, enabled_source_labels, source_plan_lines
-from .status import render_status_markdown
-from .templates import brief_template, notes_template, plan_template, report_template
+from .sources import build_sources_config, source_constraint_lines
+from .templates import (
+    brief_template,
+    goal_prompt,
+    notes_template,
+    plan_template,
+    queries_template,
+    report_template,
+    source_objects_template,
+)
 
-
-@dataclass(frozen=True)
-class IntakeDecision:
-    question: str
-    mode: str
-    template: str
-    source_plan: list[str]
-    success_criteria: list[str]
-    initial_summary: str
+DEFAULT_SUCCESS_CRITERIA = (
+    "The answer directly addresses the question.",
+    "Material claims have traceable evidence.",
+    "Competing explanations are tested or left as explicit open risks.",
+    "Calculated contributions reconcile to the relevant total when applicable.",
+)
 
 
 @dataclass(frozen=True)
 class ResearchInitResult:
     case_id: str
     path: Path
-    decision: IntakeDecision
-
-
-def initial_progress(*, mode: str) -> dict[str, Any]:
-    if mode not in VALID_MODES:
-        raise ValueError(
-            f"Invalid mode {mode!r}. Must be one of: {', '.join(sorted(VALID_MODES))}"
-        )
-    return {
-        "status": "draft" if mode == "quick" else "active",
-        "cycle_count": 0,
-        "consecutive_no_progress_cycles": 0,
-        "consecutive_failures": 0,
-        "pending_challenge_cycle": False,
-        "last_challenge_outcome": None,
-        "stop_reason": None,
-    }
-
-
-def initial_status(*, case_id: str, mode: str, template: str) -> dict[str, Any]:
-    return {
-        "case_id": case_id,
-        "mode": mode,
-        "template": template,
-        "status": "idle",
-        "runner_name": None,
-        "started_at": now_iso(),
-        "updated_at": now_iso(),
-        "active_cycle_id": None,
-        "active_attempt": None,
-        "last_attempt_outcome": None,
-        "stop_reason": None,
-    }
-
-
-def write_initial_files(
-    repo_root: Path,
-    case_id: str,
-    decision: IntakeDecision,
-    sources_config: dict,
-    supplied: dict[str, str | None] | None = None,
-) -> Path:
-    path = case_dir(repo_root, case_id)
-    if path.exists():
-        raise FileExistsError(f"Case already exists: {path}")
-    state_path = state_dir(path)
-    state_path.mkdir(parents=True)
-
-    supplied = supplied or {}
-    source_registry_block = "\n".join(source_plan_lines(sources_config))
-
-    if supplied.get("brief") is not None:
-        brief_content = splice_source_registry(supplied["brief"], source_registry_block)
-        brief_content = ensure_mode_metadata(
-            brief_content, mode=decision.mode, template=decision.template
-        )
-    else:
-        brief_content = brief_template(
-            question=decision.question,
-            template=decision.template,
-            mode=decision.mode,
-            source_plan=decision.source_plan,
-            source_registry_lines=source_plan_lines(sources_config),
-            success_criteria=decision.success_criteria,
-        )
-    write_text(brief_path(path), brief_content)
-
-    notes_content = (
-        supplied["notes"] if supplied.get("notes") is not None else notes_template()
-    )
-    write_text(notes_path(path), notes_content)
-
-    plan_content = (
-        supplied["plan"]
-        if supplied.get("plan") is not None
-        else plan_template(template=decision.template, mode=decision.mode)
-    )
-    write_text(plan_path(path), plan_content)
-
-    write_text(
-        report_path(path),
-        report_template(decision.template, decision.question, decision.initial_summary),
-    )
-    write_json(progress_path(path), initial_progress(mode=decision.mode))
-    write_json(sources_path(path), sources_config)
-    status_payload = initial_status(
-        case_id=case_id, mode=decision.mode, template=decision.template
-    )
-    write_json(status_json_path(path), status_payload)
-    write_text(status_markdown_path(path), render_status_markdown(path, status_payload))
-    return path
 
 
 def create_manual(
@@ -138,43 +50,56 @@ def create_manual(
     slug: str,
     *,
     template: str,
-    mode: str,
+    question: str | None = None,
     enabled: dict[str, bool] | None = None,
     hints: dict[str, str] | None = None,
     local_context_paths: list[str] | None = None,
     local_only: bool = False,
     from_spec_path: Path | None = None,
 ) -> ResearchInitResult:
-    question = f"Research: {slug}"
+    case_id = case_slug(slug)
+    path = case_dir(repo_root, case_id)
+    if path.exists():
+        raise FileExistsError(f"Case already exists: {path}")
+
     sources_config = build_sources_config(
         enabled=enabled,
         hints=hints,
         local_context_paths=local_context_paths,
         local_only=local_only,
     )
-    enabled_names = enabled_source_labels(sources_config)
-    source_plan = ["Live systems for fresh facts"]
-    if enabled_names:
-        source_plan.append(f"{', '.join(enabled_names)} for context and evidence")
-    decision = IntakeDecision(
-        question=question,
-        mode=mode,
-        template=template,
-        source_plan=source_plan,
-        success_criteria=[
-            "The case question is well scoped.",
-            "The workspace is ready for human or autonomous follow-through.",
-        ],
-        initial_summary="This case was created manually. Fill in the brief before relying on the output.",
+    constraints = source_constraint_lines(sources_config)
+    supplied = load_from_spec_dir(from_spec_path) if from_spec_path is not None else {}
+    case_question = question or f"Research: {slug}"
+
+    supplied_brief = supplied.get("brief")
+    if supplied_brief is not None:
+        brief = replace_markdown_section(
+            supplied_brief,
+            SOURCE_CONSTRAINTS_HEADER.removeprefix("## "),
+            "\n".join(f"- {line}" for line in constraints if line.strip())
+            + "\n\nAll external systems are read-only.",
+        )
+        case_question = extract_section(brief, "Question") or case_question
+    else:
+        brief = brief_template(
+            question=case_question,
+            template=template,
+            source_constraints=constraints,
+            success_criteria=list(DEFAULT_SUCCESS_CRITERIA),
+        )
+
+    path.mkdir(parents=True)
+    write_text(brief_path(path), brief)
+    write_text(notes_path(path), supplied.get("notes") or notes_template())
+    write_text(report_path(path), report_template(template, case_question))
+    write_text(queries_path(path), queries_template())
+    write_text(source_objects_path(path), source_objects_template())
+    write_text(
+        plan_path(path), supplied.get("plan") or plan_template(template=template)
     )
-    case_id = case_slug(slug)
-    supplied = (
-        load_from_spec_dir(from_spec_path) if from_spec_path is not None else None
-    )
-    path = write_initial_files(
-        repo_root, case_id, decision, sources_config, supplied=supplied
-    )
-    return ResearchInitResult(case_id=case_id, path=path, decision=decision)
+
+    return ResearchInitResult(case_id=case_id, path=path.resolve())
 
 
 def _resolve_existing_case_path(
@@ -231,3 +156,21 @@ def resolve_case_path(repo_root: Path, value: str) -> Path:
     if resolved is not None:
         return resolved
     raise FileNotFoundError(f"Could not find case: {value}")
+
+
+def render_goal(case_path: Path) -> str:
+    """Render the `/goal` contract, scoped to the sources this case may use.
+
+    Only the bullet list is a source. Both brief writers close the section with a
+    read-only reminder in prose, and the contract states that rule itself — left
+    in, that sentence reads as another allowed source.
+    """
+    brief = brief_path(case_path).read_text(encoding="utf-8")
+    constraints = extract_section(brief, "Source Constraints") or ""
+    sources = [
+        stripped.removeprefix("-").strip()
+        for line in constraints.splitlines()
+        if (stripped := line.strip()).startswith("-")
+        and stripped.removeprefix("-").strip()
+    ]
+    return goal_prompt(case_path, sources or ["No sources recorded in brief.md."])

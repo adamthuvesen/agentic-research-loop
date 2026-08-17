@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Goal"
+  short_description: "Run a validated case inside a native goal"
+  default_prompt: "Use $research-goal inside this native goal to investigate the question and complete the validated case."

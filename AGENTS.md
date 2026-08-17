@@ -1,19 +1,20 @@
 # AGENTS.md
 
-This repo is `agentic-research-loop`, an autonomous case engine for bounded research cycles.
+This repo is `agentic-research-loop`, a research kit for bounded investigations
+run inside a native agent goal.
 
-User-level guidance (tone, principles, git etiquette) lives in `~/.claude/CLAUDE.md` and `~/dotfiles/agents/AGENTS.md` and is *not* duplicated here. This file is for project-specific facts.
+User-level guidance (tone, principles, git etiquette) lives in the user's own
+config and is *not* duplicated here. This file is for project-specific facts.
 
-## Read The Docs First
+## Read the docs first
 
 Before working in an area, read the matching doc:
 
-- **Operating model / case lifecycle** → [program.md](program.md)
+- **Operating model and research contract** → [program.md](program.md)
 - **CLI surface (`research ...`)** → [README.md](README.md)
-- **Runtime contract (cycles, progress, challenge, schemas)** → [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md)
-- **Architecture** → [.agents/docs/architecture.md](.agents/docs/architecture.md)
+- **Architecture and validation** → [.agents/docs/architecture.md](.agents/docs/architecture.md)
+- **Why there is no runtime** → [.agents/docs/decisions/native-goals.md](.agents/docs/decisions/native-goals.md)
 - **First-time setup / source bundles** → [.agents/docs/setup.md](.agents/docs/setup.md)
-- **Day-to-day loop behavior (source strategy, hypotheses, challenge)** → [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md)
 
 If a doc disagrees with code, fix the doc in the same change.
 
@@ -21,60 +22,74 @@ If a doc disagrees with code, fix the doc in the same change.
 
 This repo is a **read/search-only consumer** of all external systems.
 
-Every source bundle is read-only by design. If a workflow seems to require writing to an external system, stop and ask the user.
+Every source bundle is read-only by design. If a workflow seems to require
+writing to an external system, stop and ask the user.
 
-## Core behavior
+## Native goals
 
-- Prefer agent judgment over deterministic choreography.
-- Use the system for context, provenance, and safety, not for micromanaging the case.
-- Let the agent decide which sources to use, what to validate next, and when the answer is good enough to stop.
+- Use Claude Code or Codex `/goal` for autonomous execution.
+- Do not add an agent subprocess runner, a custom continuation loop, cycle state,
+  completion markers, a permission bypass flag, or an Agent SDK.
+- Generate the canonical command with `uv run research goal <case>`.
+- The native goal owns persistence, pause, resume, and continuation.
+- The repo owns framing, source access, artifacts, safety, and validation.
+- Every path in the generated contract is absolute. Keep it that way — a goal
+  given relative paths can write a correct answer into the wrong directory.
 
-## Shared Skills
+## Starting research
 
-Shared repo-local skills live in `.agents/skills/`. Treat that directory as the canonical source of truth.
+- The primary path starts inside Claude Code or Codex with a native `/goal` that
+  names `research-goal`.
+- When a goal is active, scaffold with the CLI, adopt the generated contract, and
+  complete the investigation in the same session. Do not stop after scaffolding
+  or ask the user to submit a nested goal.
+- Run internal CLI commands from the repo root with `uv run research ...`.
+- Use `research-spec` when definitions, scope, source choice, confounders, or
+  completion criteria need targeted discovery first.
+- Do not ask for confirmation when the question is already bounded. Ask one
+  focused question only when a missing choice would materially change the case.
 
-After `git clone`, the same tree is wired into Claude Code via a **committed symlink** (no copy step):
+## Shared skills
 
-- **Claude Code:** `.claude/skills` → `../.agents/skills`
+Canonical repo skills live in `.agents/skills/`.
 
-Other tools (Codex, Cursor) can point at `.agents/skills/` with a local, uncommitted symlink. Do not duplicate skill content under per-tool directories. Extend `.agents/skills/` only.
+- Claude Code loads the committed `.claude/skills` symlink.
+- Codex and Cursor read `.agents/skills/` directly with a local, uncommitted symlink.
+- Do not duplicate skill content under client-specific directories.
 
-## Warehouses
+## Sources
 
-When a warehouse bundle is enabled, query it through its MCP server, not improvised connections, and never write. Snowflake's read-only rule is the committed SQL allowlist in `config/snowflake-mcp-tools.yaml` (SELECT/DESCRIBE/SHOW/USE only, pinned via `--service-config-file`). BigQuery, Postgres, Redshift, Databricks, and DuckDB each enforce read-only through their own bundle's mechanism (see `examples/sources/<name>/SETUP.md`). Each bundle is self-contained and has no dependency on any sibling repo.
+Only web search is built in. Everything else is an opt-in bundle under
+`examples/sources/`, wired with `research source enable <name>`. `.mcp.json`
+ships neutral; `.codex/config.toml` and `.cursor/mcp.json` are local-only.
 
-## Research operating rules
+Query a warehouse through its bundle's MCP server, never an improvised
+connection, and never write. Snowflake's read-only rule is the committed SQL
+allowlist in `config/snowflake-mcp-tools.yaml` (SELECT/DESCRIBE/SHOW/USE only).
+Other warehouses enforce read-only through their own bundle mechanism — see
+`examples/sources/<name>/SETUP.md`. Each bundle is self-contained.
 
-- From the repo root, invoke the CLI via `uv run research ...`.
-- The canonical way to start a case is the `/research-spec` skill, which discovers sources, designs hypotheses, and presents the spec for confirmation before scaffolding. Do not bypass this with ad-hoc `uv run research init` unless the user explicitly asks.
-- Treat external systems as read-only. If a task appears to require writing to Slack, Notion, Linear, Confidence, or another external system, stop and ask the user.
-- Keep `brief.md` stable once an autonomous case has started unless the user explicitly asks to reframe the case.
-- During cycles, the visible progress signal is changes to `notes.md` or `report.md`. Updating only JSON state files does not count as progress.
-- The autonomous loop stops after three consecutive no-progress cycles, so write visible reasoning and answer updates as you go.
-- End each autonomous slice with exactly one marker:
-  - `<promise>CYCLE_DONE</promise>` when more work is needed
-  - `<promise>CASE_COMPLETE</promise>` when the case is actually complete
+## Case contract
 
-## Research design contract
+- Treat `brief.md` as binding; keep it stable after the goal starts unless the
+  user reframes the case.
+- Keep working evidence and rejected leads in `notes.md`, the usable answer and
+  reconciliation in `report.md`, every query in `queries.sql`, and every object in
+  `source-objects.md`. Use `plan.md` only when sequencing helps.
+- Ignore legacy `state/` directories. New work does not create or update them.
+- Before finishing, delegate the final challenge to an independent subagent that
+  did not conduct the research. Record the reviewer, strongest competing
+  explanation, weakest-supported claim, most fragile dependency, and resolution
+  under `## Final Challenge` in `notes.md`. Self-review fails validation.
+- Run `uv run research validate <case> --strict`, fix every failure, and surface
+  the result in the final response.
 
-Autonomous root-cause cases enforce a stronger design contract at planning time (discriminating tests, rival explanations, completion thresholds, confounders), and `research validate --strict` enforces it. Details: [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Planning step).
+## Report section headers
 
-## Challenge cycle
+Validation parses these headings. Do not rename them casually:
 
-A mandatory challenge cycle stress-tests conclusions before any autonomous case can close. Do not skip or shortcut it. Details: [.agents/docs/runtime-playbook.md](.agents/docs/runtime-playbook.md) and [.agents/docs/runtime-contract.md](.agents/docs/runtime-contract.md) (Challenge cycle).
-
-## Steering
-
-Steer by editing `notes.md` or `plan.md` between cycles. Keep `brief.md` stable once an autonomous case has started unless the user explicitly reframes the case.
-
-## Artifact and publishing guardrails
-
-- `state/findings.json` is optional. Do not assume it exists on a newly scaffolded research.
-- When reading research state, prefer the repo's optional IO helpers for files that may not exist yet.
-- If `state/findings.json` is used, each finding should include a valid `source_type` when possible. Match it to a registered source key (see `research source list`). Publish derives each finding's freshness caveat from that source's caveat group, so any enabled source is recognized.
-- Do not casually rename report section headers that publishing relies on. These headings have special meaning:
-  - `Executive Summary`
-  - `Conclusions` or `Conclusion`
-  - `Rejected Leads`
-  - `Risks And Caveats` or `Open Questions`
-- In `notes.md`, keep the standard sections for `Working Theory`, `Dead Ends`, and `Open Questions` when they are relevant. The runtime and publish step mine those sections.
+- `Executive Summary`, `Evidence`, `Reconciliation`, `Rejected Leads`,
+  `Risks And Caveats` in `report.md`
+- `Evidence Log` and `Final Challenge` in `notes.md`
+- `Question`, `Scope` (carrying the `Research shape` line), and
+  `Source Constraints` in `brief.md`

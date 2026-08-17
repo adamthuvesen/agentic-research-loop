@@ -1,14 +1,14 @@
 ---
 name: research-spec
-description: Transform a raw business question into a detailed investigation spec: classified shape, ranked falsifiable hypotheses, a source plan built from the sources actually enabled, and research threads with discriminating tests. Then scaffold a validated agentic-research-loop case. Use before starting any research investigation in this repo.
+description: Transform a raw business question into a detailed investigation spec: classified shape, ranked falsifiable hypotheses, a source plan built from the sources actually enabled, and research threads with discriminating tests. Then scaffold a validated case and hand it to a native goal. Use before starting any research investigation in this repo.
 argument-hint: "<business question>"
 ---
 
 # Investigation Spec
 
-Turn a raw question into a confirmation-ready case workspace for the
-agentic-research-loop engine. The output is a **spec**, not an investigation: you
-design the case and hand it to the loop.
+Turn a raw question into a case workspace a native `/goal` can run. The output of
+Phases 1-4 is a **spec**, not an investigation: you design the case first, then
+run it.
 
 **Question**: $ARGUMENTS
 
@@ -20,7 +20,7 @@ A 10/10 spec has four properties. Hold the work to them:
    observation that would kill it. No unfalsifiable claims.
 3. **Decision-anchored**: the success criteria are specific and checkable, tied
    to what the reader will *do* with the answer.
-4. **Contract-clean**: `research validate --design` passes before you hand it over.
+4. **Contract-clean**: `research validate` passes before you start researching.
 
 ## NEVER
 
@@ -29,9 +29,9 @@ A 10/10 spec has four properties. Hold the work to them:
 - Assume a source is available. Check `research source list`. Emit CLI flags only
   for **enabled** sources; an unknown `--<source>-hint` aborts `research init`.
 - Scaffold before the user confirms the spec (Phase 3 checkpoint).
-- Edit `state/sources.json` by hand. Route sources through `research init` flags.
 - Guess metric definitions, table names, or tool names. Discover them live.
-- Run investigation cycles. This skill produces the spec and stops.
+- Launch a Claude or Codex subprocess, invoke an Agent SDK, or write your own
+  continuation loop. Native `/goal` owns execution.
 
 ## Phase 1 - Frame the question
 
@@ -45,18 +45,15 @@ time references, and causal language ("why", "because", "impact of").
 - `comparison` - how does A differ from B? which is better?
 - `exploration` - what is the state of X? how does Y work?
 
-**Pick the mode:**
-- `autonomous`: root-cause work the loop runs solo over bounded cycles. Enforces
-  the strong design contract and a mandatory challenge cycle.
-- `guided`: exploration/comparison where a human steers the write-up.
-- `quick`: a single-pass answer to a simple lookup.
+`root-cause` carries a stronger design contract: the brief needs `## Hypotheses`,
+`## Known Confounders`, and `## Required Cross-Checks`, and every high-priority
+thread needs all four design fields. Validation enforces it.
 
-**Catch local context and exclusions.** If the user pointed at a folder/file
-("context in `web/seo/`"), plan to read it early and pass it via `--context-path`.
-If they excluded a source ("skip Slack", "no GA4"), record it as `user_excluded`;
-default stance is every enabled source stays on. Only disable on an explicit ask;
-a source that looks irrelevant at planning time sometimes cracks the case
-mid-cycle.
+**Catch local context and exclusions.** If the user pointed at a folder or file,
+plan to read it early and pass it via `--context-path`. If they excluded a source
+("skip Slack", "no GA4"), record it; the default stance is that every enabled
+source stays on. Only disable on an explicit ask — a source that looks irrelevant
+at planning time sometimes cracks the case later.
 
 **Ask at most one clarifying question**, and only if the question is critically
 ambiguous (missing which metric, which product, or which timeframe). Otherwise
@@ -113,8 +110,8 @@ assuming. By family:
 - **Local context**: read attached folders/files now; they are usually curated,
   high-signal context.
 
-Right-size the sweep to the shape: a `quick` lookup needs one or two sources; an
-`autonomous` root-cause case earns a broad orientation.
+Right-size the sweep to the shape: a narrow lookup needs one or two sources; a
+root-cause case earns a broad orientation.
 
 ### 2c. Orientation summary
 
@@ -155,18 +152,19 @@ Design **4-8 threads** using the format in
   explains it. Don't skip quantification.
 - **Order by information gain**: sharpest discriminating test first, not easiest.
 - **Declare dependencies**: if T3 only makes sense after T1 confirms X, say so.
-- **Be specific about sources**: `Snowflake (registrations_daily, gsc_synced)`,
-  not "Snowflake". Every source named must be enabled.
+- **Be specific about sources**: name the objects, not just the system —
+  `warehouse (signups_daily, sessions_daily)`, not "the warehouse". Every source
+  named must be enabled.
 - **Flag speculation**: mark threads that may not pan out and the signal to abandon.
 
 ### Remaining brief sections
 
 Define each concretely (templates in the reference):
 
-- **Decision or Deliverable**: what the answer is *for*.
-- **Scope**: explicit in/out boundaries.
-- **Source Plan**: table over the enabled families, each with specific objects and
-  Primary/Supporting priority.
+- **Deliverable**: what the answer is *for*.
+- **Scope**: explicit in/out boundaries, and the research shape.
+- **Definitions And Reconciliation**: the primary metric, population, time zone,
+  and comparison window, plus how the result reconciles to its source totals.
 - **Key Dates**: launches, incidents, config changes, seasonal boundaries, external events.
 - **Known Confounders**: effects that could mimic or mask the signal.
 - **Required Cross-Checks**: how key claims get a second-source check (this is the
@@ -175,13 +173,16 @@ Define each concretely (templates in the reference):
 - **Success Criteria**: specific and checkable ("top 2-3 drivers ranked with
   quantified contribution"), never generic ("a clear answer").
 
+Leave `## Source Constraints` out of your draft — `research init` generates it
+from the source flags, and that generated block is what the goal contract reads.
+
 ### Right-size by shape
 
-| Shape / mode | Hypotheses | Threads | Design contract |
-|--------------|-----------|---------|-----------------|
-| autonomous root-cause | 3-5, falsifiable | 4-8 | full + confounders + cross-checks (validator-enforced) |
-| guided comparison/exploration | 3-5 angles | 3-6 | lighter; rivals where they help |
-| quick lookup | 1-3 | 1-3 | minimal; anchor + answer |
+| Shape | Hypotheses | Threads | Design contract |
+|-------|-----------|---------|-----------------|
+| root-cause | 3-5, falsifiable | 4-8 | full + confounders + cross-checks (validator-enforced) |
+| comparison / exploration | 3-5 angles | 3-6 | lighter; rivals where they help |
+| narrow lookup | 1-3 | 1-3 | minimal; anchor + answer |
 
 ### Checkpoint
 
@@ -191,7 +192,7 @@ Present the spec compactly and **wait for confirmation or edits** before Phase 4
 Hypotheses: H1-H5 one-liners (with priority)
 Threads:    T1-T6 one-liners with sources
 Scope:      in / out, one line
-Mode:       <mode> | Template: <template>
+Template:   <template>
 Sources ON:  <enabled, comma-separated>
 Sources OFF: <source> (user excluded: <reason>), ...   # omit if none
 Not enabled but relevant: <source>; enable with `research source enable <name>`   # omit if none
@@ -203,9 +204,8 @@ it. The user can adjust here ("keep GSC on", "also skip Slack").
 ## Phase 4 - Scaffold
 
 Write the three files into a tmpdir, call `research init --from-spec`, then
-**validate**. `research init` splices the `## Source Registry` block into your
-brief from the `--*-hint` flags and generates `report.md`, `status.md`, and
-`state/*.json`.
+**validate**. `research init` generates the `## Source Constraints` block from the
+source flags, plus `report.md`, `queries.sql`, and `source-objects.md`.
 
 **4a. Create the tmpdir.** Slug: short, lowercase, hyphenated (`active-users-decline`).
 
@@ -225,25 +225,25 @@ disabled source aborts the command). Use `--context-path` for attached folders a
 
 ```bash
 uv run research init <slug> \
+  --question "<the specific question>" \
   --template <template> \
-  --mode <mode> \
   --from-spec "$TMPDIR" \
   [--context-path <path> ...] \
   [--<name>-hint "<focus>"  for each enabled source with a focus] \
   [--no-<name>              for each source the user excluded at the checkpoint]
 ```
 
-**4f. Validate, then fix-and-revalidate (feedback loop).** `research init` prints
-the dated case id (`research/<date>-<slug>/`). Run the design gate against it:
+**4f. Validate, then fix-and-revalidate.** `research init` prints the dated case
+id (`research/<date>-<slug>/`).
 
 ```bash
-uv run research validate <date>-<slug> --design
+uv run research validate <date>-<slug>
 ```
 
 If it reports issues (a missing `## Required Cross-Checks`, a high-priority thread
-without all four design fields, etc.), fix them directly in the scaffolded
+without all four design fields), fix them directly in the scaffolded
 `research/<date>-<slug>/` files and re-run until it prints `Validation passed`.
-Editing the case files pre-run is fine. The brief is only protected once cycles start.
+Editing the case files now is fine; `brief.md` becomes binding once the goal starts.
 
 **4g. Clean up** always, even on failure:
 
@@ -251,21 +251,30 @@ Editing the case files pre-run is fine. The brief is only protected once cycles 
 rm -rf "$TMPDIR"
 ```
 
-## Phase 5 - Confirm ready
+## Phase 5 - Hand off to the goal
 
-Print a compact summary:
+Get the contract:
+
+```bash
+uv run research goal <date>-<slug>
+```
+
+Then dispatch on whether a goal is already running:
+
+- **A native `/goal` is active** → treat the generated contract as your operating
+  instructions and continue the investigation in this session. Do not submit it as
+  a nested slash command, return it to the user, or stop here.
+- **No native goal is active** → print the compact summary below plus the exact
+  generated `/goal` command in a code block, and stop. Do not begin the
+  investigation.
 
 ```
 Investigation workspace ready:
-  Path:   research/<date>-<slug>/
-  Mode:   <mode> | Template: <template>
-  Design: validate --design passed
+  Path:     research/<date>-<slug>/
+  Template: <template>
+  Validation: passed
   Hypotheses: <count> | Threads: <count>
   Sources: <enabled source list>
-
-To start:
-  uv run research run <date>-<slug> --max-cycles 3
-  (Add `--runner codex` to use the Codex CLI instead of Claude.)
 ```
 
-Offer to adjust anything before the loop starts.
+Offer to adjust anything before the goal starts.

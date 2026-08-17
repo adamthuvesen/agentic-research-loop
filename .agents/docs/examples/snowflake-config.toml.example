@@ -5,7 +5,7 @@
 account = "YOUR_ACCOUNT_LOCATOR"
 user = "you@example.com"
 authenticator = "externalbrowser"
-warehouse = "AD_HOC_WH"
+warehouse = "YOUR_WAREHOUSE"
 database = "YOUR_DATABASE"
 schema = "PUBLIC"
 role = "YOUR_ROLE"

@@ -6,21 +6,12 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from .research import (
-    create_manual,
-    resolve_case_path,
-)
-from .io import load_json_optional
 from .layout import find_repo_root
-from .loop import run_loop, run_plan_step
-from .publish import publish
-from .run_ui import print_run_footer
+from .research import create_manual, render_goal, resolve_case_path
 from .sources import VALID_SOURCES
-from .status import render_status_markdown
-from .validation import collect_validation_warnings, validate_case
+from .validation import validate_case
 
 _SOURCE_NAMES = sorted(VALID_SOURCES)
-_RUNNER_CHOICES = ("claude", "codex", "demo", "claude-local")
 
 
 def _positive_int(value: str) -> int:
@@ -101,42 +92,19 @@ def _add_case_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("case", help="Case id or path")
 
 
-def _add_runner_arg(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--runner",
-        choices=_RUNNER_CHOICES,
-        default="claude",
-        help="External agent CLI (default: claude).",
-    )
-
-
-def _add_run_parser(
-    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
-    name: str,
-    *,
-    help_text: str,
-) -> None:
-    run_parser = subparsers.add_parser(name, help=help_text)
-    _add_case_arg(run_parser)
-    _add_runner_arg(run_parser)
-    run_parser.add_argument("--max-cycles", type=_positive_int, default=10)
-
-
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Autonomous research case engine CLI")
+    parser = argparse.ArgumentParser(
+        description="Prepare and validate research cases run with native agent goals"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    init_parser = subparsers.add_parser("init", help="Create an empty case workspace")
+    init_parser = subparsers.add_parser("init", help="Create a case workspace")
     init_parser.add_argument("slug", help="Short case slug")
+    init_parser.add_argument("--question", help="Specific research question")
     init_parser.add_argument(
         "--template",
         choices=("exploration", "root-cause", "comparison"),
         default="exploration",
-    )
-    init_parser.add_argument(
-        "--mode",
-        choices=("quick", "guided", "autonomous"),
-        default="guided",
     )
     init_parser.add_argument(
         "--from-spec",
@@ -145,25 +113,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Directory containing pre-authored brief.md / plan.md / notes.md. "
             "Files present are used verbatim in place of default templates; "
-            "files absent fall back to defaults. The Source Registry section "
-            "of brief.md is always generated from --*-hint flags."
+            "files absent fall back to defaults. The Source Constraints section "
+            "of brief.md is always generated from the source flags."
         ),
     )
     _add_source_args(init_parser)
 
-    _add_run_parser(
-        subparsers,
-        "run",
-        help_text="Run autonomous cycles for a case",
+    goal_parser = subparsers.add_parser(
+        "goal", help="Print the native /goal command for a case"
     )
-    _add_run_parser(
-        subparsers,
-        "resume",
-        help_text="Resume an autonomous case (alias of run)",
-    )
-
-    status_parser = subparsers.add_parser("status", help="Show case status")
-    _add_case_arg(status_parser)
+    _add_case_arg(goal_parser)
 
     validate_parser = subparsers.add_parser("validate", help="Validate a case")
     _add_case_arg(validate_parser)
@@ -171,29 +130,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--strict",
         action="store_true",
         help=(
-            "Full completion gate: design contract + challenge cycle + substantive "
-            "report.md. Use only as a publish pre-flight."
+            "Completion gate: a real answer, traceable evidence, preserved "
+            "provenance, and a completed independent challenge."
         ),
     )
-    validate_parser.add_argument(
-        "--design",
-        action="store_true",
-        help=(
-            "Enforce design contract on high-priority threads. Safe to run at "
-            "scaffold/planning time — does not gate on challenge cycle or report.md."
-        ),
-    )
-
-    publish_parser = subparsers.add_parser(
-        "publish", help="Publish a case as a durable finding"
-    )
-    _add_case_arg(publish_parser)
-
-    plan_parser = subparsers.add_parser(
-        "plan", help="Generate a research plan for a case"
-    )
-    _add_case_arg(plan_parser)
-    _add_runner_arg(plan_parser)
 
     gsc_parser = subparsers.add_parser(
         "gsc",
@@ -229,66 +169,34 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_case(repo_root: Path, args: argparse.Namespace) -> int:
-    """Run or resume autonomous cycles (same behavior)."""
-    case_path = resolve_case_path(repo_root, args.case)
-    summaries = run_loop(
-        repo_root,
-        case_path,
-        runner_name=args.runner,
-        max_cycles=args.max_cycles,
-    )
-    print_run_footer([summary.to_payload() for summary in summaries])
-    progress = load_json_optional(case_path / "state" / "progress.json")
-    if isinstance(progress, dict) and progress.get("stop_reason") == "planning_failed":
-        return 1
-    return 0
-
-
-def _init_case(repo_root: Path, args: argparse.Namespace) -> int:
-    result = create_manual(
-        repo_root,
-        args.slug,
-        template=args.template,
-        mode=args.mode,
-        from_spec_path=args.from_spec,
-        **_source_kwargs(args),
-    )
+def _init_case(
+    parser: argparse.ArgumentParser, repo_root: Path, args: argparse.Namespace
+) -> int:
+    try:
+        result = create_manual(
+            repo_root,
+            args.slug,
+            template=args.template,
+            question=args.question,
+            from_spec_path=args.from_spec,
+            **_source_kwargs(args),
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     print(f"Created case: {result.case_id}")
     print(f"Path: {result.path}")
+    print(f"Next: uv run research goal {result.case_id}")
     return 0
 
 
-def _show_status(repo_root: Path, args: argparse.Namespace) -> int:
-    case_path = resolve_case_path(repo_root, args.case)
-    status_file = case_path / "state" / "status.json"
-    try:
-        status_payload = load_json_optional(status_file)
-    except (json.JSONDecodeError, OSError):
-        status_payload = None
-    if not isinstance(status_payload, dict):
-        print(f"Error: status.json not found or invalid at {status_file}")
-        return 1
-    print(render_status_markdown(case_path, status_payload))
+def _goal_command(repo_root: Path, args: argparse.Namespace) -> int:
+    print(render_goal(resolve_case_path(repo_root, args.case)))
     return 0
 
 
 def _validate_case_command(repo_root: Path, args: argparse.Namespace) -> int:
     case_path = resolve_case_path(repo_root, args.case)
-    errors = validate_case(
-        case_path,
-        strict_completion=args.strict,
-        strict_design=args.design,
-    )
-    warnings = (
-        []
-        if errors or args.strict or args.design
-        else collect_validation_warnings(case_path)
-    )
-    if warnings:
-        print("Validation warnings:")
-        for warning in warnings:
-            print(f"- {warning}")
+    errors = validate_case(case_path, strict_completion=args.strict)
     if errors:
         print("Validation failed:")
         for error in errors:
@@ -298,31 +206,10 @@ def _validate_case_command(repo_root: Path, args: argparse.Namespace) -> int:
     return 0
 
 
-def _publish_case(repo_root: Path, args: argparse.Namespace) -> int:
-    case_path = resolve_case_path(repo_root, args.case)
-    try:
-        output_path = publish(case_path)
-    except (ValueError, json.JSONDecodeError, OSError) as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        return 1
-    print(f"Published finding to {output_path}")
-    return 0
-
-
-def _plan_case(repo_root: Path, args: argparse.Namespace) -> int:
-    case_path = resolve_case_path(repo_root, args.case)
-    success = run_plan_step(repo_root, case_path, runner_name=args.runner)
-    if success:
-        print(f"Research plan written to {case_path.name}/plan.md")
-        return 0
-    print(f"Planning step did not produce a plan for {case_path.name}")
-    return 1
-
-
 def _gsc_query_command(
     parser: argparse.ArgumentParser, args: argparse.Namespace
 ) -> int:
-    from .google_api import gsc_query, GoogleApiError, GoogleAuthError
+    from .google_api import GoogleApiError, GoogleAuthError, gsc_query
 
     if args.start_date > args.end_date:
         parser.error("--start-date must be on or before --end-date")
@@ -368,22 +255,13 @@ def main(argv: list[str] | None = None) -> int:
     repo_root = find_repo_root()
 
     if args.command == "init":
-        return _init_case(repo_root, args)
+        return _init_case(parser, repo_root, args)
 
-    if args.command in {"run", "resume"}:
-        return _run_case(repo_root, args)
-
-    if args.command == "status":
-        return _show_status(repo_root, args)
+    if args.command == "goal":
+        return _goal_command(repo_root, args)
 
     if args.command == "validate":
         return _validate_case_command(repo_root, args)
-
-    if args.command == "publish":
-        return _publish_case(repo_root, args)
-
-    if args.command == "plan":
-        return _plan_case(repo_root, args)
 
     if args.command == "gsc":
         return _gsc_query_command(parser, args)
@@ -395,4 +273,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _entry() -> None:
-    sys.exit(main())
+    try:
+        exit_code = main()
+    except (FileExistsError, FileNotFoundError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        exit_code = 1
+    sys.exit(exit_code)

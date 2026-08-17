@@ -130,26 +130,19 @@ def test_user_sources_file_rejects_builtin_collision(
         sources._load_user_sources()
 
 
-def test_cli_local_only_disables_external_sources(repo_root, monkeypatch) -> None:
+def test_cli_local_only_leaves_no_external_source_in_the_brief(
+    repo_root, monkeypatch
+) -> None:
     from agentic_research_loop.cli import main
 
     monkeypatch.chdir(repo_root)
-    exit_code = main(
-        [
-            "init",
-            "reg",
-            "--template",
-            "root-cause",
-            "--mode",
-            "autonomous",
-            "--local-only",
-        ]
-    )
+    exit_code = main(["init", "reg", "--template", "root-cause", "--local-only"])
+
     assert exit_code == 0
     case = sorted((repo_root / "research").iterdir())[-1]
-    config = json.loads((case / "state" / "sources.json").read_text(encoding="utf-8"))
-    keys = [spec["key"] for spec in SOURCE_CONFIGS.values()]
-    assert all(config[key]["enabled"] is False for key in keys)
+    brief = (case / "brief.md").read_text(encoding="utf-8")
+    for spec in SOURCE_CONFIGS.values():
+        assert spec["plan_line"] not in brief
 
 
 def test_example_sources_file_is_valid() -> None:

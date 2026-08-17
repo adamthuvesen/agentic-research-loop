@@ -6,22 +6,26 @@ import pytest
 
 from agentic_research_loop.from_spec import (
     load_from_spec_dir,
-    splice_source_registry,
+    replace_markdown_section,
 )
+
+
+def splice(brief: str, block: str) -> str:
+    return replace_markdown_section(brief, "Source Constraints", block)
 
 
 def test_splice_replaces_existing_section(tmp_path: Path) -> None:
     brief = (
         "# Research Brief\n\n"
         "## Question\n\nWhy?\n\n"
-        "## Source Registry\n\n"
+        "## Source Constraints\n\n"
         "- old content that should be replaced\n"
         "- more old content\n\n"
         "## Scope\n\n- in scope\n"
     )
     new_block = "- NEW line 1\n- NEW line 2"
-    result = splice_source_registry(brief, new_block)
-    assert "## Source Registry\n\n- NEW line 1\n- NEW line 2\n" in result
+    result = splice(brief, new_block)
+    assert "## Source Constraints\n\n- NEW line 1\n- NEW line 2\n" in result
     assert "old content" not in result
     assert "## Scope\n\n- in scope\n" in result
     assert "## Question\n\nWhy?\n" in result
@@ -30,16 +34,16 @@ def test_splice_replaces_existing_section(tmp_path: Path) -> None:
 def test_splice_appends_when_section_missing() -> None:
     brief = "# Research Brief\n\n## Question\n\nWhy?\n"
     new_block = "- generated line"
-    result = splice_source_registry(brief, new_block)
-    assert result.endswith("## Source Registry\n\n- generated line\n")
+    result = splice(brief, new_block)
+    assert result.endswith("## Source Constraints\n\n- generated line\n")
     assert "## Question\n\nWhy?" in result
 
 
 def test_splice_handles_multiple_sections(capsys: pytest.CaptureFixture) -> None:
-    brief = "## Source Registry\n\n- first\n\n## Source Registry\n\n- second\n"
-    result = splice_source_registry(brief, "- replacement")
+    brief = "## Source Constraints\n\n- first\n\n## Source Constraints\n\n- second\n"
+    result = splice(brief, "- replacement")
     captured = capsys.readouterr()
-    assert "2 `## Source Registry`" in captured.err
+    assert "2 `## Source Constraints`" in captured.err
     # First occurrence replaced; second left alone
     assert result.count("- replacement") == 1
     assert "- second" in result
@@ -47,8 +51,8 @@ def test_splice_handles_multiple_sections(capsys: pytest.CaptureFixture) -> None
 
 def test_splice_handles_no_trailing_newline() -> None:
     brief = "# Brief\n\n## Question\n\nWhy?"
-    result = splice_source_registry(brief, "- block")
-    assert result.endswith("## Source Registry\n\n- block\n")
+    result = splice(brief, "- block")
+    assert result.endswith("## Source Constraints\n\n- block\n")
 
 
 def test_load_all_three_files(tmp_path: Path) -> None:
