@@ -16,7 +16,6 @@ htmlcov/
 
 # Research cases are local by default — force-add to commit: git add -f research/<case>/
 research/
-openspec/
 
 # Personal, per-machine Claude settings
 .claude/settings.local.json
