@@ -1,6 +1,6 @@
 # Agentic Research Loop
 
-![License](https://img.shields.io/github/license/adamthuvesen/agentic-research-loop) ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/github/license/adamthuvesen/agentic-research-loop) ![Python](https://img.shields.io/badge/python-3.13%2B-blue)
 
 A research kit for bounded investigations. Give it a question and a set of
 read-only sources, and it creates a workspace, frames the case, and validates the
